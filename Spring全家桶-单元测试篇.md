@@ -24,13 +24,13 @@ tags: [Java, Spring]
 ## 主要注解
 | 注解 | 属性 | 解释 |
 | --- | --- | --- |
-| `@RunWith` | `value` | 测试的运行环境,一般写作`@RunWith(SpringRunner.class)`|
+| `@RunWith` | `value` | 测试的运行环境,一般写作 `@RunWith(SpringRunner.class)` |
 | `@SpringBootTest` | 	| 标识一个Spring的测试 |
 | `@Test`| 		| 测试方法	|
 | `@Transactional ` |  | 标识该类或者该方法 |
 | `@Rollback` 	|  	 | 事物回滚 |
 | `@Commit` 	| 		| 事物提交 |
-| `@AutoConfigureMockMvc` |    | 自动注入`MockMvc`类进行模拟数据请求 |
+| `@AutoConfigureMockMvc` |    | 自动注入 `MockMvc` 类进行模拟数据请求 |
 
 
 ##  测试示例
