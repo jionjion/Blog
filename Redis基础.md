@@ -198,6 +198,9 @@ esac
 语法 `INCR key`
 其中,`key`对应的值必须为数字类型,表示并将其自增+1.当`key`不存在时,默认返回1
 注意,`key`对应的值在redis中以数字字符串进行保存!
+注意,值必须为整数,否则报错.
+
+
 
 - `key`对应的值必须为数字
 例如:`incr age` 对`age`对应值进行自增,不存在返回1
@@ -222,6 +225,8 @@ esac
 ### `DECR`
 语法 `DECR key`
 将`key`对应的值进行自减.
+注意,值必须为整数,否则报错.
+
 
 ### `DECRBY`
 语法 `DECRBY key decrement`
@@ -444,7 +449,7 @@ esac
 - 移除全部的值
 例如 `lrem users 0 jionjion`
 
-### LLEN
+### `LLEN`
 语法 `LLEN key`
 返回类表的长度,如果列表不存在,或者为空列表,则返回0
 
@@ -476,7 +481,7 @@ esac
 将列表`key`的索引位置为`index`的元素的值替换为`value`.
 
 - 替换列表第一个元素的值
-例如 `lset users 1 jion`
+例如 `lset users 0 jion`
 
 - 替换列表最后一个元素的值
 例如 `lset users -1 jion`
