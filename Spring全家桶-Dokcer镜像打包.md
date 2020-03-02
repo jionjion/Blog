@@ -109,3 +109,13 @@ ENTRYPOINT ["java","-jar","service-web-console.jar"]
 
 `/sbin/ip route|awk '/default/ { print  $3,"\tdockerhost" }'`
 
+
+
+### 测试容器
+
+启动测试容器.
+
+```shell
+docker run -it --name 容器的名字 --rm -p 虚拟机端口:本地端口 镜像ID:版本 /bin/bash
+```
+
