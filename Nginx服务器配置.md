@@ -32,6 +32,8 @@ IO多路复用的实现方式,另有select ,
  减少文件之间的传递方式,不通过用户空间而是将静态资源直接通过内核空间进行拷贝
 
 ## 快速安装
+#### 软件安装
+
 编译环境
 ` yum -y install gcc gcc-c autoconf pcre pcre-devel make automake`
 其他工具
@@ -47,9 +49,9 @@ IO多路复用的实现方式,另有select ,
 | work | 工作目录 |
 | backup | 备份文件 |
 
-软件安装
 访问网站`http://nginx.org/en/download.html`获得想要安装版本
 拷贝CentOS的yum源配置信息
+
 ``` bash
 [nginx] 
 name = nginx repo 
@@ -68,6 +70,17 @@ enabled = 1
 检查 `yum list | grep nginx`,查看是否有Nginx的对应版本
 安装 `yum install nginx`,完成安装
 使用`nginx -v`查看当前安装版本,`nginx -V`查看当前nginx的安装模块
+
+#### 版本信息
+
+`nginx -v` 查看当前版本
+`nginx -V`查看系统参数
+
+
+## 启动与停止
+`systemctl restart nginx.service` 重启服务
+`systemctl start nginx.service ` 启动服务
+`systemctl stop nginx.service` 结束服务
 
 ## Nginx目录信息
 | 目录 | 类型 | 作用 |
@@ -451,10 +464,17 @@ http 2.0 一次连接多路并行请求
 ### 客户端缓存
 浏览器在初次请求网站时,没有缓存需要将请求的静态资源存放在本地缓存中;第二次访问网站时,会首先校验文件过期与否,如果没有过期,则直接使用缓存文件,否则重新请求.
 
+| 目标 | 方式 |
+|------| -------|
+| 校验是否过期 | Expires , Cache-Control(max-age) |
+| 协议中Etag头信息校验 | Etag |
+| Last-Modified 头信息校验 | Last-Modified |
+
 通过请求头中的`Expires`,`Cache-Control(max-age)`的信息,进行校验当前缓存文件是否过期;如果超期了,则先后进行Etage和Last-Modified验证
 Etag头信息通过一串字符与服务器的文件的描述字符相比较判断是否过期,
 Last-Modified头信息校验文件时间戳与服务器的相比是否过期.
 如果是缓存文件,则使用304返回;否则则为200返回
+
 
 #### 配置语法 expires
 为返回文件添加 Cache-Control, Expires 头信息
@@ -749,12 +769,120 @@ https加密原理
 2.设置ssl session缓存
 `ssl_session_cache shared:SSL:10m;`
 
+# 在线升级
 
+首先查看当前的Nginx配置,确定各模块依赖版本
+
+```bash
+[root@localhost software]# /usr/local/nginx/sbin/nginx -V
+nginx version: nginx/1.15.6
+built by gcc 4.4.7 20120313 (Red Hat 4.4.7-3) (GCC)
+built with OpenSSL 1.1.0j  20 Nov 2018
+TLS SNI support enabled
+configure arguments: --prefix=/usr/local/nginx --add-module=/software/nginx_upstream_check_module-master --with-openssl=/software/openssl-1.1.0j --with-http_ssl_module
+```
+
+备份原有,(提示覆盖原有的备份时,输入y)
+
+```bash
+mv /usr/local/nginx/sbin/nginx /usr/local/nginx/sbin/nginx.old
+```
+
+当前工作空间,以下操作在当前文件夹下执行
+
+```bash
+/software
+```
+
+在当前工作空间下,下载最新的版本的Nginx,并解压
+
+```bash
+wget https://nginx.org/download/nginx-1.16.1.tar.gz
+tar -zxvf nginx-1.16.1.tar.gz
+```
+
+进入解压后文件目录
+
+```bash
+cd /software/nginx-1.16.1
+```
+
+注入上面看到的配置信息,并编译.(编译用时三分钟)
+
+```bash
+[root@localhost nginx-1.16.1]# ./configure --prefix=/usr/local/nginx --add-module=/software/nginx_upstream_check_module-master --with-openssl=/software/openssl-1.1.0j --with-http_ssl_module
+
+[root@localhost nginx-1.16.1]# make
+```
+
+检查是否编译成功. 在当前目录下出现 objs 目录,并在objs目录下存在 nginx 命令时.表示编译成功
+
+```bash
+[root@localhost nginx-1.16.1]# ls
+auto  CHANGES  CHANGES.ru  conf  configure  contrib  html  LICENSE  Makefile  man  objs  README  src
+[root@localhost nginx-1.16.1]# cd objs/
+[root@localhost objs]# ls
+addon  autoconf.err  Makefile  nginx  nginx.8  ngx_auto_config.h  ngx_auto_headers.h  ngx_modules.c  ngx_modules.o  src
+```
+
+查看编译后版本信息
+
+```bash
+[root@localhost objs]# ./nginx -V
+nginx version: nginx/1.16.1
+built by gcc 4.4.7 20120313 (Red Hat 4.4.7-3) (GCC)
+built with OpenSSL 1.1.0j  20 Nov 2018
+TLS SNI support enabled
+configure arguments: --prefix=/usr/local/nginx --add-module=/software/nginx_upstream_check_module-master --with-openssl=/software/openssl-1.1.0j --with-http_ssl_module
+```
+
+没有问题后,将当前程序拷贝
+
+```bash
+[root@localhost objs]# cp nginx /usr/local/nginx/sbin/
+```
+
+更新现有程序 
+
+```bash
+[root@localhost nginx-1.16.1]# make upgrade
+/usr/local/nginx/sbin/nginx -t
+nginx: the configuration file /usr/local/nginx/conf/nginx.conf syntax is ok
+nginx: configuration file /usr/local/nginx/conf/nginx.conf test is successful
+kill -USR2 `cat /usr/local/nginx/logs/nginx.pid`
+sleep 1
+test -f /usr/local/nginx/logs/nginx.pid.oldbin
+kill -QUIT `cat /usr/local/nginx/logs/nginx.pid.oldbin`
+```
+
+检查是否更新成功
+
+```bash
+[root@localhost nginx-1.16.1]# /usr/local/nginx/sbin/nginx -V
+nginx version: nginx/1.16.1
+built by gcc 4.4.7 20120313 (Red Hat 4.4.7-3) (GCC)
+built with OpenSSL 1.1.0j  20 Nov 2018
+TLS SNI support enabled
+configure arguments: --prefix=/usr/local/nginx --add-module=/software/nginx_upstream_check_module-master --with-openssl=/software/openssl-1.1.0j --with-http_ssl_module
+```
+
+  重启服务
+
+```bash
+service nginx restart
+```
 
 # 架构
 ## 常见问题
 
+### Spring 重定向时从 https 转为 http
+
+修改 `location` 下, 增加 `proxy_redirect http:// https://;` 默认从 `http` 转为 `https`
+
+
+
 ### 相同Server_name的多个虚拟主机的优先级
+
 `server_name`,如相同域名,在多个匹配文件中重复引用,则优先级根据配置文件的排列顺序进行读取
 
 ### location的匹配优先级

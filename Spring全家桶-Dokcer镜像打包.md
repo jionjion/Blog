@@ -111,6 +111,16 @@ ENTRYPOINT ["java","-jar","service-web-console.jar"]
 
 
 
+### 配置修改
+
+#### Spring获得容器宿主机的IP
+
+在Spring配置文件中,使用 `host.docker.internal` 获得宿主机的IP
+
+
+
+
+
 ### 测试容器
 
 启动测试容器.
