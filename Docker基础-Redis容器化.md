@@ -73,19 +73,29 @@ date: 2020-02-25 10:36:29
 
 `docker stop local-redis`
 
-
-
 ###创建用后即销毁的容器
 
 启动容器, 在交互界面结束后,销毁容器
 
-``
+`docker run --name my-redis --rm redis:latest`
 
 ### 数据持久化
+
+将镜像内 `/data` 文件夹对外挂载
+
+### 生成环境
+
+`docker run --name my-redis -d -p6379:6379 redis:latest`
 
 
 
 ### 设置配置信息
+
+```bash
+FROM redis
+COPY redis.conf /usr/local/etc/redis/redis.conf
+CMD [ "redis-server", "/usr/local/etc/redis/redis.conf" ]
+```
 
 
 

@@ -2044,3 +2044,43 @@ public class JsonFilterTest {
 
 ### 不常用的注解
 不做深入了解 
+
+
+
+## 示例
+
+### 自定义序列化与反序列化
+
+属性
+
+```java
+@Column(name = "START_DATE")
+@JsonSerialize(using = DateToLongSerializer.class)
+@JsonDeserialize(using = LongToDateSerializer.class)
+private LocalDateTime startDate;
+```
+
+时间戳转为日期
+
+```java
+public class LongToDateSerializer extends JsonDeserializer<LocalDateTime> {
+    @Override
+    public LocalDateTime deserialize(JsonParser parser, DeserializationContext ctxt) throws IOException, JsonProcessingException {
+        Instant instant = Instant.ofEpochMilli(Long.parseLong(parser.getText()));
+        return LocalDateTime.ofInstant(instant, ZoneOffset.ofHours(+8));
+    }
+}
+```
+
+日期转为时间戳
+
+```java
+public class DateToLongSerializer extends JsonSerializer<LocalDateTime> {
+
+    @Override
+    public void serialize(LocalDateTime localDateTime, JsonGenerator gen, SerializerProvider serializers) throws IOException {
+        // 时间戳,时区为本地时间
+        gen.writeNumber(localDateTime.toInstant(ZoneOffset.ofHours(+8)).toEpochMilli());
+    }
+}
+```

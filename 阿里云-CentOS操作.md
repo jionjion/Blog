@@ -317,3 +317,83 @@ alias cnpm="npm --registry=https://registry.npm.taobao.org \
 `systemctl enable docker`
 停止
 `systemctl stop docker`
+
+
+
+## 用户管理
+
+### 新用户
+
+创建新用户,并分配密码
+
+```bash
+# 创建组
+groupadd docker
+
+# 创建用户 docker ,并分配组
+useradd docker -g docker
+
+# 修改 docker 用户密码
+passwd docker
+
+# 允许管理员命名 sudo
+
+```
+
+
+
+### 允许使用 `sudo`
+
+编辑权限文件, 通过命令 `sudo visudo` 进入编辑. 在其中,加入需要启用的用户
+
+```
+## Allow root to run any commands anywhere
+root    ALL=(ALL)       ALL
+docker  ALL=(ALL)       ALL
+```
+
+
+
+
+
+### 用户添加公钥私钥访问
+
+思路: 在远程生成公钥和私钥,公钥作为认证 `authorized_keys` 文件, 私钥下载到本地电脑,作为连接条件
+
+```bash
+# 生成公钥和私钥文件 在用户目录 .ssh
+ssh-keygen -t rsa
+
+# 公钥重命名为
+mv id_rsa.pub authorized_keys
+
+# 私钥重命名
+mv id_rsa id_rsa_docker
+
+# .ssh权限设置为700，公钥文件authorized_keys 644
+chmod 700 ../.ssh/
+chmod 644 authorized_keys
+
+# 下载私钥,到本地,作为连接认证
+```
+
+
+
+### 登录访问策略
+
+修改配置文件 `/etc/ssh/sshd_config` , 修改后重启服务 `service sshd restart`
+
+```bash
+# 禁用root远程登录
+PermitRootLogin no
+# 禁用普通用户通过密码登录
+PasswordAuthentication no
+# 启用秘钥认证登录
+PubkeyAuthentication yes
+```
+
+
+
+### Windows秘钥权限设置
+
+参考 [博客](https://blog.csdn.net/joshua2011/article/details/90208741)
