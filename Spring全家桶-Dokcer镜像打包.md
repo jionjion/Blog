@@ -21,9 +21,7 @@ tags: [Java, Spring, Docker]
 #### 修改Pom文件
 
 添加插件`dockerfile-maven-plugin`
-
 其中,指定镜像仓库`repository`为 项目前缀/版本号
-
 属性`buildArgs` 列表中,声明一个属性`JAR_FILE`,在DockerFile中使用,作为变量传入.其值为当前项目打包成Jar文件后的文件位置
 
 ```xml
@@ -50,7 +48,6 @@ tags: [Java, Spring, Docker]
 #### 编写Dockerfile
 
 在项目根目录下,创建文件`Dockerfile`.内容入下
-
 其中局部变量`JAR_FILE`不赋值,由插件执行时通过其参数列表传入
 
 ```bash
@@ -92,21 +89,16 @@ ENTRYPOINT ["java","-jar","service-web-console.jar"]
 #### 打包命令
 
 在当前目录下,或者通过插件执行.
-
 直接打包
-
 `mvn  dockerfile:build`
 
 清除当前输出目录,跳过测试用例,打包
-
 `mvn clean package dockerfile:build -Dmaven.test.skip=true`
 
 #### 查看容器中的IP
 
 默认通过桥接模式连接容器,其宿主机IP为所在网段的路由IP.
-
 通过命令查看,默认容宿主机的IP为 `10.0.75.1`
-
 `/sbin/ip route|awk '/default/ { print  $3,"\tdockerhost" }'`
 
 
@@ -119,8 +111,6 @@ ENTRYPOINT ["java","-jar","service-web-console.jar"]
 
 
 
-
-
 ### 测试容器
 
 启动测试容器.
@@ -128,4 +118,25 @@ ENTRYPOINT ["java","-jar","service-web-console.jar"]
 ```shell
 docker run -it --name 容器的名字 --rm -p 虚拟机端口:本地端口 镜像ID:版本 /bin/bash
 ```
+
+
+
+##  高级配置
+
+### 限制内存占用
+
+通过以下命令分配内存,大概占用 `150M` 内存空间
+`java -jar -XX:MetaspaceSize=128m -XX:MaxMetaspaceSize=56m -Xms128m -Xmx128m -Xmn32m -Xss256k -XX:SurvivorRatio=8 -XX:+UseConcMarkSweepGC 应用APP.jar`
+
+| 参数                      | 说明                                    |
+| ------------------------- | --------------------------------------- |
+| -XX:MetaspaceSize=128m    | 元空间默认大小                          |
+| -XX:MaxMetaspaceSize=128m | 元空间最大大小                          |
+| -Xms1024m                 | 堆最大大小                              |
+| -Xmx1024m                 | 堆默认大小                              |
+| -Xmn256m                  | 新生代大小                              |
+| -Xss256k                  | 栈最大深度大小                          |
+| -XX:SurvivorRatio=8       | 新生代分区比例 8:2                      |
+| -XX:+UseConcMarkSweepGC   | 指定使用的垃圾收集器，这里使用CMS收集器 |
+| -XX:+PrintGCDetails       | 打印详细的GC日志                        |
 

@@ -68,3 +68,8 @@ tags:
 ` ps -ef | grep 容器实例ID`
 3.查看资源占用
 `top -p 进程ID`
+
+**或者**
+使用命名, 查看
+`docker stats`
+

@@ -67,11 +67,12 @@ docker run --name my-mysql -d -p3306:3306 -v /data/mysql/data:/var/lib/mysql -v 
 
 #### 备份与还原
 
-备份为SQL文件
-`docker exec some-mysql sh -c 'exec mysqldump --all-databases -uroot -p"$MYSQL_ROOT_PASSWORD"' > /some/path/on/your/host/all-databases.sql`
-
-还原SQL文件
-`docker exec -i some-mysql sh -c 'exec mysql -uroot -p"$MYSQL_ROOT_PASSWORD"' < /some/path/on/your/host/all-databases.sql`
+```bash
+# 备份
+docker exec some-mysql sh -c 'exec mysqldump --all-databases -uroot -p"$MYSQL_ROOT_PASSWORD"' > /some/path/on/your/host/all-databases.sql
+# 还原
+docker exec -i some-mysql sh -c 'exec mysql -uroot -p"$MYSQL_ROOT_PASSWORD"' < /some/path/on/your/host/all-databases.sql
+```
 
 #### Navicat for MySQL连接
 
