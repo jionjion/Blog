@@ -42,7 +42,10 @@ tags:
 
 ` docker run -d  -p 8761:8761 --name eureka-server-0.0.1 --memory 170M --memory-swap=200M  b632ece7e92a`
 
+### 查看日志
 
+查看日志, `-f` 监控日志不断输出, `-t` 显示日志的输出时间
+`docker logs -ft 容器ID`
 
 ## 推送阿里云仓库
 
