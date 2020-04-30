@@ -203,3 +203,21 @@ log = logging.getLogger(__name__)
 log.info('日志...')
 ```
 
+
+
+## 部署
+
+### 软件安装
+
+其中, `scrapyd-client` 仅支持Linux环境
+
+```python
+pip install scrapyd
+pip install scrapyd-client
+```
+
+### 部署
+
+通过命令生成部署程序
+
+` scrapyd-deploy --build-egg 部署项目.egg`
