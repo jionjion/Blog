@@ -21,3 +21,64 @@ tags: [Java, Spring, MVC]
 `@JsonSerialize`    对响应的JSON嵌入自定义代码
 `@jsonignore`       表示不会对该类的属性进行JSON输出
 `@JsonIgnoreProperties` 类注解,将某些属性不进行JSON输出
+
+## 常见配置
+
+### 允许跨域
+
+重写配置类
+
+```java
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
+/**
+ * @author Jion
+ */
+@Configuration
+public class WebConfig implements WebMvcConfigurer {
+    /***
+     *  跨域请求,允许
+     * @param registry 注册
+     */
+    @Override
+    public void addCorsMappings(CorsRegistry registry) {
+        registry.addMapping("/api/**")
+                .allowedOrigins("*")
+                .allowedMethods("POST", "GET", "PUT", "OPTIONS", "DELETE")
+                .maxAge(3600)
+                .allowCredentials(true);
+    }
+}
+```
+
+### 外部资源路径
+
+允许将`URL `中的访问路径映射到文件系统中,扩展访问范围. 
+**注意** 映射磁盘路径以文件夹结尾符结束 `\`
+
+```java
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
+
+/**
+ * @author Jion
+ */
+@Configuration
+public class WebConfig implements WebMvcConfigurer {
+
+    /***
+     *  添加资源文件夹位置
+     * @param registry 注册
+     */
+    @Override
+    public void addResourceHandlers(ResourceHandlerRegistry registry) {
+        //如果是Windows环境的话 file:=改为=》file:///
+        registry.addResourceHandler("/static/**").addResourceLocations("file:" + "S://" + File.separatorChar);
+    }
+}
+```
+
