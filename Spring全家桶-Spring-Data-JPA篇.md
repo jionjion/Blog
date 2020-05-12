@@ -1045,3 +1045,60 @@ public class ConsoleDatasourceJpaConfig {
 }
 ```
 
+
+
+## 数据库表名大小写
+
+`MySQL` 数据库在Linxu环境下,数据库设定为表名大小写敏感 .因此,一般数据库表名大写,字段名大写.
+需要在配置文件中添加以下信息
+
+通过实现 `org.hibernate.boot.model.naming.PhysicalNamingStrategy` 接口中定义的方法.可以重写数据库对象名,默认实现空类为 `org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl` 
+
+默认实现
+
+```java
+public class PhysicalNamingStrategyStandardImpl implements PhysicalNamingStrategy, Serializable {
+	/**
+	 * Singleton access
+	 */
+	public static final PhysicalNamingStrategyStandardImpl INSTANCE = new PhysicalNamingStrategyStandardImpl();
+
+    // 重写数据库目录
+	@Override
+	public Identifier toPhysicalCatalogName(Identifier name, JdbcEnvironment context) {
+		return name;
+	}
+
+    // 重写数据库 Schema
+	@Override
+	public Identifier toPhysicalSchemaName(Identifier name, JdbcEnvironment context) {
+		return name;
+	}
+
+    // 重写数据库表名
+	@Override
+	public Identifier toPhysicalTableName(Identifier name, JdbcEnvironment context) {
+		return name;
+	}
+
+    // 重写数据库字序列名
+	@Override
+	public Identifier toPhysicalSequenceName(Identifier name, JdbcEnvironment context) {
+		return name;
+	}
+
+    // 重写数据库字段名
+	@Override
+	public Identifier toPhysicalColumnName(Identifier name, JdbcEnvironment context) {
+		return name;
+	}
+}
+```
+
+在配置文件中添加使用
+
+```properties
+# 表名统一大写
+spring.jpa.hibernate.naming.physical-strategy=top.jionjion.web.fish.config.UpperTableStrategy
+```
+
