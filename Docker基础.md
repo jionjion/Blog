@@ -322,6 +322,11 @@ docker inspect -f "{{ .NetworkSettings.IPAddress }}" <容器ID>
 `docker rmi <镜像ID>`
 删除指定镜像
 
+#### 删除空标签镜像
+
+`docker rmi $(docker images -f "dangling=true" -q)`
+删除所有的空标签镜像
+
 ## 仓库
 
 ### `logout`
