@@ -879,8 +879,6 @@ service nginx restart
 
 修改 `location` 下, 增加 `proxy_redirect http:// https://;` 默认从 `http` 转为 `https`
 
-
-
 ### 相同Server_name的多个虚拟主机的优先级
 
 `server_name`,如相同域名,在多个匹配文件中重复引用,则优先级根据配置文件的排列顺序进行读取
@@ -939,3 +937,25 @@ service nginx restart
 
 ## 防火墙
 ngx_lua_waf
+
+## 禁止非IP访问
+
+在配置文件中增加以下配置. 监听 `80` 和 `443` 端口,使其在访问时,如果为IP自动拒绝.返回 `500` 错误
+另外,SSH证书可以随意指定,仅做配置使用
+
+```bash
+server {
+    listen       80 default;
+    listen       443 default_server;
+    server_name  _;
+    return       500;
+    # 证书配置
+    ssl_certificate                    /etc/nginx/cert/jionjion.top.pem;
+    ssl_certificate_key                /etc/nginx/cert/jionjion.top.key;
+    ssl_session_timeout                5m;
+    ssl_protocols                      TLSv1 TLSv1.1 TLSv1.2;
+    ssl_ciphers                        ECDHE-RSA-AES128-GCM-SHA256:HIGH:!aNULL:!MD5:!RC4:!DHE;
+    ssl_prefer_server_ciphers          on;
+}
+```
+

@@ -64,7 +64,5 @@ $ hexo deploy
 
 
 
-![no game no life](http://image.jionjion.top/blog/20190319/PrbprxtFuOTq.png?imageslim)
-
-
+![游戏人生](./hello-world/no_game_no_life.png)
 

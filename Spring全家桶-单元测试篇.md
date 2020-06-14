@@ -8,7 +8,7 @@ categories:
 tags: [Java, Spring]
 ---
 
-
+# 简介
 
 介绍了`spring-test`中单元测试的使用
 
@@ -25,7 +25,8 @@ tags: [Java, Spring]
 | 注解 | 属性 | 解释 |
 | --- | --- | --- |
 | `@RunWith` | `value` | 测试的运行环境,一般写作 `@RunWith(SpringRunner.class)` |
-| `@SpringBootTest` | 	| 标识一个Spring的测试 |
+| `@SpringBootTest` | 	| 标识一个Spring的测试,使用测试上下文容器 |
+| `@SpringBootApplication` | `scanBasePackages` | 将测试类单独作为容器启动类,使用上下文容器.指定扫描的包 |
 | `@Test`| 		| 测试方法	|
 | `@Transactional ` |  | 标识该类或者该方法 |
 | `@Rollback` 	|  	 | 事物回滚 |
@@ -36,6 +37,8 @@ tags: [Java, Spring]
 ##  测试示例
 
 ### 普通的单元测试
+
+使用测试上下文容器的测试用例
 
 ``` java
 @RunWith(SpringRunner.class) // 测试环境
@@ -54,7 +57,45 @@ public class UserTest {
 }
 ```
 
+使用启动类上下文容器的测试用例
+
+```java
+@RunWith(SpringRunner.class)
+@SpringBootApplication(scanBasePackages = "top.jionjion.bean")
+public class AppConfigTest {
+
+    @Autowired
+    private AppConfig appConfig;
+
+    @Test
+    public void testGetUser(){
+        User user = appConfig.getUser();
+        System.out.println(user.hashCode());
+    }
+}
+```
+
+最新版测试. 只需使用 `@SpringBootTest` 声明一个 `package-private` 的测试类,即可完成单元测试
+
+```java
+@SpringBootTest
+class StudentMapperTest {
+
+    @Autowired
+    StudentMapper studentMapper;
+
+    @Test
+    void findByUserId(){
+        Student student = studentMapper.findByUserId(1);
+        Assert.notNull(student,"查询失败!");
+    }
+}
+```
+
+
+
 ### Http请求的单元测试
+
 带有JSON参数的POST请求单元测试
 
 ```java
