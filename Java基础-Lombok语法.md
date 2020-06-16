@@ -11,7 +11,7 @@ tags: [Java, Lombok]
 
 # 简介
 
-`Lombok`简要介绍
+简要介绍 `Lombok`
 
 ## 常用注解
 
