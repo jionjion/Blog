@@ -8,8 +8,6 @@ categories:
 tags: [Java, Redis, Jedis]
 ---
 
-# JAVA中Redis作为缓存数据库
-
 ## 简介
 Java代码操作Redis数据库.
 
@@ -173,6 +171,8 @@ public class RedisConnect {
 |               | type(String key)                                             | 查看存放的数据类型                                           |
 |               | flushAll()                                                   | 清空数据库                                                   |
 |               | flushDB()                                                    | 清空子数据库                                                 |
+
+#### 示例代码
 
 
 ``` java

@@ -20,7 +20,7 @@ tags: [Oracle, SQL]
 在Oracle中,SQL子句的执行步骤依次为:
 1. 执行From子句,确定数据的来源
 2. 执行Where子句,数据过滤
-3. 执行Selet子句,确定数据列,设置别名
+3. 执行Select子句,确定数据列,设置别名
 4. 执行Group by子句,对数据进行分组
 5. 执行Having子句,对分组后的数据进行过滤
 6. 执行Order by子句进行排序
@@ -137,34 +137,6 @@ where rowid not in (
   group by empno , ename 
 );
 ```
-### 抓取函数
-`fetch`函数支持根据记录数或者比例抓取查询结果
-语法:
-``` sql
-select  XXX
-from XXX
-group by XXX
-having XXX
-order by XXX
-fetch first 行数 | [offset 开始位置 rows fetch next 个数] | [fetch next 百分比 percent] row only
-```
-
-**示例**
-
-``` sql
--- 前五条
-select * from emp order by sal
-fetch first 5 row only;
-
--- 第4-5条
-select * from emp order by sal
-offset 3 fetch next 2 row only;
-
--- 取一半
-select * from emp order by sal
-fetch next 50 percent row only;
-```
-
 
 
 ### 字段解释
@@ -422,8 +394,6 @@ select * from emp
 where sal>all (select sal from emp where deptno=30);
 ```
 
-
-
 ### 分页查询
 
 ``` sql
@@ -431,6 +401,36 @@ where sal>all (select sal from emp where deptno=30);
 --查询工资排名在5到8之间的员工 (为开区间)
 select * from (select rownum r, a.* from ( select emp.* from emp order by sal desc )a where rownum<8)b where r>5;
 ```
+
+### 分片查询
+`fetch`函数支持根据记录数或者比例抓取查询结果
+语法:
+
+``` sql
+select  XXX
+from XXX
+group by XXX
+having XXX
+order by XXX
+fetch first 行数 | [offset 开始位置 rows fetch next 个数] | [fetch next 百分比 percent] row only
+```
+
+**示例**
+
+``` sql
+-- 前五条
+select * from emp order by sal
+fetch first 5 row only;
+
+-- 第4-5条
+select * from emp order by sal
+offset 3 fetch next 2 row only;
+
+-- 取一半
+select * from emp order by sal
+fetch next 50 percent row only;
+```
+
 
 ### 存在查询
 

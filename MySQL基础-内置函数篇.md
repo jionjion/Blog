@@ -426,3 +426,15 @@ select count(*) from emp;
 select count(distinct emp.job) from emp;                                   -- 必须指定具体的字段,去重输出
 select count(*) , count(empno) , count(comm) , count(distinct job) from emp;
 ```
+
+
+
+## 查询语句
+
+### 分页查询
+
+```mysql
+-- 查询前五条数据,从0开始,查询5条
+select * from emp limit 0, 5
+```
+
