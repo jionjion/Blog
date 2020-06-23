@@ -33,7 +33,7 @@ make install
 ## 命令
 - 启动 自建命令`redis`;
 - 启动 系统命令`redis-server /usr/local/redis/ect/redis.conf`,指明启动的配置文件
-- 关闭 `redis-cli shutdown nosave`
+- 关闭 `redis-cli shutdown nosave` 或者 `redis-cli shutdown`
 
 ## 远程连接并作为服务
 修改配置文件
@@ -123,6 +123,8 @@ esac
 手册参考网站`http://redisdoc.com/`,仅对自己常用的进行记录
 
 如果配置了密码,则需要在登录后执行 `auth password`
+或者使用登录命令
+ `redis -cli -h 127.0.0.1 -p 6379 -a <your_password>`
 
 ## 键值操作
 
@@ -1070,8 +1072,56 @@ esac
 
 
 # 附录:
-参数
+## 配置文件信息
 
-| 参数 | 默认值 | 说明 |
-| -- | -- | -- |
-| bind | 127.0.0.1 | 绑定的 |
+| 参数                              | 默认值/参考值                                    | 说明                                                         |
+| --------------------------------- | ------------------------------------------------ | ------------------------------------------------------------ |
+| `daemonize`                       | no                                               | 是否以守护进程启动,默认非守护进程                            |
+| `bind`                            | 127.0.0.1                                        | 绑定的IP地址,默认本地                                        |
+| `port`                            | 6379                                             | 绑定的端口                                                   |
+| `databases`                       | 16                                               | 数据库数量,默认16个,即 0~15 库                               |
+| `save <second> <changes>`         | `save 900 1`  ; `save 300 10`  ; `save 60 10000` | 多少时间、有多少次更新操作，就将数据同步到数据文件           |
+| `dbfilename`                      | dump.rdb                                         | 持久到本地数据文件名                                         |
+| `dir`                             | `./`                                             | 本地数据库文件存放路径.                                      |
+| requirepass                       |                                                  | 是否启用密码                                                 |
+| `pidfile`                         | `var/run/redis.pid`                              | 程序PID进程文件                                              |
+| `timeout`                         | 300                                              | 客户端闲置多久后关闭连接, `0` 为不关闭                       |
+| `loglevel`                        | `verbose`                                        | 日志级别,  `debug`, `verbose`, `notice`, `warning`           |
+| `logfile`                         | `stdout`                                         | 日志纪录方式,这里为标准输出;如果以守护进程启动,则日志丢入 `/dev/null` |
+| `rdbcompression `                 | `yes`                                            | 是否启用压缩方式文件                                         |
+| `slaveof <masterip> <masterport>` |                                                  | 当为进行集群启动时, 设置 `master` 的地址和端口               |
+| `masterauth <master-password>`    |                                                  | 当为进行集群启动时, 连接 `master` 的密码                     |
+| `maxclients`                      | 0                                                | 默认最大客户端连接数                                         |
+| `maxmemory <bytes>`               |                                                  | 最大内存使用                                                 |
+| `appendonly`                      | `no`                                             | 是否在 `key` 发生修改后,更新日志                             |
+| `appendfilename`                  | `appendonly.aof`                                 | 更新日志名称                                                 |
+| `appendfsync`                     | `everysec`                                       | 更新日志的条件:  1). `no` 操作系统更新日志时更新  2). `always` 每次更新key时更新  3). `everysec` 每秒更新 |
+| `vm-enabled`                      | `no`                                             | 是否使用虚拟内存. 热点数据存入内存, 非热点数据存入磁盘       |
+| `vm-swap-file`                    | `/tmp/redis.swap`                                | 虚拟内存的存放位置                                           |
+| `vm-max-memory`                   | 0                                                | 虚拟内存时,将key存入内存,而value存入磁盘.                    |
+| `vm-page-size `                   | 32                                               | swap文件的page大小设置. 32 或 64                             |
+| `vm-pages`                        | 134217728                                        | swap文件的page数量                                           |
+| `vm-max-thread`                   | 4                                                | swap文件的访问线程数,不可超过处理器内核数. 0 为串行访问      |
+| `glueoutputbuf `                  | `yes`                                            | 客户端应答时,将较小的包合并为一个包发送                      |
+| `hash-max-zipmap-entries`         | 64                                               | 超过最大数量时, 使用一种哈希算法                             |
+| `hash-max-zipmap-value`           | 512                                              | 超过最大大小时, 使用一种哈希算法                             |
+| `activerehashing`                 | `yes`                                            | 是否使用重置哈希                                             |
+| `include`                         | `/path/to/local.conf`                            | 包含的其他配置文件信息                                       |
+
+## 内存淘汰策略
+
+- `noeviction` 当内存使用超过配置的时候会返回错误，不会驱逐任何键
+
+- `allkeys-lru` 加入键的时候，如果过限，首先通过LRU算法驱逐最久没有使用的键
+
+- `volatile-lru` 加入键的时候如果过限，首先从设置了过期时间的键集合中驱逐最久没有使用的键
+
+- `allkeys-random` 加入键的时候如果过限，从所有key随机删除
+
+- `volatile-random` 加入键的时候如果过限，从过期键的集合中随机驱逐
+
+- `volatile-ttl` 从配置了过期时间的键中驱逐马上就要过期的键
+
+- `volatile-lfu` 从所有配置了过期时间的键中驱逐使用频率最少的键
+
+- `allkeys-lfu` 从所有键中驱逐使用频率最少的键
