@@ -126,7 +126,10 @@ esac
 或者使用登录命令
  `redis -cli -h 127.0.0.1 -p 6379 -a <your_password>`
 
-## 键值操作
+## `STRING` 操作
+
+将对象序列化为二进制,存在缓存中.
+线程安全,自带原子性
 
 ### `SET` 
 语法 `SET key value [EX seconds] [PX milliseconds] [NX|XX]`
@@ -257,7 +260,9 @@ esac
 - `key`字符类型
 例如:`mget name age`.获得`name`和`age`对应的值
 
-## 哈希表操作
+## `HASH` 操作
+
+`STRING` 类型的 `key` 和  `value` ,适合存储键和值类型的数据.
 
 ### `HSET`
 语法 `HSET hash field value`
@@ -375,7 +380,7 @@ esac
 
 暂定!
 
-## 列表操作
+## `LIST` 操作
 
 ### `LPUSH`
 语法 `LPUSH key value [value …]`
@@ -544,7 +549,7 @@ esac
 - 循环等待10秒,将列尾弹出并放置在列首
 例如 `brpoplpush users uesrs 10`
 
-## 集合
+## `SET` 集合
 
 ### `SADD`
 语法 `SADD key member [member …]`
@@ -670,7 +675,7 @@ esac
 - 获得`users1`,`users2`集合的差集
 例如 `sdiffstore users users1 users2`
 
-## 有序集合
+## `ZSET` 有序集合
 
 ### `ZADD`
 语法 `ZADD  [NX|XX] [CH] [INCR] score member [score member …]`
@@ -1125,3 +1130,24 @@ esac
 - `volatile-lfu` 从所有配置了过期时间的键中驱逐使用频率最少的键
 
 - `allkeys-lfu` 从所有键中驱逐使用频率最少的键
+
+## 开发实践
+
+### 命名规范
+
+建议使用 `:` 进行命名分割, 区分不同的命名空间.
+如 `user:session:A1B2C3E4F5E6`
+
+### `STRING` 实践
+
+- 用于统计数量
+- 存放 `token`
+- 存放热点图片 (序列化为二进制文件)
+
+
+
+### `HASH` 实践
+
+- 存放对象属性, 不同对象通过 `key` 的命名规范进行区分
+- 在序列化和反序列化时,注意操作原子性
+

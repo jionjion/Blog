@@ -1,9 +1,11 @@
+---
 title: Spring全家桶-SpringBoot源码篇
 date: 2020-06-23 22:43:34
 categories:
   - Java
   - Spring
 tags: [Java, Spring]
+---
 
 # 简介
 
@@ -110,7 +112,7 @@ import org.springframework.core.env.ConfigurableEnvironment;
  * @author Jion
  */
 @Order(1)
-public class WebAppInitializerFirst implements ApplicationContextInitializer<ConfigurableApplicationContext> {
+public class WebApplicationInitializerFirst implements ApplicationContextInitializer<ConfigurableApplicationContext> {
 
     @Override
     public void initialize(ConfigurableApplicationContext applicationContext) {
@@ -127,7 +129,7 @@ public class WebAppInitializerFirst implements ApplicationContextInitializer<Con
 
 ```properties
 # 注册自定义系统初始化器
-org.springframework.context.ApplicationContextInitializer=top.jionjion.initializer.WebAppInitializerFirst
+org.springframework.context.ApplicationContextInitializer=top.jionjion.initializer.WebApplicationInitializerFirst
 ```
 
 
@@ -150,7 +152,7 @@ import org.springframework.core.env.ConfigurableEnvironment;
  * @author Jion
  */
 @Order(2)
-public class WebAppInitializerSecond implements ApplicationContextInitializer<ConfigurableApplicationContext> {
+public class WebApplicationInitializerSecond implements ApplicationContextInitializer<ConfigurableApplicationContext> {
 
     @Override
     public void initialize(ConfigurableApplicationContext applicationContext) {
@@ -186,7 +188,7 @@ public class WebApplication {
 
         // 自定义容器的初始化器,并调用run方法
         SpringApplication springApplication = new SpringApplication(WebApplication.class);
-        springApplication.setInitializers(Collections.singleton(new WebAppInitializerSecond()));
+        springApplication.setInitializers(Collections.singleton(new WebApplicationInitializerSecond()));
         springApplication.run(args);
     }
 }
@@ -212,7 +214,7 @@ import org.springframework.core.env.ConfigurableEnvironment;
  * @author Jion
  */
 @Order(3)
-public class WebAppInitializerThird implements ApplicationContextInitializer<ConfigurableApplicationContext> {
+public class WebApplicationInitializerThird implements ApplicationContextInitializer<ConfigurableApplicationContext> {
 
     @Override
     public void initialize(ConfigurableApplicationContext applicationContext) {
@@ -230,7 +232,7 @@ public class WebAppInitializerThird implements ApplicationContextInitializer<Con
 ```yaml
 context:
   initializer:
-    classes: top.jionjion.initializer.WebAppInitializerThird
+    classes: top.jionjion.initializer.WebApplicationInitializerThird
 ```
 
 
@@ -885,8 +887,9 @@ public ConfigurableApplicationContext run(String... args) {
     // 监听器启动, EventPublishingRunListener 发布 ApplicationStartingEvent 事件
     listeners.starting();
     try {
-        // 6. 配置环境模块
+        // 6. 配置环境信息
         ApplicationArguments applicationArguments = new DefaultApplicationArguments(args);
+        // 发布 ApplicationEnvironmentPreparedEvent 时间
         ConfigurableEnvironment environment = prepareEnvironment(listeners, applicationArguments);
         configureIgnoreBeanInfo(environment);
         // 7. 打印 banner
@@ -2959,7 +2962,947 @@ protected void resetCommonCaches() {
 
 ## `Banner` 打印
 
+通过设置 `spring.banner.location` 设置文字简笔画图片
+通过设置 `spring.banner.image.location` 设置图片(png,jpg,gif),系统会转为对应的字符简笔画
+或者在 `SpringApplication` 中的 `setBanner()` 方法配置信息
+系统默认位置在 `resources/banner.txt`  目录下
 
+
+
+### 源码步骤
+
+#### 2-7-0-0 打印 `Banner`
+
+在 `run` 方法中, 调用 `Banner printedBanner = printBanner(environment)` 进行打印.
+
+```java
+private Banner printBanner(ConfigurableEnvironment environment) {
+    // 是否启用 Banner 打印
+    if (this.bannerMode == Banner.Mode.OFF) {
+        return null;
+    }
+    // 1. 资源加载器,如果不存在则创建.打印默认的 Banner
+    ResourceLoader resourceLoader = (this.resourceLoader != null) ? this.resourceLoader
+        : new DefaultResourceLoader(getClassLoader());
+    SpringApplicationBannerPrinter bannerPrinter = new SpringApplicationBannerPrinter(resourceLoader, this.banner);
+    // 2. 打印到日志
+    if (this.bannerMode == Mode.LOG) {
+        return bannerPrinter.print(environment, this.mainApplicationClass, logger);
+    }
+    // 打印到控制台
+    return bannerPrinter.print(environment, this.mainApplicationClass, System.out);
+}
+```
+
+#### 2-7-1-0 获得 `Banner` 并打印
+
+```java
+Banner print(Environment environment, Class<?> sourceClass, Log logger) {
+    // 1. 获得 Banner 对象
+    Banner banner = getBanner(environment);
+    try {
+        // 日志
+        logger.info(createStringFromBanner(banner, environment, sourceClass));
+    }
+    catch (UnsupportedEncodingException ex) {
+        logger.warn("Failed to create String for banner", ex);
+    }
+    // 2. 构建打印对象
+    return new PrintedBanner(banner, sourceClass);
+}
+```
+
+#### 2-7-1-1 获得 `Banner` 对象
+
+```java
+private Banner getBanner(Environment environment) {
+    // 创建 Banner 列表, 可以有多个Banner
+    Banners banners = new Banners();
+    // 尝试添加图片打印
+    banners.addIfNotNull(getImageBanner(environment));
+    // 尝试添加文字打印
+    banners.addIfNotNull(getTextBanner(environment));    
+    if (banners.hasAtLeastOneBanner()) {
+        return banners;
+    }
+    // 如果在 SpringApplication 中指定,则返回
+    if (this.fallbackBanner != null) {
+        return this.fallbackBanner;
+    }
+    // 以上均未匹配, 返回默认的配置
+    return DEFAULT_BANNER;
+}
+
+```
+
+#### 2-7-1-2 不同类型的打印
+
+默认打印的 `SpringBanner` 类如下.
+
+```java
+class SpringBootBanner implements Banner {
+
+	private static final String[] BANNER = { "", "  .   ____          _            __ _ _",
+			" /\\\\ / ___'_ __ _ _(_)_ __  __ _ \\ \\ \\ \\", "( ( )\\___ | '_ | '_| | '_ \\/ _` | \\ \\ \\ \\",
+			" \\\\/  ___)| |_)| | | | | || (_| |  ) ) ) )", "  '  |____| .__|_| |_|_| |_\\__, | / / / /",
+			" =========|_|==============|___/=/_/_/_/" };
+
+	private static final String SPRING_BOOT = " :: Spring Boot :: ";
+
+	private static final int STRAP_LINE_SIZE = 42;
+
+	@Override
+	public void printBanner(Environment environment, Class<?> sourceClass, PrintStream printStream) {
+        // 文字简笔画打印
+		for (String line : BANNER) {
+			printStream.println(line);
+		}
+        // 版本信息
+		String version = SpringBootVersion.getVersion();
+		version = (version != null) ? " (v" + version + ")" : "";
+		StringBuilder padding = new StringBuilder();
+        // 字符串补空格
+		while (padding.length() < STRAP_LINE_SIZE - (version.length() + SPRING_BOOT.length())) {
+			padding.append(" ");
+		}
+		// 文字设置颜色
+		printStream.println(AnsiOutput.toString(AnsiColor.GREEN, SPRING_BOOT, AnsiColor.DEFAULT, padding.toString(),
+				AnsiStyle.FAINT, version));
+		printStream.println();
+	}
+}
+```
+
+文字打印如下
+具体方法为 `org.springframework.boot.ResourceBanner#printBanner` 
+
+```java
+@Override
+public void printBanner(Environment environment, Class<?> sourceClass, PrintStream out) {
+    try {
+        // 读取文本, 指定字符
+        String banner = StreamUtils.copyToString(this.resource.getInputStream(),
+                                                 environment.getProperty("spring.banner.charset", Charset.class, StandardCharsets.UTF_8));
+		// 可以通过 ${} 为系统指定环境信息
+        for (PropertyResolver resolver : getPropertyResolvers(environment, sourceClass)) {
+            banner = resolver.resolvePlaceholders(banner);
+        }
+        // 打印文本内容
+        out.println(banner);
+    }
+    catch (Exception ex) {
+        logger.warn(LogMessage.format("Banner not printable: %s (%s: '%s')", this.resource, ex.getClass(),
+                                      ex.getMessage()), ex);
+    }
+}
+```
+
+图案打印
+
+具体方法为 `org.springframework.boot.ImageBanner#printBanner`
+
+```java
+public void printBanner(Environment environment, Class<?> sourceClass, PrintStream out) {
+	// 是否在 headless 模式下
+    String headless = System.getProperty("java.awt.headless");
+    try {
+        System.setProperty("java.awt.headless", "true");
+        // 打印方法
+        printBanner(environment, out);
+    }
+    catch (Throwable ex) {
+        logger.warn(LogMessage.format("Image banner not printable: %s (%s: '%s')", this.image, ex.getClass(),
+                                      ex.getMessage()));
+        logger.debug("Image banner printing failure", ex);
+    }
+    finally {
+        if (headless == null) {
+            System.clearProperty("java.awt.headless");
+        }
+        else {
+            System.setProperty("java.awt.headless", headless);
+        }
+    }
+}
+```
+
+具体打印
+
+```java
+private void printBanner(Environment environment, PrintStream out) throws IOException {
+    // 基本信息. 通过 spring.banner.image.* 设置属性
+   	int width = getProperty(environment, "width", Integer.class, 76);
+    int height = getProperty(environment, "height", Integer.class, 0);
+    int margin = getProperty(environment, "margin", Integer.class, 2);
+    boolean invert = getProperty(environment, "invert", Boolean.class, false);
+ 	// 打印属性
+    BitDepth bitDepth = getBitDepthProperty(environment);
+    PixelMode pixelMode = getPixelModeProperty(environment);
+    // 读取
+    Frame[] frames = readFrames(width, height);
+    for (int i = 0; i < frames.length; i++) {
+        if (i > 0) {
+            resetCursor(frames[i - 1].getImage(), out);
+        }
+        // 打印输出流,图片内容
+        printBanner(frames[i].getImage(), margin, invert, bitDepth, pixelMode, out);
+        sleep(frames[i].getDelayTime());
+    }
+}
+```
+
+
+
+## 计时器 `StopWatch`
+
+Spring提供的计时器,主要方法如下.
+可以多次停止,纪录多个任务,并
+
+```java
+// 创建计时器
+StopWatch stopWatch = new StopWatch();  
+// 计时,指定任务-A
+stopWatch.start("任务-A");		
+stopWatch.stop();
+// 计时,指定任务-B
+stopWatch.start("任务-B");
+stopWatch.stop();
+// 格式打印输出
+stopWatch.prettyPrint();
+```
+
+
+
+## 启动加载器
+
+在框架启动后, 进行某些操作
+
+### 示例 - 自定义启动加载器
+
+通过实现 `CommandLineRunner` 和 `ApplicationRunner` 接口进行定义, 可以使用 `@Order` 注解进行排序,相同排序则 `ApplicationRunner` 接口优先.
+
+#### 实现 `CommandLineRunner` 接口
+
+实现 `org.springframework.boot.CommandLineRunner` 接口中的方法, 重写 `run` 方法, 在程序完成后进行某些操作. `args` 为启动时传入的命令参数
+
+```java
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.core.annotation.Order;
+import org.springframework.stereotype.Component;
+
+/**
+ *  自定义容器启动器,在容器启动后执行
+ *      Order 注解 为启动器进行排序
+ * @author Jion
+ */
+@Order(1)
+@Component
+public class WebApplicationCommandLineRunnerFirst implements CommandLineRunner {
+
+    @Override
+    public void run(String... args) throws Exception {
+        System.out.println("--- 方法一 ---");
+        System.out.println("启动加载器: 容器启动成功...");
+        System.out.println("------");
+    }
+}
+```
+
+#### 实现 `ApplicationRunner` 接口
+
+实现 `org.springframework.boot.ApplicationRunner` 接口中的方法, 重写 `run` 方法, 在Spring框架完成后进行操作.  `context` 为当前容器, `args` 为框架封装的启动参数
+
+```java
+import org.springframework.boot.ApplicationArguments;
+import org.springframework.boot.ApplicationRunner;
+import org.springframework.core.annotation.Order;
+import org.springframework.stereotype.Component;
+
+/**
+ *  自定义容器启动器,在容器启动后执行
+ *      优先执行
+ * @author Jion
+ */
+@Order(1)
+@Component
+public class WebApplicationCommandLineRunnerSecond implements ApplicationRunner {
+
+    @Override
+    public void run(ApplicationArguments args) throws Exception {
+        System.out.println("--- 方法二 ---");
+        System.out.println("启动加载器: 容器启动成功...");
+        System.out.println("------");
+    }
+}
+```
+
+
+
+### 源码步骤
+
+#### 2-15-0-0 调用
+
+在 `run` 方法中, 通过 `callRunners(context, applicationArguments)` 方法, 对启动扩展加载器进行调用.
+
+
+```java
+private void callRunners(ApplicationContext context, ApplicationArguments args) {
+    // 集合
+    List<Object> runners = new ArrayList<>();
+    // ApplicationRunner 接口实现
+    runners.addAll(context.getBeansOfType(ApplicationRunner.class).values());
+    // CommandLineRunner 接口实现
+    runners.addAll(context.getBeansOfType(CommandLineRunner.class).values());
+    // 对其排序
+    AnnotationAwareOrderComparator.sort(runners);
+    // 进行调用
+    for (Object runner : new LinkedHashSet<>(runners)) {
+        // ApplicationRunner 接口先, 传入 ApplicationArguments 参数对象
+        if (runner instanceof ApplicationRunner) {
+            callRunner((ApplicationRunner) runner, args);
+        }
+        // CommandLineRunner 接口后, 传入 args 参数数组
+        if (runner instanceof CommandLineRunner) {
+            callRunner((CommandLineRunner) runner, args);
+        }
+    }
+}
+```
+
+
+
+## 环境属性
+
+### 属性配置
+
+#### 配置先后
+
+| 顺序 | 方式                                              | 示例                                                         |
+| ---- | ------------------------------------------------- | ------------------------------------------------------------ |
+| 1    | `Devtools` 全局属性                               |                                                              |
+| 2    | 测试环境 `@TestPropertySource` 注解               | `@TestPropertySource("classpath:属性文件.properties")`       |
+| 3    | 测试环境 `properties` 属性                        | 通过在 `@SpringBootTest` 注解中, 为属性 `properties` 添加 `json` 格式的参数对象,完成配置 |
+| 4    | 命令行参数                                        |                                                              |
+| 5    | `SPRING_APPLICATION_JSON` 属性                    | 通过将 `json`  格式的参数以 `SPRING_APPLICATION_JSON` 为参数名传入, 完成配置 |
+| 6    | `ServletConfig` 初始化参数                        |                                                              |
+| 7    | `ServletContext` 初始化参数                       |                                                              |
+| 8    | `JNDI` 属性                                       |                                                              |
+| 9    | `JAVA` 系统虚拟机属性                             | 通过设置 `JVM` 虚拟机参数                                    |
+| 10   | 操作系统环境变量                                  |                                                              |
+| 11   | `RandomValuePropertySource` 随机属性              | `{random.int[20,30]}` 属性配置                               |
+| 12   | jar包外的 `application-{profile}.properties` 文件 | 默认使用 `default` 配置文件                                  |
+| 13   | jar包内的 `application-{profile}.properties` 文件 |                                                              |
+| 14   | jar包外的 `application.properties` 文件           |                                                              |
+| 15   | jar包外的 `application.properties` 文件           |                                                              |
+| 16   | `@PropertySource` 绑定配置                        | `@PropertySource("classpath:属性文件.properties")`           |
+| 17   | 默认属性                                          | ```java Properties properties = new Properties(); properties.setProperty("author","Jion17"); springApplication.setDefaultProperties(properties); ``` |
+
+
+
+
+## `Aware` 接口
+
+ 在需要使用 `Spring` 容器中的相关功能时, 调用 `org.springframework.beans.factory.Aware` 接口及其相关实现
+
+### 常用接口
+
+| 接口                             | 作用                     | 作用位置    |
+| -------------------------------- | ------------------------ | ----------- |
+| `BeanNameAware`                  | 获取容器中 `bean` 的名称 |             |
+| `BeanClassLoaderAware`           | 获得类加载器             |             |
+| `BeanFactoryAware`               | 获得 `bean` 创建工厂     | `bean` 创建 |
+| `EnvironmentAware`               | 获得环境变量             | `bean` 创建 |
+| `EmbeddedValueResolverAware`     | 获得容器加载属性文件的值 | `bean` 创建 |
+| `ResourceLoaderAware`            | 获得资源加载器           | `bean` 创建 |
+| `ApplicationEventPublisherAware` | 获得应用事件发布器       | `bean` 创建 |
+| `MessageSouceAware`              | 获得文本信息, 用以国际化 | `bean` 创建 |
+| `ApplicationContextAware`        | 获得当前应用上下文       | `bean` 创建 |
+
+### 调用位置
+
+`doCreateBean` -> `initializeBean` -> `invokeAwareMethods` -> `applyBeanPostProcessorsBeforeInitialization` -> `ApplicationContextAwareProcessor`
+
+初始化 `Bean` 在方法 `org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#initializeBean` 中
+
+```java
+protected Object initializeBean(final String beanName, final Object bean, @Nullable RootBeanDefinition mbd) {
+    if (System.getSecurityManager() != null) {
+        AccessController.doPrivileged((PrivilegedAction<Object>) () -> {
+            // 调用
+            invokeAwareMethods(beanName, bean);
+            return null;
+        }, getAccessControlContext());
+    }
+    else {
+        // 调用
+        invokeAwareMethods(beanName, bean);
+    }
+
+    Object wrappedBean = bean;
+    if (mbd == null || !mbd.isSynthetic()) {
+        // 2. 调用一些 aware 接口
+        wrappedBean = applyBeanPostProcessorsBeforeInitialization(wrappedBean, beanName);
+    }
+
+    try {
+        invokeInitMethods(beanName, wrappedBean, mbd);
+    }
+    catch (Throwable ex) {
+        throw new BeanCreationException(
+            (mbd != null ? mbd.getResourceDescription() : null),
+            beanName, "Invocation of init method failed", ex);
+    }
+    if (mbd == null || !mbd.isSynthetic()) {
+        wrappedBean = applyBeanPostProcessorsAfterInitialization(wrappedBean, beanName);
+    }
+
+    return wrappedBean;
+}
+```
+
+在 `org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#invokeAwareMethods` 中调用
+
+```java
+private void invokeAwareMethods(final String beanName, final Object bean) {
+    if (bean instanceof Aware) {
+        if (bean instanceof BeanNameAware) {
+            ((BeanNameAware) bean).setBeanName(beanName);
+        }
+        if (bean instanceof BeanClassLoaderAware) {
+            ClassLoader bcl = getBeanClassLoader();
+            if (bcl != null) {
+                ((BeanClassLoaderAware) bean).setBeanClassLoader(bcl);
+            }
+        }
+        if (bean instanceof BeanFactoryAware) {
+            ((BeanFactoryAware) bean).setBeanFactory(AbstractAutowireCapableBeanFactory.this);
+        }
+    }
+}
+```
+
+
+
+`org.springframework.context.support.ApplicationContextAwareProcessor#postProcessBeforeInitialization` 方法, 进行调用
+
+```java
+public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
+    if (!(bean instanceof EnvironmentAware || bean instanceof EmbeddedValueResolverAware ||
+          bean instanceof ResourceLoaderAware || bean instanceof ApplicationEventPublisherAware ||
+          bean instanceof MessageSourceAware || bean instanceof ApplicationContextAware)){
+        return bean;
+    }
+
+    AccessControlContext acc = null;
+
+    if (System.getSecurityManager() != null) {
+        acc = this.applicationContext.getBeanFactory().getAccessControlContext();
+    }
+
+    if (acc != null) {
+        AccessController.doPrivileged((PrivilegedAction<Object>) () -> {
+            invokeAwareInterfaces(bean);
+            return null;
+        }, acc);
+    }
+    else {
+        // 调用 aware 接口
+        invokeAwareInterfaces(bean);
+    }
+    return bean;
+}
+// 具体的调用
+private void invokeAwareInterfaces(Object bean) {
+    if (bean instanceof EnvironmentAware) {
+        ((EnvironmentAware) bean).setEnvironment(this.applicationContext.getEnvironment());
+    }
+    if (bean instanceof EmbeddedValueResolverAware) {
+        ((EmbeddedValueResolverAware) bean).setEmbeddedValueResolver(this.embeddedValueResolver);
+    }
+    if (bean instanceof ResourceLoaderAware) {
+        ((ResourceLoaderAware) bean).setResourceLoader(this.applicationContext);
+    }
+    if (bean instanceof ApplicationEventPublisherAware) {
+        ((ApplicationEventPublisherAware) bean).setApplicationEventPublisher(this.applicationContext);
+    }
+    if (bean instanceof MessageSourceAware) {
+        ((MessageSourceAware) bean).setMessageSource(this.applicationContext);
+    }
+    if (bean instanceof ApplicationContextAware) {
+        ((ApplicationContextAware) bean).setApplicationContext(this.applicationContext);
+    }
+}
+```
+
+
+
+### 示例 - 自定义 `Aware` 接口
+
+自定义一个  `aware` 接口, 被用来继承,以期实现传入指定封装类.
+
+#### 自定义封装类
+
+自定义封装类, 用 `@Component` 注入容器中, 以便可以直接通过容器获得
+
+```java
+import org.springframework.stereotype.Component;
+
+/**
+ *  自定义类, 使用 aware 获取
+ * @author Jion
+ */
+@Component
+public class WebApplicationFlag {
+
+    /** 是否Web应用 */
+    private Boolean isWebApplicationFlag = Boolean.FALSE;
+
+    public Boolean getWebApplicationFlag() {
+        return isWebApplicationFlag;
+    }
+
+    public void setWebApplicationFlag(Boolean webApplicationFlag) {
+        isWebApplicationFlag = webApplicationFlag;
+    }
+}
+
+```
+
+
+
+#### 自定义 `aware` 接口
+
+通过实现 `Aware` 接口, 并自定义方法
+
+```java
+import org.springframework.beans.factory.Aware;
+
+/**
+ *  自定义的 Aware 接口, 用来 从容器中获得类
+ * @see WebApplicationAwareProcess 设置过程
+ * @see WebApplicationFlag 设置对象
+ * @author Jion
+ */
+public interface WebApplicationAware extends Aware {
+
+    /** 自定义, 将当容器对象设置到实现方法中 */
+    void setWebApplicationFlag(WebApplicationFlag webApplicationFlag);
+}
+```
+
+
+
+#### 自定义后置处理器
+
+通过实现 `org.springframework.beans.factory.config.BeanPostProcessor` 接口,判断类型后将其类型转换,调用相关方法
+
+```java
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.Aware;
+import org.springframework.beans.factory.config.BeanPostProcessor;
+import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.stereotype.Component;
+
+/**
+ *  对自定义 aware 接口进行后置处理
+ * @author Jion
+ */
+@Component
+public class WebApplicationAwareProcessor implements BeanPostProcessor {
+
+    /** 上下文容器 */
+    private final ConfigurableApplicationContext context;
+
+    public WebApplicationAwareProcessor(ConfigurableApplicationContext context) {
+        this.context = context;
+    }
+
+    @Override
+    public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
+        if(bean instanceof Aware){
+            if(bean instanceof WebApplicationAware){
+                // 从上下文容器中获得, 并封装为 自定义对象
+                WebApplicationFlag flag = context.getBean(WebApplicationFlag.class);
+                String property = context.getEnvironment().getProperty("web-application");
+                flag.setWebApplicationFlag(Boolean.parseBoolean(property));
+                // 调用接口实现的方法
+                ((WebApplicationAware) bean).setWebApplicationFlag(flag);
+            }
+        }
+        // 一定要返回 Bean
+        return bean;
+    }
+}
+```
+
+
+
+#### 尝试获取
+
+通过继承,完成 `set` 方法, 获得接口中的对象
+
+```java
+import org.springframework.stereotype.Component;
+
+/**
+ * @author Jion
+ */
+@Component
+public class MyWebApplicationAware implements WebApplicationAware {
+
+    private WebApplicationFlag webApplicationFlag;
+
+    @Override
+    public void setWebApplicationFlag(WebApplicationFlag webApplicationFlag) {
+        this.webApplicationFlag = webApplicationFlag;
+    }
+
+    /** 通过 aware 接口获得 */
+    public Boolean getFlag(){
+        return webApplicationFlag.getWebApplicationFlag();
+    }
+}
+
+```
+
+
+
+#### 测试用例
+
+在 `@SpringBootTest(properties = {"web-application:true"})` 中, 注入环境属性
+
+```java
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.junit4.SpringRunner;
+
+/**
+ * @author Jion
+ */
+@RunWith(SpringRunner.class)
+@SpringBootTest(properties = {"web-application:true"})
+public class MyWebApplicationAwareTest{
+
+    @Autowired
+    MyWebApplicationAware myWebApplicationAware;
+
+    @Test
+    public void getFlag() {
+        Boolean flag = myWebApplicationAware.getFlag();
+        System.out.println("通过Aware接口获得:" + flag);
+    }
+}
+```
+
+
+
+## `Environment` 环境
+
+在 `Environment` 对象中,有多个 `propertySources` , 每个 `propertySources` 封装了来自框架内外的参数信息.从中获得相关的属性.
+
+
+
+![Environment类图](./Spring全家桶-SpringBoot源码篇/Environment类图-1.png)
+
+### 源码步骤
+
+#### 2-6-0-0 配置环境信息
+
+在 `run` 方法中 , 通过 `ConfigurableEnvironment environment = prepareEnvironment(listeners, applicationArguments)` 方法构建上下环境信息.
+
+``` java
+private ConfigurableEnvironment prepareEnvironment(SpringApplicationRunListeners listeners,
+                                                   ApplicationArguments applicationArguments) {
+    // 1. 创建一个环境信息
+    ConfigurableEnvironment environment = getOrCreateEnvironment();
+    // 2. 配置环境信息
+    configureEnvironment(environment, applicationArguments.getSourceArgs());
+    // 3. 添加可以配置的源 configurationProperties
+    ConfigurationPropertySources.attach(environment);
+    // 4. 发送一个事件
+    listeners.environmentPrepared(environment);
+    // 5. 绑定上下文对象属性
+    bindToSpringApplication(environment);
+    // 6. 转换场景,不同场景下配置对象不同,转为不同的环境配置
+    if (!this.isCustomEnvironment) {
+        environment = new EnvironmentConverter(getClassLoader()).convertEnvironmentIfNecessary(environment,
+                                                                                               deduceEnvironmentClass());
+    }
+    // 7. 配置属性源
+    ConfigurationPropertySources.attach(environment);
+    return environment;
+}
+```
+
+
+
+#### 2-6-1-0 创建环境信息
+
+```java
+private ConfigurableEnvironment getOrCreateEnvironment() {
+    // 一般为 null
+    if (this.environment != null) {
+        return this.environment;
+    }
+    // 根据环境信息
+    switch (this.webApplicationType) {
+        case SERVLET:
+            // 一般是这个..
+            return new StandardServletEnvironment();
+        case REACTIVE:
+            return new StandardReactiveWebEnvironment();
+        default:
+            return new StandardEnvironment();
+    }
+}
+```
+
+#### 2-6-1-1 配置环境信息源
+
+`StandardServletEnvironment`  继承自 `StandardEnvironment` , 而 `StandardEnvironment` 再继承自 `AbstractEnvironment`  类, 在该类的构造方法中,  回调方法 `customizePropertySources` 其具体实现为对应子类的方法.(最终子类实现)
+
+```java
+public AbstractEnvironment() {
+    // 自义定属性来源
+    customizePropertySources(this.propertySources);
+}
+
+// 交由子类实现
+protected void customizePropertySources(MutablePropertySources propertySources) {}
+```
+
+在子类 `org.springframework.web.context.support.StandardServletEnvironment` 中, 有具体实现.
+
+```java
+@Override
+protected void customizePropertySources(MutablePropertySources propertySources) {
+    // 添加源 servletConfigInitParams
+    propertySources.addLast(new StubPropertySource(SERVLET_CONFIG_PROPERTY_SOURCE_NAME));
+    // 添加源 servletContextInitParams
+    propertySources.addLast(new StubPropertySource(SERVLET_CONTEXT_PROPERTY_SOURCE_NAME));
+    //是否为JNDI环境
+    if (JndiLocatorDelegate.isDefaultJndiEnvironmentAvailable()) {
+        // 添加源 jndiProperties
+        propertySources.addLast(new JndiPropertySource(JNDI_PROPERTY_SOURCE_NAME));
+    }
+    // 调用父类的方法
+    super.customizePropertySources(propertySources);
+}
+```
+
+在父类  `org.springframework.core.env.StandardEnvironment#customizePropertySources` 方法中.添加属性源
+
+```java
+@Override
+protected void customizePropertySources(MutablePropertySources propertySources) {
+    propertySources.addLast(
+        // 添加源 systemProperties 
+        new PropertiesPropertySource(SYSTEM_PROPERTIES_PROPERTY_SOURCE_NAME, getSystemProperties()));
+    propertySources.addLast(
+        // 添加源 systemEnvironment
+        new SystemEnvironmentPropertySource(SYSTEM_ENVIRONMENT_PROPERTY_SOURCE_NAME, getSystemEnvironment()));
+}
+```
+
+#### 2-6-2-0 配置参数
+
+```java
+protected void configureEnvironment(ConfigurableEnvironment environment, String[] args) {
+    // 属性转换
+    if (this.addConversionService) {
+        ConversionService conversionService = ApplicationConversionService.getSharedInstance();
+        environment.setConversionService((ConfigurableConversionService) conversionService);
+    }
+    // 1. 配置启动参数
+    configurePropertySources(environment, args);
+    // 2. 
+    configureProfiles(environment, args);
+}
+```
+
+#### 2-6-2-1 配置启动参数属性
+
+```java
+protected void configurePropertySources(ConfigurableEnvironment environment, String[] args) {
+    MutablePropertySources sources = environment.getPropertySources();
+    // 添加默认的属性, 在 Application 中通过 setDefaultProperties 设置
+    if (this.defaultProperties != null && !this.defaultProperties.isEmpty()) {
+        sources.addLast(new MapPropertySource("defaultProperties", this.defaultProperties));
+    }
+    // 命令行参数属性赋值
+    if (this.addCommandLineProperties && args.length > 0) {
+        // commandLineArgs
+        String name = CommandLinePropertySource.COMMAND_LINE_PROPERTY_SOURCE_NAME;
+        if (sources.contains(name)) {
+            PropertySource<?> source = sources.get(name);
+            CompositePropertySource composite = new CompositePropertySource(name);
+            composite.addPropertySource(
+                new SimpleCommandLinePropertySource("springApplicationCommandLineArgs", args));
+            composite.addPropertySource(source);
+            sources.replace(name, composite);
+        }
+        else {
+            // 添加命令行属性参数 --开头, =分割
+            sources.addFirst(new SimpleCommandLinePropertySource(args));
+        }
+    }
+}
+```
+
+#### 2-6-2-2 配置激活属性
+
+```java
+protected void configureProfiles(ConfigurableEnvironment environment, String[] args) {
+    Set<String> profiles = new LinkedHashSet<>(this.additionalProfiles);
+    profiles.addAll(Arrays.asList(environment.getActiveProfiles()));
+    environment.setActiveProfiles(StringUtils.toStringArray(profiles));
+}
+```
+
+#### 2-6-4-0 发布事件
+
+在 `org.springframework.boot.SpringApplicationRunListeners#environmentPrepared`  方法中, 发布 `ApplicationEnvironmentPreparedEvent` 事件,该事件包含 `ConfigurableEnvironment` 配置对象,以便监听者可以对其进行修改.
+
+```java
+void environmentPrepared(ConfigurableEnvironment environment) {
+    for (SpringApplicationRunListener listener : this.listeners) {
+        // 获得 SpringApplicationRunListener 包装类, 并调用方法, 调用每一个监听器的 environmentPrepared() 方法
+        listener.environmentPrepared(environment);
+    }
+}
+```
+
+在监听器中,通过 `org.springframework.context.event.SimpleApplicationEventMulticaster#multicastEvent` 方法,调用广播器进行广播,.
+
+```java
+@Override
+public void environmentPrepared(ConfigurableEnvironment environment) {
+    this.initialMulticaster
+        .multicastEvent(new ApplicationEnvironmentPreparedEvent(this.application, this.args, environment));
+}
+@Override
+public void multicastEvent(final ApplicationEvent event, @Nullable ResolvableType eventType) {
+    ResolvableType type = (eventType != null ? eventType : resolveDefaultEventType(event));
+    Executor executor = getTaskExecutor();
+    // 获得对该事件感兴趣的监听器, 并调用其方法
+    for (ApplicationListener<?> listener : getApplicationListeners(event, type)) {
+        if (executor != null) {
+            executor.execute(() -> invokeListener(listener, event));
+        }
+        else {
+            invokeListener(listener, event);
+        }
+    }
+}
+```
+
+其中的广播, `org.springframework.boot.context.config.ConfigFileApplicationListener#onApplicationEvent` 方法在收到该事件后, 对环境配置进行修改.
+具体通过`SpringFactoriesLoader` 加载 `META-INF/spring.factories`  中接口 `org.springframework.boot.env.EnvironmentPostProcessor` 的实现类(实现 `Order` 接口, 定义具体属性重载排序), 并调用从而实现对配置信息的修改
+常用的有 `SpringApplicationJsonEnvironmentPostProcessor`  (添加 `SPRING_APPLICATION_JSON` 属性集), `CloudFoundryVcapEnvironmentPostProcessor` (添加 `vcap` 属性集), `
+
+```java
+// 监听事件
+@Override
+public void onApplicationEvent(ApplicationEvent event) {
+    if (event instanceof ApplicationEnvironmentPreparedEvent) {
+        // 容器环境准备
+        onApplicationEnvironmentPreparedEvent((ApplicationEnvironmentPreparedEvent) event);
+    }
+    if (event instanceof ApplicationPreparedEvent) {
+        onApplicationPreparedEvent(event);
+    }
+}
+
+// 容器环境备注
+private void onApplicationEnvironmentPreparedEvent(ApplicationEnvironmentPreparedEvent event) {
+    // 通过 META-INF/spring.factories 加载 EnvironmentPostProcessor 实现类
+    List<EnvironmentPostProcessor> postProcessors = loadPostProcessors();
+    postProcessors.add(this);
+    // 排序
+    AnnotationAwareOrderComparator.sort(postProcessors);
+    for (EnvironmentPostProcessor postProcessor : postProcessors) {
+        // 修改环境变量
+        postProcessor.postProcessEnvironment(event.getEnvironment(), event.getSpringApplication());
+    }
+}
+
+// 通过 META-INF/spring.factories 加载 EnvironmentPostProcessor 实现类
+List<EnvironmentPostProcessor> loadPostProcessors() {
+    return SpringFactoriesLoader.loadFactories(EnvironmentPostProcessor.class, getClass().getClassLoader());
+}
+```
+
+#### 2-6-5-0 绑定上下文对象属性
+
+将 `spring.main.*` 的属性 绑定到 `SpringApplication` 对象的属性
+
+```java
+protected void bindToSpringApplication(ConfigurableEnvironment environment) {
+    try {
+        // spring.main.* 的属性 绑定到 SpringApplication 对象
+        Binder.get(environment).bind("spring.main", Bindable.ofInstance(this));
+    }
+    catch (Exception ex) {
+        throw new IllegalStateException("Cannot bind to SpringApplication", ex);
+    }
+}
+```
+
+#### 2-6-6-0 转换场景环境配置
+
+```java
+StandardEnvironment convertEnvironmentIfNecessary(ConfigurableEnvironment environment,
+                                                  Class<? extends StandardEnvironment> type) {
+    // 将 ConfigurableEnvironment 转为具体的环境配. 如 StandardEnvironment, StandardServletEnvironment,StandardReactiveWebEnvironment
+    if (type.equals(environment.getClass())) {
+        return (StandardEnvironment) environment;
+    }
+    // 不存在,则转为 标准的 StandardEnvironment
+    return convertEnvironment(environment, type);
+}
+
+// 转为 StandardEnvironment , 拷贝属性,并返回
+private StandardEnvironment convertEnvironment(ConfigurableEnvironment environment,
+                                               Class<? extends StandardEnvironment> type) {
+    StandardEnvironment result = createEnvironment(type);
+    result.setActiveProfiles(environment.getActiveProfiles());
+    result.setConversionService(environment.getConversionService());
+    copyPropertySources(environment, result);
+    return result;
+}
+```
+
+
+
+#### 2-6-7-0 可配置的源
+
+```java
+public static void attach(Environment environment) {
+    Assert.isInstanceOf(ConfigurableEnvironment.class, environment);
+    MutablePropertySources sources = ((ConfigurableEnvironment) environment).getPropertySources();
+    // 配置源 configurationProperties
+    PropertySource<?> attached = sources.get(ATTACHED_PROPERTY_SOURCE_NAME);
+    // 一般存在,默认删除
+    if (attached != null && attached.getSource() != sources) {
+        sources.remove(ATTACHED_PROPERTY_SOURCE_NAME);
+        attached = null;
+    }
+    // 不存在, 添加默认的
+    if (attached == null) {
+        sources.addFirst(new ConfigurationPropertySourcesPropertySource(ATTACHED_PROPERTY_SOURCE_NAME,
+                                                                        new SpringConfigurationPropertySources(sources)));
+    }
+}
+
+```
+
+
+
+
+
+## `profile` 解析
 
 
 
