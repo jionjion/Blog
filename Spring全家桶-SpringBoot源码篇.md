@@ -1,10 +1,13 @@
 ---
 title: Spring全家桶-SpringBoot源码篇
-date: 2020-06-23 22:43:34
 categories:
   - Java
   - Spring
-tags: [Java, Spring]
+tags:
+  - Java
+  - Spring
+abbrlink: 339b7cd
+date: 2020-06-23 22:43:34
 ---
 
 # 简介
@@ -3900,11 +3903,270 @@ public static void attach(Environment environment) {
 
 
 
-
-
 ## `profile` 解析
 
+默认激活的配置文件 `application-default.properti`, 如果存在其他配置文件,则失效
 
+通过使用 `spring.profiles.active` 指定具体的配置文件环境前缀, 对应的 `spring.profiles.default` 指定默认的配置文件.两者互斥
+
+通过使用 `spring.profiles.include` 指定包含多个配置文件
+
+通过使用 `spring.profiles.name` 在命令行指定具体的配置文件
+
+
+
+### 源码步骤
+
+#### 2-6-4-1 收到事件
+
+在框架环境准备完成后, 会发送 `ApplicationEnvironmentPreparedEvent` 事件,  `org.springframework.boot.context.config.ConfigFileApplicationListener#onApplicationEnvironmentPreparedEvent` 方法在监听到该事件后, 会调用接口`org.springframework.boot.env.EnvironmentPostProcessor` 的实现类中的`postProcessEnvironment` 方法, 其中包括 `ConfigFileApplicationListener` 类本身实现的方法.
+
+```java
+// 本身实现方法
+@Override
+public void postProcessEnvironment(ConfigurableEnvironment environment, SpringApplication application) {
+    addPropertySources(environment, application.getResourceLoader());
+}
+
+// 添加指定环境配置源
+protected void addPropertySources(ConfigurableEnvironment environment, ResourceLoader resourceLoader) {
+    // 添加 random 和 systemEnvironment 配置源
+    RandomValuePropertySource.addToEnvironment(environment);
+    // 加载配置
+    new Loader(environment, resourceLoader).load();
+}
+```
+
+其中的 `load()` 方法, 将系统具体指定的配置前缀进行添加
+
+```java
+void load() {
+    // defaultProperties
+    FilteredPropertySource.apply(this.environment, DEFAULT_PROPERTIES, LOAD_FILTERED_PROPERTY,
+                                 (defaultProperties) -> {
+                                     // 初始化集合
+                                     this.profiles = new LinkedList<>();
+                                     this.processedProfiles = new LinkedList<>();
+                                     this.activatedProfiles = false;
+                                     this.loaded = new LinkedHashMap<>();
+                                     // 初始化默认的 default 集合
+                                     initializeProfiles();
+                                     // 遍历配置集合. 如果不为空, 表示有属性集合, 加载读取其中的配置文件
+                                     while (!this.profiles.isEmpty()) {
+                                         Profile profile = this.profiles.poll();
+                                         if (isDefaultProfile(profile)) {
+                                             // 获得 spring.profiles.active 中指定的前缀, 默认为 default
+                                             addProfileToEnvironment(profile.getName());
+                                         }
+                                         // 2. 加载读取配置文件
+                                         load(profile, this::getPositiveProfileFilter,
+                                              addToLoaded(MutablePropertySources::addLast, false));
+                                         // 已读取集合 
+                                         this.processedProfiles.add(profile);
+                                     }
+                                     // 如果为空, 调用读取
+                                     load(null, this::getNegativeProfileFilter, addToLoaded(MutablePropertySources::addFirst, true));
+                                     // 将读取到的配置文件, 写入到环境中
+                                     addLoadedPropertySources();
+                                     // 为环境设置激活的配置信息
+                                     applyActiveProfiles(defaultProperties);
+                                 });
+}
+```
+
+初始化默认集合
+
+```java
+private void initializeProfiles() {
+    // 添加空前缀. 如 applocation.  配置文件, 则没有环境前缀
+    this.profiles.add(null);
+    Binder binder = Binder.get(this.environment);
+    // 获得激活的配置文件
+    Set<Profile> activatedViaProperty = getProfiles(binder, ACTIVE_PROFILES_PROPERTY);
+    // 获得扩展的配置文件
+    Set<Profile> includedViaProperty = getProfiles(binder, INCLUDE_PROFILES_PROPERTY);
+    List<Profile> otherActiveProfiles = getOtherActiveProfiles(activatedViaProperty, includedViaProperty);
+    this.profiles.addAll(otherActiveProfiles);
+    // 添加属性集
+    this.profiles.addAll(includedViaProperty);
+    addActiveProfiles(activatedViaProperty);
+    // 如果为1, 表示只有 application. 配置文件, 添加默认的配置
+    if (this.profiles.size() == 1) {
+        // spring.profile.default 定义的配置文件, 如果定义了分散文件属性,则无法加载. 可以在命令行中加入
+        for (String defaultProfileName : this.environment.getDefaultProfiles()) {
+            Profile defaultProfile = new Profile(defaultProfileName, true);
+            this.profiles.add(defaultProfile);
+        }
+    }
+}
+```
+
+
+
+#### 2-6-4-2 加载配置
+
+首先遍历,尝试获取配置文件的位置
+
+```java
+private void load(Profile profile, DocumentFilterFactory filterFactory, DocumentConsumer consumer) {
+    // 获得配置文件的位置
+    getSearchLocations().forEach((location) -> {
+        // 判断是否为目录
+        boolean isDirectory = location.endsWith("/");
+        // 如果是目录,获得文件名. 属性 spring.config.name 指定文件名 默认 application  , 如果定义了分散文件属性,则无法加载. 可以在命令行中加入
+        Set<String> names = isDirectory ? getSearchNames() : NO_SEARCH_NAMES;
+        // 加载配置文件 指定文件路径 前缀 文件名
+        names.forEach((name) -> load(location, name, profile, filterFactory, consumer));
+    });
+}
+// 获得配置文件的位置
+private Set<String> getSearchLocations() {
+    // spring.config.additional-location 获取额外文件位置
+    Set<String> locations = getSearchLocations(CONFIG_ADDITIONAL_LOCATION_PROPERTY);
+    // spring.config.location 配置位置,如果指定,则加载
+    if (this.environment.containsProperty(CONFIG_LOCATION_PROPERTY)) {
+        locations.addAll(getSearchLocations(CONFIG_LOCATION_PROPERTY));
+    }
+    else {
+        // 否则, 添加默认的配置文件路径
+        locations.addAll(
+            // 默认路径 classpath:/,classpath:/config/,file:./,file:./config/*/,file:./config/
+            asResolvedSet(ConfigFileApplicationListener.this.searchLocations, DEFAULT_SEARCH_LOCATIONS));
+    }
+    return locations;
+}
+```
+
+#### 2-6-4-2 读取文件
+
+通过  `org.springframework.boot.context.config.ConfigFileApplicationListener.Loader#load`  方法,最终将配置文件中的属性读入
+
+其中文件读取器有两个 `org.springframework.boot.env.PropertiesPropertySourceLoader` 读取 `.properties` 和 `.xml` 文件以及 `org.springframework.boot.env.YamlPropertySourceLoader` 读取 `.yml` 和 `.yaml`
+
+```java
+private void load(String location, String name, Profile profile, DocumentFilterFactory filterFactory,
+                  DocumentConsumer consumer) {
+    // 校验. 指定路径,文件不存再, 尝试递归调用
+    if (!StringUtils.hasText(name)) {
+        for (PropertySourceLoader loader : this.propertySourceLoaders) {
+            if (canLoadFileExtension(loader, location)) {
+                load(loader, location, profile, filterFactory.getDocumentFilter(profile), consumer);
+                return;
+            }
+        }
+        throw new IllegalStateException("File extension of config file location '" + location
+                                        + "' is not known to any PropertySourceLoader. If the location is meant to reference "
+                                        + "a directory, it must end in '/'");
+    }
+    // 读取文件
+    Set<String> processed = new HashSet<>();
+    for (PropertySourceLoader loader : this.propertySourceLoaders) {
+        // 不同的加载器去加载. 在 /META-INF/spring.factories 中指定 PropertySourceLoader 实现类
+        for (String fileExtension : loader.getFileExtensions()) {
+            if (processed.add(fileExtension)) {
+                // 读取文件方法.
+                loadForFileExtension(loader, location + name, "." + fileExtension, profile, filterFactory,
+                                     consumer);
+            }
+        }
+    }
+}
+```
+
+在读取文件方法中,具体如下
+
+```java
+// 读取文件方法.
+private void loadForFileExtension(PropertySourceLoader loader, String prefix, String fileExtension,
+                                  Profile profile, DocumentFilterFactory filterFactory, DocumentConsumer consumer) {
+    DocumentFilter defaultFilter = filterFactory.getDocumentFilter(null);
+    DocumentFilter profileFilter = filterFactory.getDocumentFilter(profile);
+    if (profile != null) {
+        // Try profile-specific file & profile section in profile file (gh-340)
+        String profileSpecificFile = prefix + "-" + profile + fileExtension;
+        load(loader, profileSpecificFile, profile, defaultFilter, consumer);
+        load(loader, profileSpecificFile, profile, profileFilter, consumer);
+        // Try profile specific sections in files we've already processed
+        for (Profile processedProfile : this.processedProfiles) {
+            if (processedProfile != null) {
+                String previouslyLoaded = prefix + "-" + processedProfile + fileExtension;
+                load(loader, previouslyLoaded, profile, profileFilter, consumer);
+            }
+        }
+    }
+    // Also try the profile-specific section (if any) of the normal file
+    load(loader, prefix + fileExtension, profile, profileFilter, consumer);
+}
+
+// 具体的读取方式
+private void load(PropertySourceLoader loader, String location, Profile profile, DocumentFilter filter,
+				DocumentConsumer consumer) {
+    // 获得资源路径
+    Resource[] resources = getResources(location);
+    for (Resource resource : resources) {
+        try {
+            // 是否存在
+            if (resource == null || !resource.exists()) {
+                if (this.logger.isTraceEnabled()) {
+                    StringBuilder description = getDescription("Skipped missing config ", location, resource,
+                                                               profile);
+                    this.logger.trace(description);
+                }
+                continue;
+            }
+            // 文件扩展名是否正确
+            if (!StringUtils.hasText(StringUtils.getFilenameExtension(resource.getFilename()))) {
+                if (this.logger.isTraceEnabled()) {
+                    StringBuilder description = getDescription("Skipped empty config extension ", location,
+                                                               resource, profile);
+                    this.logger.trace(description);
+                }
+                continue;
+            }
+            // 文件扩展名
+            String name = "applicationConfig: [" + getLocationName(location, resource) + "]";
+            // 加载配置文件, 包装为 Document 对象(属性集, 配置前缀, 激活的配置前缀, 包括的其他扩展配置集合). 
+            List<Document> documents = loadDocuments(loader, name, resource);
+            // 加载失败.说明配置文件有问题,不符合Spring结构. 结束
+            if (CollectionUtils.isEmpty(documents)) {
+                if (this.logger.isTraceEnabled()) {
+                    StringBuilder description = getDescription("Skipped unloaded config ", location, resource,
+                                                               profile);
+                    this.logger.trace(description);
+                }
+                continue;
+            }
+            // 加载成功,遍历
+            List<Document> loaded = new ArrayList<>();
+            for (Document document : documents) {
+                // 避免重复加载
+                if (filter.match(document)) {
+                    // 添加 激活的属性
+                    addActiveProfiles(document.getActiveProfiles());
+                    // 添加 扩展属性
+                    addIncludedProfiles(document.getIncludeProfiles());
+                    loaded.add(document);
+                }
+            }
+            Collections.reverse(loaded);
+            // 处理
+            if (!loaded.isEmpty()) {
+                loaded.forEach((document) -> consumer.accept(profile, document));
+                if (this.logger.isDebugEnabled()) {
+                    StringBuilder description = getDescription("Loaded config file ", location, resource,
+                                                               profile);
+                    this.logger.debug(description);
+                }
+            }
+        }
+        catch (Exception ex) {
+            StringBuilder description = getDescription("Failed to load property source from ", location,
+                                                       resource, profile);
+            throw new IllegalStateException(description.toString(), ex);
+        }
+    }
+}
+```
 
 
 
