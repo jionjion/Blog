@@ -3306,6 +3306,7 @@ private void callRunners(ApplicationContext context, ApplicationArguments args) 
 ## `Aware` 接口
 
  在需要使用 `Spring` 容器中的相关功能时, 调用 `org.springframework.beans.factory.Aware` 接口及其相关实现
+因为 `Spring` 的相关功能多为工厂类或者各种容器,因此不能通过容器获得相应的对象引用, 因此需要 `Aware` 接口实现
 
 ### 常用接口
 
@@ -4167,6 +4168,108 @@ private void load(PropertySourceLoader loader, String location, Profile profile,
     }
 }
 ```
+
+#### 2-6-4-3 属性赋值环境
+
+在获得 `environment` 环境中的 `MutablePropertySources` 集合,  随后
+
+```java
+private void addLoadedPropertySources() {
+    // 环境信息中的属性
+    MutablePropertySources destination = this.environment.getPropertySources();
+    // 遍历已经加载的属性
+    List<MutablePropertySources> loaded = new ArrayList<>(this.loaded.values());
+    Collections.reverse(loaded);
+    String lastAdded = null;
+    Set<String> added = new HashSet<>();
+    // 将已经加载的配置信息拷贝到环境信息变量中
+    for (MutablePropertySources sources : loaded) {
+        for (PropertySource<?> source : sources) {
+            if (added.add(source.getName())) {
+                addLoadedPropertySource(destination, lastAdded, source);
+                lastAdded = source.getName();
+            }
+        }
+    }
+}
+```
+
+
+
+## 异常报告
+
+通过接口 `org.springframework.boot.SpringBootExceptionReporter` 中定义的类进行实现
+
+```java
+@FunctionalInterface
+public interface SpringBootExceptionReporter {
+	boolean reportException(Throwable failure);
+}
+
+```
+
+
+
+### 源码步骤
+
+#### 2-9-0-0 异常报告器
+
+在 `run` 方法中,  一共两次异常捕获, 一次是在容器创建, 另一次是在监听程序出现异常.
+
+```java
+	public ConfigurableApplicationContext run(String... args) {
+		// ...
+		Collection<SpringBootExceptionReporter> exceptionReporters = new ArrayList<>();
+		// ...
+		try {
+            // .. 
+			// 1. 获得容器初始化的异常报告器
+			exceptionReporters = getSpringFactoriesInstances(SpringBootExceptionReporter.class,
+					new Class[] { ConfigurableApplicationContext.class }, context);
+			
+		}
+        // 获得运行时异常信息
+		catch (Throwable ex) {
+            // 2. 并做处理, 交由不同的 监听器后续处理
+			handleRunFailure(context, ex, exceptionReporters, listeners);
+			throw new IllegalStateException(ex);
+		}
+
+		try {
+            // 容器运行
+			listeners.running(context);
+		}
+        // 出现异常
+		catch (Throwable ex) {
+            // 3. 并做处理
+			handleRunFailure(context, ex, exceptionReporters, null);
+			throw new IllegalStateException(ex);
+		}
+		return context;
+	}
+```
+
+
+
+#### 2-9-1-0 初始化异常报告器
+
+加载具体实现, `org.springframework.boot.diagnostics.FailureAnalyzers` 类实现了框架的异常报告捕获处理
+
+```java
+private <T> Collection<T> getSpringFactoriesInstances(Class<T> type, Class<?>[] parameterTypes, Object... args) {
+    // 类加载器
+    ClassLoader classLoader = getClassLoader();
+    // 通过类加载器, 加载 spring.factories 文件中的实现类
+    Set<String> names = new LinkedHashSet<>(SpringFactoriesLoader.loadFactoryNames(type, classLoader));
+    // 创建实例
+    List<T> instances = createSpringFactoriesInstances(type, parameterTypes, classLoader, args, names);
+    // 排序, 通过 Order 接口指定
+    AnnotationAwareOrderComparator.sort(instances);
+    return instances;
+}
+```
+
+
 
 
 
