@@ -918,6 +918,7 @@ public ConfigurableApplicationContext run(String... args) {
         // 15. 调用框架启动扩展类
         callRunners(context, applicationArguments);
     }
+    // 16. 异常处理
     catch (Throwable ex) {
         handleRunFailure(context, ex, exceptionReporters, listeners);
         throw new IllegalStateException(ex);
@@ -926,6 +927,7 @@ public ConfigurableApplicationContext run(String... args) {
     try {
         listeners.running(context);
     }
+    // 16. 异常处理
     catch (Throwable ex) {
         handleRunFailure(context, ex, exceptionReporters, null);
         throw new IllegalStateException(ex);
@@ -4205,12 +4207,55 @@ private void addLoadedPropertySources() {
 public interface SpringBootExceptionReporter {
 	boolean reportException(Throwable failure);
 }
+```
 
+
+
+### 自定义异常报告
+
+通过实现接口,并注册
+
+#### 实现类
+
+通过实现 `org.springframework.boot.SpringBootExceptionReporter` 接口,  并声明一个有参的构造器,传入 `ConfigurableApplicationContext` 容器上下文对象.
+
+```java
+public class WebApplicationExceptionReporter implements SpringBootExceptionReporter {
+
+
+    private ConfigurableApplicationContext context;
+    // 有参构造器, 传入容器对象
+    WebApplicationExceptionReporter(ConfigurableApplicationContext context) {
+        this.context = context;
+    }
+
+    @Override
+    public boolean reportException(Throwable failure) {
+        if(failure instanceof RuntimeException){
+            System.out.println("容器启动失败...");
+            System.out.println(context.toString());
+        }
+        // 如果返回 true 则改异常不会再被后续异常报告处理
+        return false;
+    }
+}
+```
+
+#### 注册异常报告
+
+在 `spring.factories` 中注册
+
+```
+org.springframework.boot.SpringBootExceptionReporter=top.jionjion.except.WebApplicationExceptionReporter
 ```
 
 
 
 ### 源码步骤
+
+1. `run` 方法中调用, 创建填充 `Collection<SpringBootExceptionReporter>` 异常报告. 其泛型中接口的实现完成异常的捕捉处理.
+  1. 调用 `analyze` 方法的具体实现, 找到对当前异常感兴趣的处理对象, 调用 `report` 方法.
+  2. `report` 方法由 `FailureAnalysisReporter` 接口的实现类完成.
 
 #### 2-9-0-0 异常报告器
 
@@ -4223,7 +4268,8 @@ public interface SpringBootExceptionReporter {
 		// ...
 		try {
             // .. 
-			// 1. 获得容器初始化的异常报告器
+			// 1. 获得容器初始化的异常报告器, 通过 ClassLoader 从 spring.factories 文件中读取. 
+            // 传入 参数及其类型ConfigurableApplicationContext.class. 调用构造器
 			exceptionReporters = getSpringFactoriesInstances(SpringBootExceptionReporter.class,
 					new Class[] { ConfigurableApplicationContext.class }, context);
 			
@@ -4259,9 +4305,9 @@ public interface SpringBootExceptionReporter {
 private <T> Collection<T> getSpringFactoriesInstances(Class<T> type, Class<?>[] parameterTypes, Object... args) {
     // 类加载器
     ClassLoader classLoader = getClassLoader();
-    // 通过类加载器, 加载 spring.factories 文件中的实现类
+    // 通过类加载器, 加载 spring.factories 文件中的实现类的名字
     Set<String> names = new LinkedHashSet<>(SpringFactoriesLoader.loadFactoryNames(type, classLoader));
-    // 创建实例
+    // 创建实例,   传入 参数及其类型ConfigurableApplicationContext.class. 调用构造器
     List<T> instances = createSpringFactoriesInstances(type, parameterTypes, classLoader, args, names);
     // 排序, 通过 Order 接口指定
     AnnotationAwareOrderComparator.sort(instances);
@@ -4269,15 +4315,945 @@ private <T> Collection<T> getSpringFactoriesInstances(Class<T> type, Class<?>[] 
 }
 ```
 
+具体实现类为 `org.springframework.boot.diagnostics.FailureAnalyzers`
+其构造方法如下, 
+
+```java
+// 初始化时,传入容器对象
+FailureAnalyzers(ConfigurableApplicationContext context) {
+    this(context, null);
+}
+
+// 传入容器对象, 及其类加载器
+FailureAnalyzers(ConfigurableApplicationContext context, ClassLoader classLoader) {
+    Assert.notNull(context, "Context must not be null");
+    this.classLoader = (classLoader != null) ? classLoader : context.getClassLoader();
+    // 1. 初始化 FailureAnalyzer 接口实例
+    this.analyzers = loadFailureAnalyzers(this.classLoader);
+    // 2. aware 接口调用
+    prepareFailureAnalyzers(this.analyzers, context);
+}
+```
+
+#### 2-9-1-1 初始化类 `FailureAnalyzer` 接口实例
+
+```java
+// 加载类
+private List<FailureAnalyzer> loadFailureAnalyzers(ClassLoader classLoader) {
+    // 类名
+    List<String> analyzerNames = SpringFactoriesLoader.loadFactoryNames(FailureAnalyzer.class, classLoader);
+    List<FailureAnalyzer> analyzers = new ArrayList<>();
+    for (String analyzerName : analyzerNames) {
+        try {
+            // 获得类信息
+            Constructor<?> constructor = ClassUtils.forName(analyzerName, classLoader).getDeclaredConstructor();
+            // 类访问权限修改
+            ReflectionUtils.makeAccessible(constructor);
+            // 创建实例, 并添加
+            analyzers.add((FailureAnalyzer) constructor.newInstance());
+        }
+        catch (Throwable ex) {
+            logger.trace(LogMessage.format("Failed to load %s", analyzerName), ex);
+        }
+    }
+    // 排序后返回
+    AnnotationAwareOrderComparator.sort(analyzers);
+    return analyzers;
+}
+```
+
+#### 2-9-1-2 调用 `aware` 接口
+
+调用 `BeanFactoryAware` 和 `EnvironmentAware` 中的设置方法. 设置属性
+
+```java
+
+private void prepareFailureAnalyzers(List<FailureAnalyzer> analyzers, ConfigurableApplicationContext context) {
+    for (FailureAnalyzer analyzer : analyzers) {
+        prepareAnalyzer(context, analyzer);
+    }
+}
+
+private void prepareAnalyzer(ConfigurableApplicationContext context, FailureAnalyzer analyzer) {
+    if (analyzer instanceof BeanFactoryAware) {
+        ((BeanFactoryAware) analyzer).setBeanFactory(context.getBeanFactory());
+    }
+    if (analyzer instanceof EnvironmentAware) {
+        ((EnvironmentAware) analyzer).setEnvironment(context.getEnvironment());
+    }
+}
+
+```
+
+#### 2-9-1-x `FailureAnalyzer`  接口
+
+定义方法, 对抛出异常进行处理
+
+```java
+package org.springframework.boot.diagnostics;
+
+@FunctionalInterface
+public interface FailureAnalyzer {
+	FailureAnalysis analyze(Throwable failure);
+}
+```
+
+比如 `org.springframework.boot.diagnostics.AbstractFailureAnalyzer` 抽象类.定义类大多数异常分析器的方法. 其中泛型 `<T extends Throwable>` 传入感兴趣异常的类型
+将异常信息封装为 `FailureAnalysis` 类
+
+```java
+public abstract class AbstractFailureAnalyzer<T extends Throwable> implements FailureAnalyzer {
+
+	@Override
+	public FailureAnalysis analyze(Throwable failure) {
+        // getCauseType() 获得泛型中的异常类
+        // findCause() 如果当前抛出异常类属于泛型中该兴趣的异常,则调用分析
+		T cause = findCause(failure, getCauseType());
+		if (cause != null) {
+			return analyze(failure, cause);
+		}
+		return null;
+	}
+    
+    // 子类具体实现, 封装为 FailureAnalysis 对象
+    protected abstract FailureAnalysis analyze(Throwable rootFailure, T cause);
+
+    // 获得泛型中定义的感兴趣的异常类
+    protected Class<? extends T> getCauseType() {
+        return (Class<? extends T>) ResolvableType.forClass(AbstractFailureAnalyzer.class, getClass()).resolveGeneric();
+    }
+    
+    // 如果当前抛出异常类属于泛型中该兴趣的异常,则调用分析
+    protected final <E extends Throwable> E findCause(Throwable failure, Class<E> type) {
+        // 循环读取异常堆栈,获得其中感兴趣的异常.
+        while (failure != null) {
+            if (type.isInstance(failure)) {
+                return (E) failure;
+            }
+            // 获得抛出的异常中的下一层.
+            failure = failure.getCause();
+        }
+        return null;
+    }
+}
+```
+
+常见的具体实现类有以下等, 常用 `异常名` + `Analyzer` 命令, 表示这是对该类进行异常报告
+
+- `BeanCurrentlyInCreationFailureAnalyzer.class` 
+- `DataSourceBeanCreationFailureAnalyzer.class`
+- `NoSuchMethodFailureAnalyzer.class`
+- `NoUniqueBeanDefinitionFailureAnalyzer.class`
+- `PortInUseFailureAnalyzer.class`
+
+其类图如下
+
+![AbstractFailureAnalyzer类图](./Spring全家桶-SpringBoot源码篇/AbstractFailureAnalyzer类图-1.png)
+
+#### 2-9-2-0 报告异常
+
+`org.springframework.boot.diagnostics.FailureAnalyzers`  实现 `org.springframework.boot.diagnostics.FailureAnalyzer` 接口中的 `analyze` 方法, 将当前异常信息封装为 `org.springframework.boot.diagnostics.FailureAnalysis` 对象, 并返回.
+再由不同的异常报告类 `org.springframework.boot.diagnostics.FailureAnalysisReporter` 进行报告
+
+```java
+// 实现方法
+@Override
+public boolean reportException(Throwable failure) {
+    // 获得封装的异常信息
+    FailureAnalysis analysis = analyze(failure, this.analyzers);
+    // 报告异常
+    return report(analysis, this.classLoader);
+}
+```
+
+#### 2-9-2-x 封装类 `FailureAnalysis`
+
+```java
+public class FailureAnalysis {
+	// 描述
+	private final String description;
+	// 动作
+	private final String action;
+	// 异常
+	private final Throwable cause;
+}
+```
 
 
 
+#### 2-9-2-1 封装异常信息
 
-# 附录
+```java
+// 获得封装的异常信息
+private FailureAnalysis analyze(Throwable failure, List<FailureAnalyzer> analyzers) {
+    // 遍历,获得最先抛出的一个异常报告,并对其返回
+    for (FailureAnalyzer analyzer : analyzers) {
+        try {           
+            FailureAnalysis analysis = analyzer.analyze(failure);
+            if (analysis != null) {
+                return analysis;
+            }
+        }
+        catch (Throwable ex) {
+            logger.debug(LogMessage.format("FailureAnalyzer %s failed", analyzer), ex);
+        }
+    }
+    return null;
+}
+```
 
 
 
+#### 2-9-2-2 报告异常
+
+通过 `spring.factories` 中的 `org.springframework.boot.diagnostics.FailureAnalysisReporter` 接口实现类,去完成报告的创建
+
+```java
+private boolean report(FailureAnalysis analysis, ClassLoader classLoader) {
+    List<FailureAnalysisReporter> reporters = SpringFactoriesLoader.loadFactories(FailureAnalysisReporter.class,
+                                                                                  classLoader);
+    if (analysis == null || reporters.isEmpty()) {
+        return false;
+    }
+    for (FailureAnalysisReporter reporter : reporters) {
+        reporter.report(analysis);
+    }
+    return true;
+}
+```
+
+#### 2-9-3-0 `FailureAnalysisReporter`  异常分析报告接口
+通过读取 `spring.factories` 中的 `org.springframework.boot.diagnostics.FailureAnalysisReporter` 接口实现类, 将当前封装的异常信息进行处理. 其具体实现为 `org.springframework.boot.diagnostics.LoggingFailureAnalysisReporter` 目前只有一个.
+
+```java
+package org.springframework.boot.diagnostics;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import org.springframework.util.StringUtils;
+
+public final class LoggingFailureAnalysisReporter implements FailureAnalysisReporter {
+
+	private static final Log logger = LogFactory.getLog(LoggingFailureAnalysisReporter.class);
+	// 报告异常
+	@Override
+	public void report(FailureAnalysis failureAnalysis) {
+        // 打印异常信息
+		if (logger.isDebugEnabled()) {
+			logger.debug("Application failed to start due to an exception", failureAnalysis.getCause());
+		}
+		if (logger.isErrorEnabled()) {
+			logger.error(buildMessage(failureAnalysis));
+		}
+	}
+	// 具体的异常信息
+	private String buildMessage(FailureAnalysis failureAnalysis) {
+		StringBuilder builder = new StringBuilder();
+		builder.append(String.format("%n%n"));
+		builder.append(String.format("***************************%n"));
+		builder.append(String.format("APPLICATION FAILED TO START%n"));
+		builder.append(String.format("***************************%n%n"));
+		builder.append(String.format("Description:%n%n"));
+		builder.append(String.format("%s%n", failureAnalysis.getDescription()));
+		if (StringUtils.hasText(failureAnalysis.getAction())) {
+			builder.append(String.format("%nAction:%n%n"));
+			builder.append(String.format("%s%n", failureAnalysis.getAction()));
+		}
+		return builder.toString();
+	}
+
+}
+```
 
 
 
+#### 2-16-0-0 异常处理
 
+1. 在 `try - catch` 中捕获到异常,调用 `handleRunFailure` 方法
+2. 获得系统预设的退出状态码. 并将其进行广播
+3. 调用 `SpringApplicationRunListener` 的 `failed` 方法, 广播 `ApplicationFailedEvent` 事件
+4. 调用 `SpringBootExceptionReporter` 接口的 `reportException` 方法, 报告异常信息
+5. 容器关闭
+6. 重新抛出异常,告知外围系统
+
+#### 2-16-0-1 流程
+在初始化异常报告器后, 如果在后续过程中发生了异常,则调用 `handleRunFailure` 方法, 将处理具体异常
+
+```java
+private void handleRunFailure(ConfigurableApplicationContext context, Throwable exception,
+                              Collection<SpringBootExceptionReporter> exceptionReporters, SpringApplicationRunListeners listeners) {
+    try {
+        try {
+            // 1. 处理异常,获取退出代码
+            handleExitCode(context, exception);
+            if (listeners != null) {
+                // 2. 发送监听事件
+                listeners.failed(context, exception);
+            }
+        }
+        finally {
+            // 3. 生成异常报告
+            reportFailure(exceptionReporters, exception);
+            if (context != null) {
+                // 4. 容器关闭
+                context.close();
+            }
+        }
+    }
+    catch (Exception ex) {
+        logger.warn("Unable to close ApplicationContext", ex);
+    }
+    // 5. 重新抛出异常
+    ReflectionUtils.rethrowRuntimeException(exception);
+}
+```
+
+#### 2-16-1-0 获取退出代码
+通过 `getExitCodeFromException` 方法, 获得退出代码. 
+如果不为 `0` , 表示异常退出, 发布异常时间.
+```java
+private void handleExitCode(ConfigurableApplicationContext context, Throwable exception) {
+    // 获得退出代码
+    int exitCode = getExitCodeFromException(context, exception);
+    if (exitCode != 0) {
+        if (context != null) {
+            // 发布失败事件 ExitCodeEvent
+            context.publishEvent(new ExitCodeEvent(context, exitCode));
+        }
+        // 异常处理类,将当前异常退出代码存入
+        SpringBootExceptionHandler handler = getSpringBootExceptionHandler();
+        if (handler != null) {
+             // 异常退出代码存入 
+            handler.registerExitCode(exitCode);
+        }
+    }
+}
+```
+
+#### 2-16-1-1 退出代码
+
+获取当前的系统异常, 主要通过 `org.springframework.boot.ExitCodeExceptionMapper` 接口实现和 `org.springframework.boot.ExitCodeGenerator` 接口实现确认具体的异常及其对应的退出代码.
+
+** 如果自定义异常状态码及其捕获异常, 那么在容器抛出相关异常后,则判定容器退出,调用失败事件发布/容器关闭等... **
+
+```java
+// 获取当前退出系统代码
+private int getExitCodeFromException(ConfigurableApplicationContext context, Throwable exception) {
+    // ExitCodeExceptionMapper 接口实现获得
+    int exitCode = getExitCodeFromMappedException(context, exception);
+    if (exitCode == 0) {
+        // ExitCodeGenerator 接口实现获得
+        exitCode = getExitCodeFromExitCodeGeneratorException(exception);
+    }
+    return exitCode;
+}
+
+private int getExitCodeFromMappedException(ConfigurableApplicationContext context, Throwable exception) {
+    // 容器存在, 且不为已停止的
+    if (context == null || !context.isActive()) {
+        return 0;
+    }
+    ExitCodeGenerators generators = new ExitCodeGenerators();
+    Collection<ExitCodeExceptionMapper> beans = context.getBeansOfType(ExitCodeExceptionMapper.class).values();
+    generators.addAll(exception, beans);
+    return generators.getExitCode();
+}
+
+private int getExitCodeFromExitCodeGeneratorException(Throwable exception) {
+    if (exception == null) {
+        return 0;
+    }
+    if (exception instanceof ExitCodeGenerator) {
+        return ((ExitCodeGenerator) exception).getExitCode();
+    }
+    return getExitCodeFromExitCodeGeneratorException(exception.getCause());
+}
+```
+
+#### 2-16-2-0 发送监听事件
+通过 `SpringApplicationRunListeners` 封装类, 封装了所有的 `SpringApplicationRunListener` 运行监听器接口的实现,作为工具类,调用其中的 `failed` 方法. 遍历每一个监听器,广播一个事件
+
+```java
+void failed(ConfigurableApplicationContext context, Throwable exception) {
+    // 调用加载的监听器
+    for (SpringApplicationRunListener listener : this.listeners) {
+        callFailedListener(listener, context, exception);
+    }
+}
+
+private void callFailedListener(SpringApplicationRunListener listener, ConfigurableApplicationContext context,
+                                Throwable exception) {
+    try {
+        // 1. 调用运行监听器工具对象中的方法
+        listener.failed(context, exception);
+    }
+    catch (Throwable ex) {
+        if (exception == null) {
+            ReflectionUtils.rethrowRuntimeException(ex);
+        }
+        if (this.log.isDebugEnabled()) {
+            this.log.error("Error handling failed", ex);
+        }
+        else {
+            String message = ex.getMessage();
+            message = (message != null) ? message : "no error message";
+            this.log.warn("Error handling failed (" + message + ")");
+        }
+    }
+}
+```
+#### 2-16-2-1 发送事件
+`org.springframework.boot.SpringApplicationRunListener`接口定义了一系列发布容器事件,其的具体实现为 `org.springframework.boot.context.event.EventPublishingRunListener` , 在容器失败后,调用 `failed` 方法.
+创建一个 `ApplicationFailedEvent` 事件, 并对其进行广播
+
+```java
+@Override
+public void failed(ConfigurableApplicationContext context, Throwable exception) {
+    ApplicationFailedEvent event = new ApplicationFailedEvent(this.application, this.args, context, exception);
+    // 如果容器不为空, 且处于活动状态 -> 严重的异常导致容器退出
+    if (context != null && context.isActive()) {        
+        // 容器发布事件
+        context.publishEvent(event);
+    }
+    else {
+        // 容器初始化中, 使用 SimpleApplicationEventMulticaster 容器初始化广播器进行发布事件
+        if (context instanceof AbstractApplicationContext) {
+            for (ApplicationListener<?> listener : ((AbstractApplicationContext) context)
+                 .getApplicationListeners()) {
+                this.initialMulticaster.addApplicationListener(listener);
+            }
+        }
+        this.initialMulticaster.setErrorHandler(new LoggingErrorHandler());
+        this.initialMulticaster.multicastEvent(event);
+    }
+}
+```
+
+
+
+#### 2-16-3-0 生成异常报告
+
+调用 `SpringBootExceptionReporter` 接口实现类中的  `reportException` 方法, 完成异常信息的日志输出
+
+```java
+private void reportFailure(Collection<SpringBootExceptionReporter> exceptionReporters, Throwable failure) {
+    try {
+        for (SpringBootExceptionReporter reporter : exceptionReporters) {
+            // 调用异常报告
+            if (reporter.reportException(failure)) {
+                // 异常处理注册,已经处理过改异常
+                registerLoggedException(failure);
+                return;
+            }
+        }
+    }
+    catch (Throwable ex) {
+        // 空处理
+    }
+    if (logger.isErrorEnabled()) {
+        logger.error("Application run failed", failure);
+        registerLoggedException(failure);
+    }
+}
+```
+
+#### 2-16-4-0 容器关闭
+
+主要进行容器的关闭和是否移除`JVM` 退出时的关闭事件钩子函数.
+
+```java
+@Override
+public void close() {
+    synchronized (this.startupShutdownMonitor) {
+        // 关闭容器
+        doClose();
+        // 事件钩子, 在JVM退出时执行
+        if (this.shutdownHook != null) {
+            try {
+                Runtime.getRuntime().removeShutdownHook(this.shutdownHook);
+            }
+            catch (IllegalStateException ex) {
+                // ignore - VM is already shutting down
+            }
+        }
+    }
+}
+```
+#### 2-16-4-1 具体的关闭
+```java
+protected void doClose() {
+    // 检查容器是否在激活, 
+    if (this.active.get() && this.closed.compareAndSet(false, true)) {
+        // 关闭日志
+        if (logger.isDebugEnabled()) {
+            logger.debug("Closing " + this);
+        }
+        // 注销应用上下文
+        LiveBeansView.unregisterApplicationContext(this);
+
+        try {
+            // 发布事件 ContextClosedEvent
+            publishEvent(new ContextClosedEvent(this));
+        }
+        catch (Throwable ex) {
+            logger.warn("Exception thrown from ApplicationListener handling ContextClosedEvent", ex);
+        }
+
+        // 调用 Bean的生命周期的销毁方法 
+        if (this.lifecycleProcessor != null) {
+            try {
+                this.lifecycleProcessor.onClose();
+            }
+            catch (Throwable ex) {
+                logger.warn("Exception thrown from LifecycleProcessor on context close", ex);
+            }
+        }
+
+        // 销毁单例的Bean
+        destroyBeans();
+
+        // 关闭 Bean 工厂, 将其置空,便于垃圾回收
+        closeBeanFactory();
+
+        // 清理工作, 空实现
+        onClose();
+
+        // 监听器重置到容器启动前的状态
+        if (this.earlyApplicationListeners != null) {
+            // 清空
+            this.applicationListeners.clear();
+            // 重置 
+            this.applicationListeners.addAll(this.earlyApplicationListeners);
+        }
+
+        // 切换容器状态.
+        this.active.set(false);
+    }
+}
+```
+
+#### 2-16-5-0 重新抛出异常
+
+重新抛出异常,交由 `SpringBoot` 框架外的调用者感知, 并作更进一步处理
+
+```java
+public static void rethrowRuntimeException(Throwable ex) {
+    if (ex instanceof RuntimeException) {
+        throw (RuntimeException) ex;
+    }
+    if (ex instanceof Error) {
+        throw (Error) ex;
+    }
+    // 未被 Spring 处理的异常
+    throw new UndeclaredThrowableException(ex);
+}
+```
+
+
+
+# 运行框架
+
+## 配置类解析
+在容器创建后, 将当前配置类引入.
+
+### 自定义 `Import`
+
+
+
+### 解析入口
+
+ 1. `run` 方法中的 `refresh` 方法,刷新当前容器
+ 2. 其中 `invokeBeanFactoryPostProcessors` 方法会调用所有`BeanDefinitionRegistryPostProcessor` 接口的所有实现,其中包括 `ConfigurationClassPostProcessor` 类.
+ 3. 实现类中的 `postProcessBeanDefinitionRegistry` 方法,进行配置类的解析
+   1. 首先获得 `BeanDefinitionRegistry` 的唯一ID, 判断是否已经注册过. 已注册, 抛出异常
+   2. 未注册, 添加到已处理集合中, 调用 `processConfigBeanDefinitions` 方法
+ 4. 在 `processConfigBeanDefinitions` 中. 判断如下
+   1. 首先获得注册的 `BeanDefinitionRegistry` 中的 Bean 名称, 判断是否处理过. 处理过则跳过.
+   2. 未注册处理,检查其 `configurationClass` 属性判断配置类型,并设置
+   3. 处理完成后, 将其加入到 `configCandidates` 集合中.
+   4. `configCandidates` 集合根据 `order` 值排序
+   5. 遍历集合进行解析处理
+   6. 注册 `importRegistry` 并清空
+
+
+
+### 源码步骤
+
+首先在 `org.springframework.context.support.AbstractApplicationContext#refresh` 重新刷新容器方法中,通过 `invokeBeanFactoryPostProcessors(beanFactory)` 方法调用 `BeanFactoryPostProcessor` 接口中定义的 `postProcessBeanFactory` 方法, 将配置信息注册.
+
+```java
+protected void invokeBeanFactoryPostProcessors(ConfigurableListableBeanFactory beanFactory) {
+    // 注册
+    PostProcessorRegistrationDelegate.invokeBeanFactoryPostProcessors(beanFactory, getBeanFactoryPostProcessors());
+
+    if (beanFactory.getTempClassLoader() == null && beanFactory.containsBean(LOAD_TIME_WEAVER_BEAN_NAME)) {
+        beanFactory.addBeanPostProcessor(new LoadTimeWeaverAwareProcessor(beanFactory));
+        beanFactory.setTempClassLoader(new ContextTypeMatchClassLoader(beanFactory.getBeanClassLoader()));
+    }
+}
+```
+
+#### 2-11-5-x 入口方法
+
+在所有 `BeanDefinitionRegistryPostProcessor` 接口实现中, 有 `org.springframework.context.annotation.ConfigurationClassPostProcessor` 实现类, 其中完成了对配置类的后置处理.
+
+```java
+public static void invokeBeanFactoryPostProcessors(
+    ConfigurableListableBeanFactory beanFactory, List<BeanFactoryPostProcessor> beanFactoryPostProcessors) {
+       // ...
+    
+       // 遍历所有 BeanDefinitionRegistryPostProcessor 接口的实现,调用其中的方法
+       invokeBeanDefinitionRegistryPostProcessors(currentRegistryProcessors, registry);
+    
+       // ...
+    }
+```
+
+其类图如下
+
+![ConfigurationClassPostProcessor类图](./Spring全家桶-SpringBoot源码篇/ConfigurationClassPostProcessor类图-1.png)
+
+#### x-1-0-0 实现类入口
+
+通过 `org.springframework.context.annotation.ConfigurationClassPostProcessor#postProcessBeanFactory` 方法,在容器 `refresh` 方法中, 加载 `Bean`  后对其进行后续处理
+
+```java
+@Override
+public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) {
+    // 首先获得 BeanDefinitionRegistry 用以注册 BeanDefinition 信息
+    int registryId = System.identityHashCode(registry);
+    // 如果 BeanDefinitionRegistry 已经注册过,则抛出异常
+    if (this.registriesPostProcessed.contains(registryId)) {
+        throw new IllegalStateException(
+            "postProcessBeanDefinitionRegistry already called on this post-processor against " + registry);
+    }
+    // 如果 BeanFactory 已经进行过后置处理 Bean 后, 则抛出异常
+    if (this.factoriesPostProcessed.contains(registryId)) {
+        throw new IllegalStateException(
+            "postProcessBeanFactory already called on this post-processor against " + registry);
+    }
+    // BeanDefinitionRegistry 注册 +1
+    this.registriesPostProcessed.add(registryId);
+	// 调用注册, 对Bean信息进行处理
+    processConfigBeanDefinitions(registry);
+}
+```
+
+
+
+#### x-2-0-0 注册配置类
+
+在 `Bean` 创建后,通过类信息注册 `Configuration` 对象, 用以描述类的信息
+
+```java
+public void processConfigBeanDefinitions(BeanDefinitionRegistry registry) {
+    // 待处理 BeanDefinition 对象集合
+    List<BeanDefinitionHolder> configCandidates = new ArrayList<>();
+    // 当前容器中的配置类,有多个其中包括 主启动类 xxxApplication
+    String[] candidateNames = registry.getBeanDefinitionNames();
+	// 遍历所有的配置类信息
+    for (String beanName : candidateNames) {
+        // 从 BeanDefinitionRegistry 注册中获取改配置类的信息
+        BeanDefinition beanDef = registry.getBeanDefinition(beanName);
+        // 判断 BeanDefinition 中属性 org.springframework.context.annotation.ConfigurationClassPostProcessor.configurationClass
+        // 存在,跳过
+        if (beanDef.getAttribute(ConfigurationClassUtils.CONFIGURATION_CLASS_ATTRIBUTE) != null) {
+            if (logger.isDebugEnabled()) {
+                logger.debug("Bean definition has already been processed as a configuration class: " + beanDef);
+            }
+        }
+        // 不存在, 添加到 待处理 BeanDefinition 对象集合
+        else if (ConfigurationClassUtils.checkConfigurationClassCandidate(beanDef, this.metadataReaderFactory)) {
+            configCandidates.add(new BeanDefinitionHolder(beanDef, beanName));
+        }
+    }
+
+    // @Configuration 配置类未找到, 返回.
+    if (configCandidates.isEmpty()) {
+        return;
+    }
+
+    // 根据 order 值排序
+    configCandidates.sort((bd1, bd2) -> {
+        int i1 = ConfigurationClassUtils.getOrder(bd1.getBeanDefinition());
+        int i2 = ConfigurationClassUtils.getOrder(bd2.getBeanDefinition());
+        return Integer.compare(i1, i2);
+    });
+
+    // 
+    SingletonBeanRegistry sbr = null;
+    if (registry instanceof SingletonBeanRegistry) {
+        sbr = (SingletonBeanRegistry) registry;
+        if (!this.localBeanNameGeneratorSet) {
+            BeanNameGenerator generator = (BeanNameGenerator) sbr.getSingleton(
+                AnnotationConfigUtils.CONFIGURATION_BEAN_NAME_GENERATOR);
+            if (generator != null) {
+                this.componentScanBeanNameGenerator = generator;
+                this.importBeanNameGenerator = generator;
+            }
+        }
+    }
+	// 环境信息, 一般存在
+    if (this.environment == null) {
+        this.environment = new StandardEnvironment();
+    }
+
+    // 解析 @Configuration 类, 创建解析器
+    ConfigurationClassParser parser = new ConfigurationClassParser(
+        this.metadataReaderFactory, this.problemReporter, this.environment,
+        this.resourceLoader, this.componentScanBeanNameGenerator, registry);
+	// 待解析
+    Set<BeanDefinitionHolder> candidates = new LinkedHashSet<>(configCandidates);
+    // 已解析
+    Set<ConfigurationClass> alreadyParsed = new HashSet<>(configCandidates.size());
+    // 循环解析
+    do {
+        // 1. 解析当前配置类
+        parser.parse(candidates);
+        // 验证. 是否为 final, 不能被复写, 等
+        parser.validate();
+		// 临时集合, 移除已经解析
+        Set<ConfigurationClass> configClasses = new LinkedHashSet<>(parser.getConfigurationClasses());
+        configClasses.removeAll(alreadyParsed);
+
+        // 读取配置类
+        if (this.reader == null) {
+            this.reader = new ConfigurationClassBeanDefinitionReader(
+                registry, this.sourceExtractor, this.resourceLoader, this.environment,
+                this.importBeanNameGenerator, parser.getImportRegistry());
+        }
+        // 读取配置类, 如果有相关 Bean 定义, 则进行读取
+        this.reader.loadBeanDefinitions(configClasses);
+        // 已解析添加
+        alreadyParsed.addAll(configClasses);
+        // 待解析清空
+        candidates.clear();
+        
+        // 如果在解析时, 引入了新的配置类, 则进行添加
+        if (registry.getBeanDefinitionCount() > candidateNames.length) {
+            String[] newCandidateNames = registry.getBeanDefinitionNames();
+            Set<String> oldCandidateNames = new HashSet<>(Arrays.asList(candidateNames));
+            Set<String> alreadyParsedClasses = new HashSet<>();
+            for (ConfigurationClass configurationClass : alreadyParsed) {
+                alreadyParsedClasses.add(configurationClass.getMetadata().getClassName());
+            }
+            for (String candidateName : newCandidateNames) {
+                if (!oldCandidateNames.contains(candidateName)) {
+                    BeanDefinition bd = registry.getBeanDefinition(candidateName);
+                    if (ConfigurationClassUtils.checkConfigurationClassCandidate(bd, this.metadataReaderFactory) &&
+                        !alreadyParsedClasses.contains(bd.getBeanClassName())) {
+                        candidates.add(new BeanDefinitionHolder(bd, candidateName));
+                    }
+                }
+            }
+            candidateNames = newCandidateNames;
+        }
+    }
+    // do - while 结束
+    while (!candidates.isEmpty());
+
+    // Register the ImportRegistry as a bean in order to support ImportAware @Configuration classes
+    if (sbr != null && !sbr.containsSingleton(IMPORT_REGISTRY_BEAN_NAME)) {
+        sbr.registerSingleton(IMPORT_REGISTRY_BEAN_NAME, parser.getImportRegistry());
+    }
+
+    if (this.metadataReaderFactory instanceof CachingMetadataReaderFactory) {
+        // Clear cache in externally provided MetadataReaderFactory; this is a no-op
+        // for a shared cache since it'll be cleared by the ApplicationContext.
+        ((CachingMetadataReaderFactory) this.metadataReaderFactory).clearCache();
+    }
+}
+```
+
+#### x-2-1-0 解析
+
+传入待处理的配置类集合,进行处理调用.
+
+```java
+public void parse(Set<BeanDefinitionHolder> configCandidates) {
+    // 遍历集合
+    for (BeanDefinitionHolder holder : configCandidates) {
+        // 获得配置类的定义 BeanDefinition
+        BeanDefinition bd = holder.getBeanDefinition();
+        try {
+            // 根据配置类的不同,调用不同的解析器,解析具体的信息
+            if (bd instanceof AnnotatedBeanDefinition) {
+                parse(((AnnotatedBeanDefinition) bd).getMetadata(), holder.getBeanName());
+            }
+            else if (bd instanceof AbstractBeanDefinition && ((AbstractBeanDefinition) bd).hasBeanClass()) {
+                parse(((AbstractBeanDefinition) bd).getBeanClass(), holder.getBeanName());
+            }
+            else {
+                parse(bd.getBeanClassName(), holder.getBeanName());
+            }
+        }
+        catch (BeanDefinitionStoreException ex) {
+            throw ex;
+        }
+        catch (Throwable ex) {
+            throw new BeanDefinitionStoreException(
+                "Failed to parse configuration class [" + bd.getBeanClassName() + "]", ex);
+        }
+    }
+
+    this.deferredImportSelectorHandler.process();
+}
+
+```
+
+
+
+#### x-2-1-1 解析
+
+解析方法, 通过不同的类, 调用不同的解析方法. 
+首先构造 `ConfigurationClass` 封装类, 包含了配置类的类描述信息和类资源路径
+```java
+protected final void parse(AnnotationMetadata metadata, String beanName) throws IOException {
+    // 流程配置类
+    processConfigurationClass(new ConfigurationClass(metadata, beanName), DEFAULT_EXCLUSION_FILTER);
+}
+
+protected void processConfigurationClass(ConfigurationClass configClass, Predicate<String> filter) throws IOException {
+    // 判断是否可以跳过配置
+    if (this.conditionEvaluator.shouldSkip(configClass.getMetadata(), ConfigurationPhase.PARSE_CONFIGURATION)) {
+        return;
+    }
+    // 获得配置类的配置信息,第一次进入为空. 跳过
+    ConfigurationClass existingClass = this.configurationClasses.get(configClass);
+    if (existingClass != null) {
+        if (configClass.isImported()) {
+            if (existingClass.isImported()) {
+                existingClass.mergeImportedBy(configClass);
+            }
+            // Otherwise ignore new imported config class; existing non-imported class overrides it.
+            return;
+        }
+        else {
+            // Explicit bean definition found, probably replacing an import.
+            // Let's remove the old one and go with the new one.
+            this.configurationClasses.remove(configClass);
+            this.knownSuperclasses.values().removeIf(configClass::equals);
+        }
+    }
+
+    // 递归解析配置类及其父类
+    SourceClass sourceClass = asSourceClass(configClass, filter);
+    do {
+        // 解析核销方法
+        sourceClass = doProcessConfigurationClass(configClass, sourceClass, filter);
+    }
+    while (sourceClass != null);
+
+    this.configurationClasses.put(configClass, configClass);
+}
+```
+
+#### x-2-1-2 核心方法解析
+
+- 内部类处理, 如声明内部类.并使用 `@Configuration` 注解
+- `PropertySource` 处理, 替换资源占位符,加载资源,添加到环境中.
+- `ComponentScan` 处理, 指定扫描路径或类, 或者默认配置类所在路径. 
+  - 可指定过滤,默认先执行排除规则,再执行引入规则(优先级更高)
+- `Import` 处理. 
+  - 处理 `ImportSelector` 和 `DeferredImportSelector` 接口实现中的返回类全路径.
+  - 处理 `ImportBeanDefinitionRegistrar` 中注册的Bean
+  - 处理 `@Import` 注解中导入的类
+- `ImportResource` 处理, 导入 xml 配置文件
+- `BeanMethod` 处理, 如在配置文件中使用 `@Bean` 注解
+- 接口默认方法实现, 如在 `default` 方法中使用 `@Bean` 注解注入
+- 父类处理.
+
+```java
+protected final SourceClass doProcessConfigurationClass(
+    ConfigurationClass configClass, SourceClass sourceClass, Predicate<String> filter)
+    throws IOException {
+    // 处理内部类, 在内部类中,是否引入新的配置类
+    if (configClass.getMetadata().isAnnotated(Component.class.getName())) {
+        // 递归处理内部类. 
+        processMemberClasses(configClass, sourceClass, filter);
+    }
+
+    // 处理 @PropertySource 注解, 引入资源文件 替换SpEL表达式, 将资源引入到环境中
+    for (AnnotationAttributes propertySource : AnnotationConfigUtils.attributesForRepeatable(
+        sourceClass.getMetadata(), PropertySources.class,
+        org.springframework.context.annotation.PropertySource.class)) {
+        if (this.environment instanceof ConfigurableEnvironment) {
+            processPropertySource(propertySource);
+        }
+        else {
+            logger.info("Ignoring @PropertySource annotation on [" + sourceClass.getMetadata().getClassName() +
+                        "]. Reason: Environment must implement ConfigurableEnvironment");
+        }
+    }
+
+    // 处理 @ComponentScan 注解, 进行扫描注入
+    Set<AnnotationAttributes> componentScans = AnnotationConfigUtils.attributesForRepeatable(
+        sourceClass.getMetadata(), ComponentScans.class, ComponentScan.class);
+    if (!componentScans.isEmpty() &&
+        !this.conditionEvaluator.shouldSkip(sourceClass.getMetadata(), ConfigurationPhase.REGISTER_BEAN)) {
+        for (AnnotationAttributes componentScan : componentScans) {
+            // The config class is annotated with @ComponentScan -> perform the scan immediately
+            Set<BeanDefinitionHolder> scannedBeanDefinitions =
+                this.componentScanParser.parse(componentScan, sourceClass.getMetadata().getClassName());
+            // Check the set of scanned definitions for any further config classes and parse recursively if needed
+            for (BeanDefinitionHolder holder : scannedBeanDefinitions) {
+                BeanDefinition bdCand = holder.getBeanDefinition().getOriginatingBeanDefinition();
+                if (bdCand == null) {
+                    bdCand = holder.getBeanDefinition();
+                }
+                if (ConfigurationClassUtils.checkConfigurationClassCandidate(bdCand, this.metadataReaderFactory)) {
+                    parse(bdCand.getBeanClassName(), holder.getBeanName());
+                }
+            }
+        }
+    }
+
+    // 处理 @Import 注解, @Configuration 配置类 , 或者 Import 接口实现类
+    processImports(configClass, sourceClass, getImports(sourceClass), filter, true);
+
+    // 处理 @ImportResource 注解, 引入其他 xml 的配置
+    AnnotationAttributes importResource =
+        AnnotationConfigUtils.attributesFor(sourceClass.getMetadata(), ImportResource.class);
+    if (importResource != null) {
+        String[] resources = importResource.getStringArray("locations");
+        Class<? extends BeanDefinitionReader> readerClass = importResource.getClass("reader");
+        for (String resource : resources) {
+            String resolvedResource = this.environment.resolveRequiredPlaceholders(resource);
+            configClass.addImportedResource(resolvedResource, readerClass);
+        }
+    }
+
+    // 处理 @Bean 及其指定方法
+    Set<MethodMetadata> beanMethods = retrieveBeanMethodMetadata(sourceClass);
+    for (MethodMetadata methodMetadata : beanMethods) {
+        configClass.addBeanMethod(new BeanMethod(methodMetadata, configClass));
+    }
+
+    // 处理 接口 的默认方法. 如在默认实现方法中添加 @Bean 注解
+    processInterfaces(configClass, sourceClass);
+
+    // 处理父类方法.
+    if (sourceClass.getMetadata().hasSuperClass()) {
+        String superclass = sourceClass.getMetadata().getSuperClassName();
+        // 不为 null , 且不以 java开头, 且尚未处理
+        if (superclass != null && !superclass.startsWith("java") &&
+            !this.knownSuperclasses.containsKey(superclass)) {
+            this.knownSuperclasses.put(superclass, configClass);
+            // Superclass found, return its annotation metadata and recurse
+            return sourceClass.getSuperClass();
+        }
+    }
+
+    // No superclass -> processing is complete
+    return null;
+}
+```
+
+## Servlet-Tomcat 容器启动
+
+### 启动流程
+
+### Web容器工厂类加载及配置解析
+
+### Tomcat 配置
