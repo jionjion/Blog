@@ -5252,8 +5252,314 @@ protected final SourceClass doProcessConfigurationClass(
 
 ## Servlet-Tomcat 容器启动
 
+在 `SpringBoot` 中, 如果你是 `Servlet` 容器, 则会启动默认 `Tomcat` 容器
+
 ### 启动流程
 
-### Web容器工厂类加载及配置解析
+#### 1-3-0-0 判断容器类型
+
+在容器初始化时, 会判断容器类型.
+
+```java
+public SpringApplication(ResourceLoader resourceLoader, Class<?>... primarySources) {
+    this.resourceLoader = resourceLoader;
+    Assert.notNull(primarySources, "PrimarySources must not be null");
+    // 判断容器类型
+    this.primarySources = new LinkedHashSet<>(Arrays.asList(primarySources));
+    this.webApplicationType = WebApplicationType.deduceFromClasspath();
+    setInitializers((Collection) getSpringFactoriesInstances(ApplicationContextInitializer.class));
+    setListeners((Collection) getSpringFactoriesInstances(ApplicationListener.class));
+    this.mainApplicationClass = deduceMainApplicationClass();
+}
+```
+
+#### 1-3-1-0 根据类判断
+
+根据当前类路径下是否含有某些特定类,判断容器类型.
+
+- `reactive` 响应式
+- `Servlet` 容器
+- 非 `web` 容器
+
+```java
+static WebApplicationType deduceFromClasspath() {
+    // org.springframework.web.reactive.DispatcherHandler
+    if (ClassUtils.isPresent(WEBFLUX_INDICATOR_CLASS, null) 
+        // org.springframework.web.servlet.DispatcherServlet
+        && !ClassUtils.isPresent(WEBMVC_INDICATOR_CLASS, null)
+        // org.glassfish.jersey.servlet.ServletContainer
+        && !ClassUtils.isPresent(JERSEY_INDICATOR_CLASS, null)) {
+        // 响应式容器
+        return WebApplicationType.REACTIVE;
+    }
+    // { "javax.servlet.Servlet", "org.springframework.web.context.ConfigurableWebApplicationContext" }
+    for (String className : SERVLET_INDICATOR_CLASSES) {
+        if (!ClassUtils.isPresent(className, null)) {
+            // 非 Web 环境
+            return WebApplicationType.NONE;
+        }
+    }
+    // Servlet 容器
+    return WebApplicationType.SERVLET;
+}
+```
+
+#### 2-8-0-0 创建应用上下文
+在容器启动 `run` 方法时, 根据容器类型的不同,创建不同的应用上下文
+`context = createApplicationContext();`  方法调用
+具体为判断当前容器类型,并调用不同的创建过程
+
+```java
+protected ConfigurableApplicationContext createApplicationContext() {
+    Class<?> contextClass = this.applicationContextClass;
+    if (contextClass == null) {
+        try {
+            // 根据容器类型获得不同的容器类全路径
+            switch (this.webApplicationType) {
+                case SERVLET:
+                    // org.springframework.boot.web.servlet.context.AnnotationConfigServletWebServerApplicationContext
+                    contextClass = Class.forName(DEFAULT_SERVLET_WEB_CONTEXT_CLASS);
+                    break;
+                case REACTIVE:
+                    // org.springframework.boot.web.reactive.context.AnnotationConfigReactiveWebServerApplicationContext
+                    contextClass = Class.forName(DEFAULT_REACTIVE_WEB_CONTEXT_CLASS);
+                    break;
+                default:
+                    // org.springframework.context.annotation.AnnotationConfigApplicationContext
+                    contextClass = Class.forName(DEFAULT_CONTEXT_CLASS);
+            }
+        }
+        catch (ClassNotFoundException ex) {
+            throw new IllegalStateException(
+                "Unable create a default ApplicationContext, please specify an ApplicationContextClass", ex);
+        }
+    }
+    // 使用类加载机制, 获得指定类的实例
+    return (ConfigurableApplicationContext) BeanUtils.instantiateClass(contextClass);
+}
+```
+
+#### 2-11-9-0 容器刷新
+在容器刷新时. 会对Web容器进行初始化
+`org.springframework.context.support.AbstractApplicationContext#refresh` 方法中, 调用 `org.springframework.context.support.AbstractApplicationContext#onRefresh` 方法, 将
+
+```java
+protected void onRefresh() throws BeansException {
+    // 交由自方法实现
+}
+```
+##### 2-11-9-1 容器创建
+`org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext#onRefresh`子类方法具体实现了容器的创建
+
+```java
+@Override
+protected void onRefresh() {
+    // 调用父类 AbstractApplicationContext 的方法
+    super.onRefresh();
+    try {
+        // 创建容器
+        createWebServer();
+    }
+    catch (Throwable ex) {
+        throw new ApplicationContextException("Unable to start web server", ex);
+    }
+}
+```
+#### 2-11-9-2 容器创建
+
+```java
+private void createWebServer() {
+    // 一般为 null
+    WebServer webServer = this.webServer;
+    // 一般为 null
+    ServletContext servletContext = getServletContext();
+    if (webServer == null && servletContext == null) {
+        //  获得 ServletWebServer 的工厂类, 有且只有一个
+        ServletWebServerFactory factory = getWebServerFactory();
+        // getSelfInitializer() web容器初始化方法. 默认空
+        // getWebServer() 创建 servlet 容器 
+        this.webServer = factory.getWebServer(getSelfInitializer());
+        // 注册关闭函数
+        getBeanFactory().registerSingleton("webServerGracefulShutdown",
+                                           new WebServerGracefulShutdownLifecycle(this.webServer));
+        // 注册启动/关闭程序
+        getBeanFactory().registerSingleton("webServerStartStop",
+                                           new WebServerStartStopLifecycle(this, this.webServer));
+    }
+    // 一般容器存在.
+    else if (servletContext != null) {
+        try {
+            getSelfInitializer().onStartup(servletContext);
+        }
+        catch (ServletException ex) {
+            throw new ApplicationContextException("Cannot initialize servlet context", ex);
+        }
+    }
+    // 5. 属性赋值
+    initPropertySources();
+}
+// 获得 ServletWebServer 的工厂类, 有且只有一个
+protected ServletWebServerFactory getWebServerFactory() {
+    // 默认Tomcat tomcatServletWebServerFactory
+    String[] beanNames = getBeanFactory().getBeanNamesForType(ServletWebServerFactory.class);
+    if (beanNames.length == 0) {
+        throw new ApplicationContextException("Unable to start ServletWebServerApplicationContext due to missing "
+                                              + "ServletWebServerFactory bean.");
+    }
+    if (beanNames.length > 1) {
+        throw new ApplicationContextException("Unable to start ServletWebServerApplicationContext due to multiple "
+                                              + "ServletWebServerFactory beans : " + StringUtils.arrayToCommaDelimitedString(beanNames));
+    }
+    // 实例化工厂类
+    return getBeanFactory().getBean(beanNames[0], ServletWebServerFactory.class);
+}
+```
+
+#### 2-11-9-3 创建 Tomcat 容器
+在不同容器中,有不同的创建方式,其中 `Tomcat` 为 
+`org.springframework.boot.web.embedded.tomcat.TomcatServletWebServerFactory#getWebServer` 方法. 创建对应 `Tomcat`
+
+```java
+@Override
+public WebServer getWebServer(ServletContextInitializer... initializers) {
+    if (this.disableMBeanRegistry) {
+        Registry.disableRegistry();
+    }
+    // 创建
+    Tomcat tomcat = new Tomcat();
+    // 设置属性 ...已经读取到配置文件中
+    File baseDir = (this.baseDirectory != null) ? this.baseDirectory : createTempDir("tomcat");
+    tomcat.setBaseDir(baseDir.getAbsolutePath());
+    Connector connector = new Connector(this.protocol);
+    connector.setThrowOnFailure(true);
+    tomcat.getService().addConnector(connector);
+    customizeConnector(connector);
+    tomcat.setConnector(connector);
+    tomcat.getHost().setAutoDeploy(false);
+    configureEngine(tomcat.getEngine());
+    for (Connector additionalConnector : this.additionalTomcatConnectors) {
+        tomcat.getService().addConnector(additionalConnector);
+    }
+    prepareContext(tomcat.getHost(), initializers);
+    // 4. 返回Tomcat 容器,并启动
+    return getTomcatWebServer(tomcat);
+}
+```
+
+#### 2-11-9-4 容器启动
+
+在上一步中, `getTomcatWebServer` 获得 Tomcat 的包装类. 
+
+```java
+protected TomcatWebServer getTomcatWebServer(Tomcat tomcat) {
+    return new TomcatWebServer(tomcat, getPort() >= 0, getShutdown());
+}
+```
+
+在其构造方法中,调用 `initialize()` 对传入的 `Tomcat` 容器进行启动
+
+```java
+// 构造方法, 封装为 TomcatWebServer
+public TomcatWebServer(Tomcat tomcat, boolean autoStart, Shutdown shutdown) {
+    Assert.notNull(tomcat, "Tomcat Server must not be null");
+    this.tomcat = tomcat;
+    this.autoStart = autoStart;
+    this.gracefulShutdown = (shutdown == Shutdown.GRACEFUL) ? new GracefulShutdown(tomcat) : null;
+    initialize();
+}
+
+private void initialize() throws WebServerException {
+    logger.info("Tomcat initialized with port(s): " + getPortsDescription(false));
+    synchronized (this.monitor) {
+        try {
+            addInstanceIdToEngineName();
+
+            Context context = findContext();
+            context.addLifecycleListener((event) -> {
+                if (context.equals(event.getSource()) && Lifecycle.START_EVENT.equals(event.getType())) {
+                    // Remove service connectors so that protocol binding doesn't
+                    // happen when the service is started.
+                    removeServiceConnectors();
+                }
+            });
+
+            // Start the server to trigger initialization listeners
+            this.tomcat.start();
+
+            // We can re-throw failure exception directly in the main thread
+            rethrowDeferredStartupExceptions();
+
+            try {
+                ContextBindings.bindClassLoader(context, context.getNamingToken(), getClass().getClassLoader());
+            }
+            catch (NamingException ex) {
+                // Naming is not enabled. Continue
+            }
+
+            // Unlike Jetty, all Tomcat threads are daemon threads. We create a
+            // blocking non-daemon to stop immediate shutdown
+            startDaemonAwaitThread();
+        }
+        catch (Exception ex) {
+            stopSilently();
+            destroySilently();
+            throw new WebServerException("Unable to start embedded Tomcat", ex);
+        }
+    }
+}
+```
+
+
+
+
+#### 2-11-9-5 属性赋值
+属性赋值  最终调用`org.springframework.web.context.support.WebApplicationContextUtils#initServletPropertySources(org.springframework.core.env.MutablePropertySources, javax.servlet.ServletContext, javax.servlet.ServletConfig)` 方法进行环境属性的赋值, 将当前属性进行替换
+
+```java
+public static void initServletPropertySources(MutablePropertySources sources,
+                                              @Nullable ServletContext servletContext, @Nullable ServletConfig servletConfig) {
+
+    Assert.notNull(sources, "'propertySources' must not be null");
+    // servletContextInitParams 参数属性
+    String name = StandardServletEnvironment.SERVLET_CONTEXT_PROPERTY_SOURCE_NAME;
+    if (servletContext != null && sources.contains(name) && sources.get(name) instanceof StubPropertySource) {
+        sources.replace(name, new ServletContextPropertySource(name, servletContext));
+    }
+    // servletConfigInitParams 参数属性
+    name = StandardServletEnvironment.SERVLET_CONFIG_PROPERTY_SOURCE_NAME;
+    if (servletConfig != null && sources.contains(name) && sources.get(name) instanceof StubPropertySource) {
+        sources.replace(name, new ServletConfigPropertySource(name, servletConfig));
+    }
+}
+```
+
+### Web容器工厂类加载流程
+
+- 配置引入
+
+
+
+
 
 ### Tomcat 配置
+
+- 配置 `web` 属性
+- 注入到 `ServerProperties` 类中
+- 自动配置类导入 `WebServerFactoryCustomizer` 实现类
+- `ServerProperties` 成为实现类的属性
+- 在工厂类初始化时
+- `getWebServiceFactory` 获得具体web服务工厂类
+- 对具体实现类调用 `doGetBean` 进行初始化
+- 遍历 `BeanPostProcessor` 实现类, 对 `Bean` 进行处理
+- 进入 `WebServerFactoryCustomizerBeanPostProcessor` 实现方法
+- `postProcessBeforeInitialization` 方法调用 `getCustomizers` 方法获得 `WebServerFactoryCustomizer` 实现类
+- 依次调用实现类的 `customize` 方法进行定制处理
+
+## 场景加载器
+
+`SpringBoot` 提供个的各种 `starter-xxx` 
+
+### `Conditional` 注解
+
+在某个条件下将当前 `Bean` 注入
+
