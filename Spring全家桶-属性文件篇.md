@@ -45,9 +45,11 @@ eureka.client.service-url.defaultZone=http://${eureka.instance.hostname}:${serve
 
 `@Component`标识这是一个组件,交由Spring管理
 `@PropertySource`指向属性文件的位置,而不是从全局配置文件或者运行环境中获得.
+当然.支持多环境, 如 `@PropertySource("classpath:fish-${spring.profiles.active}.properties")`
 `@ConfigurationProperties`标识属性文件的前缀,该注解默认从全局配置文件或者运行环境中获得.
 `@Getter`,`@Setter`,`@ToString`注解由Lombok提供,标示重写`get/set`方法和`toString`方法
 **属性不能为static修饰,并不用强制配置Getter/Setter方法**
+
 ```java
 @Component
 @PropertySource("classpath:config/description.properties")
