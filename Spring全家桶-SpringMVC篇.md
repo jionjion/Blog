@@ -8,7 +8,7 @@ categories:
 tags: [Java, Spring, MVC]
 ---
 
-## 常用注解
+# 常用注解
 `@Autowired`        对私有属性实现依赖注入
 `@RestController`   标识这是一个Restful的控制器,返回JSON结果
 `@RequestMapping`   匹配请求路径,对所有的请求方式进行响应
@@ -22,7 +22,7 @@ tags: [Java, Spring, MVC]
 `@jsonignore`       表示不会对该类的属性进行JSON输出
 `@JsonIgnoreProperties` 类注解,将某些属性不进行JSON输出
 
-## 常见配置
+# 常见配置
 
 ### 允许跨域
 
@@ -82,3 +82,10 @@ public class WebConfig implements WebMvcConfigurer {
 }
 ```
 
+
+
+# 参数绑定
+
+带日期格式的参数转为 `java` 类
+
+通过 `@DateTimeFormat(pattern = "yyyy-MM-dd")` 注解将字符串属性转为对应的日期属性. 仅支持 `java.util.Date` 和 `java.sql.Time` 类
