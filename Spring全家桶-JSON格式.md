@@ -22,23 +22,23 @@ tags: [Java, Spring, JSON]
 
 **序列化注解**
 
-`@JsonAnyGetter` Get方法注解,用在`Map`类型的属性中,将`Map`的`key`和`value`分别作为JSON的`key`和`value`.
-`@JsonGetter`  Get方法注解,指定属性序列化后的JSON的`key`
+`@JsonAnyGetter` Get方法注解,用在 `Map` 类型的属性中,将 `Map` 的 `key` 和 `value` 分别作为JSON的 `key` 和 `value` .
+`@JsonGetter`  Get方法注解,指定属性序列化后的JSON的 `key` 
 `@JsonPropertyOrder` 类注解,指定序列化后的JSON的属性排序.
 `@JsonPropertyOrder(alphabetic = true)` 根据字典顺序进行排列.
-`@JsonRawValue` 属性注解,该属性的为JSON字符串,并直接作为序列化后的`value`.
+`@JsonRawValue` 属性注解,该属性的为JSON字符串,并直接作为序列化后的 `value` .
 `@JsonValue` 属性注解,将属性值作为JSON返回
-`@JsonRootName` 类注解,序列化后JSON被新的`key`包裹.
+`@JsonRootName` 类注解,序列化后JSON被新的 `key` 包裹.
 `@JsonSerialize` 属性注解,该属性在被序列化时,使用的序列化类,该序列化类必须继承自`StdSerializer<T>`类
 
 **反序列化注解**
 
-`@JsonAnySetter`	Set方法注解,注解在`Map`类型中,将改属性对应的JSON的`key`内嵌套的JSON解析为key-value进行保存.
-`@JsonSetter`		Set方法注解,当JSON字符串的`key`和属性不同时反序列化时便于对应.
-`@JsonAlias`	属性注解,当JSON字符串的`key`可能不只一个时,使用该注解标识属性对应JSON的`key`的别名等..
-`@JsonCreator` 		构造方法注解,配合`@JsonProperty`注解,对反序列化时,JSON的`key`和实际属性不同的类进行标注.
+`@JsonAnySetter`	Set方法注解,注解在 `Map` 类型中,将改属性对应的JSON的 `key` 内嵌套的JSON解析为key-value进行保存.
+`@JsonSetter`		Set方法注解,当JSON字符串的 `key` 和属性不同时反序列化时便于对应.
+`@JsonAlias`	属性注解,当JSON字符串的 `key` 可能不只一个时,使用该注解标识属性对应JSON的 `key` 的别名等..
+`@JsonCreator` 		构造方法注解,配合 `@JsonProperty` 注解,对反序列化时,JSON的 `key` 和实际属性不同的类进行标注.
 `@JacksonInject`	属性注解,反序列化值从注入中获取值,而不是通过JSON字符串
-`@JsonDeserialize` 属性注解,该属性再被反序列化时,使用的反序列化类.该反序列化类必须继承自`StdDeserializer<T>`类.
+`@JsonDeserialize` 属性注解,该属性再被反序列化时,使用的反序列化类.该反序列化类必须继承自 `StdDeserializer<T>` 类.
 
 
 **通用注解**
@@ -48,7 +48,7 @@ tags: [Java, Spring, JSON]
 `@JsonIgnore` 属性注解,标识忽略的属性
 `@JsonInclude` 类注解,标识解析字段的要求,排除具有空值,默认值的属性
 `@JsonAutoDetect`  类注解,对于私有属性是否进行解析.默认私有属性可以被解析.
-`@JsonProperty` 属性注解,标识该属性在序列化和反序列化时的JSON的`key`.
+`@JsonProperty` 属性注解,标识该属性在序列化和反序列化时的JSON的 `key` .
 `@JsonFormat`	属性注解,对于时间属性,序列化时指明序列格式,简便开发,避免编写转化类.
 `@JsonUnwrapped` 属性注解,改类型如果是对象,则该对象的属性序列或者反序列时不作为JSON的嵌套
 `@JsonView`	 属性注解,仅将注解中类的指定类型进行序列化.
@@ -58,7 +58,7 @@ tags: [Java, Spring, JSON]
 
 **多态注解**
 
-`@JsonTypeInfo`   类注解, 表明序列化中包含的类型信息的详细信息,注解在父类中
+`@JsonTypeInfo` 类注解, 表明序列化中包含的类型信息的详细信息,注解在父类中
 `@JsonSubTypes` 类注解,表明带注释的类型的子类型.注解在父类中,指明拥有哪些子类.
 `@JsonTypeName` 类注解,表明子类的类型名称
 
@@ -74,18 +74,18 @@ tags: [Java, Spring, JSON]
 
 
 ## 常用注解示例
-项目示例可能用到`Lomback`.
-`@Getter`和`@Setter`注解表示对属性生成`get`和`set`方法.
-`@Slf4j` 注入日志组件.可以使用日志输出.
+项目示例可能用到 `Lomback` .
+`@Getter` 和 `@Setter` 注解表示对属性生成 `get` 和 `set` 方法.
+`@Slf4j`  注入日志组件.可以使用日志输出.
 
 ### 序列化
 序列化注解,在java的Bean转为JSON对象时使用.
-序列化时,会默认为存在`get`方法的属性生成JSON字段.字段命名参考注解`@JsonNaming`.
+序列化时,会默认为存在 `get` 方法的属性生成JSON字段.字段命名参考注解 `@JsonNaming` .
 
 #### `@JsonAnyGetter` 
 
-内部类`Student`中,有属性`info`和`score`分别为`Map`类型,在转为JSON时,通过`@JsonAnyGetter`注解进行映射,将`Map`内的值转为JSON属性.
-其中`@JsonAnyGetter(enabled = false)` 表示将`Map`中的属性嵌套作为JSON串子对象进行组合.默认`enable = true`,表示将`Map`中的属性与Bean对象属性同级别输出.
+内部类 `Student` 中,有属性 `info` 和 `score` 分别为 `Map` 类型,在转为JSON时,通过`@JsonAnyGetter` 注解进行映射,将 `Map` 内的值转为JSON属性.
+其中`@JsonAnyGetter(enabled = false)` 表示将 `Map` 中的属性嵌套作为JSON串子对象进行组合.默认 `enable = true` ,表示将 `Map` 中的属性与Bean对象属性同级别输出.
 
 **代码**
 ```java
@@ -158,8 +158,8 @@ public class JsonAnyGetterTest {
 
 #### `@JsonGetter` 
 
-内部类`Student`中,属性`name`被`@JsonGetter`注解使用,并指定生成的JSON对属性名称.
-由于属性`id`存在`get`方法.默认也会在JSON对象的属性中出现,其名称与字段名称一致.
+内部类 `Student` 中,属性 `name` 被 `@JsonGetter` 注解使用,并指定生成的JSON对属性名称.
+由于属性 `id` 存在 `get` 方法.默认也会在JSON对象的属性中出现,其名称与字段名称一致.
 
 
 **代码**
@@ -233,7 +233,7 @@ public class JsonGetterTest {
 
 类注解,对生成的JSON属性进行排序,
 可以通过字符数组指定序列化后的JSON字段进行排序.
-`@JsonPropertyOrder(alphabetic = true)` 默认将JSON属性的排序根据字典顺序排序.
+ `@JsonPropertyOrder(alphabetic = true)`  默认将JSON属性的排序根据字典顺序排序.
 
 
 **代码**
@@ -304,7 +304,7 @@ public class JsonPropertyOrderTest {
 
 
 #### `@JsonRawValue`
-属性或者`get`方法注解,将该属性值直接作为JSON的属性值进行序列化.
+属性或者 `get` 方法注解,将该属性值直接作为JSON的属性值进行序列化.
 要求bean对应的属性值,格式为JSON字符串.
 
 **代码**
@@ -380,8 +380,8 @@ public class JsonRawValueTest {
 
 
 #### `@JsonValue`
-仅被`@JsonValue`注解标识的该类的属性值会被直接作为序列化后的结果.
-如果多个属性被`@JsonValue`注解,则会抛出异常.
+仅被 `@JsonValue` 注解标识的该类的属性值会被直接作为序列化后的结果.
+如果多个属性被 `@JsonValue` 注解,则会抛出异常.
 
 **代码**
 ```java
@@ -449,7 +449,7 @@ public class JsonValueTest {
 
 #### `@JsonRootName`
 类注解,标识该类属性对应生成的JSON的根节点.当JSON对象被其他嵌套时,对应的节点名称.
-`SerializationFeature.WRAP_ROOT_VALUE` 表示将序列化结果进行包裹
+ `SerializationFeature.WRAP_ROOT_VALUE`  表示将序列化结果进行包裹
 
 **代码**
 ```java
@@ -526,7 +526,7 @@ public class JsonRootNameTest {
 
 
 #### `@JsonSerialize` 
-对于日期格式的,在序列化时需要指定序列化后的格式.就用`@JsonSerialize`指定自定义的类.
+对于日期格式的,在序列化时需要指定序列化后的格式.就用 `@JsonSerialize` 指定自定义的类.
 如日期进行格式化.默认的日期序列化后为时间戳
 
 
@@ -635,12 +635,12 @@ class JsonDataFormat extends StdSerializer<Date> {
 
 ### 反序列化
 反序列化是将JSON字符串转为Java的Bean对象.
-反序列化时,会默认为存在`set`方法的属性生成JSON字段.字段命名参考注解`@JsonNaming`.
+反序列化时,会默认为存在 `set` 方法的属性生成JSON字段.字段命名参考注解 `@JsonNaming` .
 
 #### `@JsonAnySetter`
 
-`@JsonAnySetter`将当前类中,未被其他属性作反序列化的JSON字符串中的属性,存入该`Map`中.
-`@JsonAnySetter(enabled = false)` 将JSON字符串中`score`子串中的属性及值转为`Map`的key-value.
+`@JsonAnySetter` 将当前类中,未被其他属性作反序列化的JSON字符串中的属性,存入该 `Map` 中.
+`@JsonAnySetter(enabled = false)`  将JSON字符串中 `score` 子串中的属性及值转为 `Map` 的key-value.
 
 ```java
 import com.fasterxml.jackson.annotation.JsonAnySetter;
@@ -738,8 +738,8 @@ public class JsonAnySetterTest {
 ```
 
 #### `@JsonSetter`
-将JSON字符串中的属性根据其`key`的名字映射为Java类的属性.
-对于属性名称不一致时,通过`@JsonSetter`指定名称.
+将JSON字符串中的属性根据其 `key` 的名字映射为Java类的属性.
+对于属性名称不一致时,通过 `@JsonSetter` 指定名称.
 另外,当名称一致时,不需要指定名称时也可以进行反序列化.
 
 ```java
@@ -811,9 +811,9 @@ public class JsonSetterTest {
 ```
 
 #### `@JsonAlias`
-当JSON字符串中的属性具有不唯一的`key`时,即存在别名,可以通过`@JsonAlias`指定JSON的别名.
+当JSON字符串中的属性具有不唯一的 `key` 时,即存在别名,可以通过 `@JsonAlias` 指定JSON的别名.
 
-JSON字符串中`username`和`name`属性对应Bean的`name`属性,此外,当JSON中出现多个别名对应的同一个Bean属性,则以最后一次出现的`key`的值为最终结果.
+JSON字符串中 `username` 和 `name` 属性对应Bean的 `name` 属性,此外,当JSON中出现多个别名对应的同一个Bean属性,则以最后一次出现的 `key` 的值为最终结果.
 
 ```java
 import com.fasterxml.jackson.annotation.JsonAlias;
@@ -887,7 +887,7 @@ public class JsonAliasTest {
 
 
 #### `@JsonCreator`
-在构造函数中使用,通过`@JsonProperty`注解配合反序列化
+在构造函数中使用,通过 `@JsonProperty` 注解配合反序列化
 
 
 ```java
@@ -966,7 +966,7 @@ public class JsonCreatorTest {
 
 
 #### `@JacksonInject`
-被`@JacksonInject`注解过的属性,需要在反序列化时,为其指定值.通过`InjectableValues`类进行复制.
+被 `@JacksonInject` 注解过的属性,需要在反序列化时,为其指定值.通过 `InjectableValues` 类进行复制.
 
 ```java
 import com.fasterxml.jackson.annotation.JacksonInject;
@@ -1038,8 +1038,8 @@ public class JacksonInjectTest {
 ```
 
 #### `@JsonDeserialize`
-对于日期类型的JSON属性反序列化时,通过`@JsonDeserialize`注解指定反序列化时的类,将字符格式转为日期格式.
-格式化类继承自`StdDeserializer`类,并实现`deserialize`方法.注意声明无参/有参的构造方法
+对于日期类型的JSON属性反序列化时,通过 `@JsonDeserialize` 注解指定反序列化时的类,将字符格式转为日期格式.
+格式化类继承自 `StdDeserializer` 类,并实现 `deserialize` 方法.注意声明无参/有参的构造方法
 
 ```java
 
@@ -1234,7 +1234,7 @@ public class JsonIgnorePropertiesTest {
 #### `@JsonIgnoreType`
 类注解,标识该类作为属性时,被自动忽略.
 
-内部类`Info`在被注解`@JsonIgnoreType`注解时,在被作为属性时,会自动被忽略.
+内部类 `Info` 在被注解 `@JsonIgnoreType` 注解时,在被作为属性时,会自动被忽略.
 
 ```java
 
@@ -1523,8 +1523,8 @@ public class JsonAutoDetectTest {
 ```
 
 #### `@JsonProperty`
-属性/方法注解,标识该属性在序列化和反序列化时的JSON的`key`.
-通过分别标注在`Getter/Setter`方法上,指定不同方法序列化/反序列化时的`key`
+属性/方法注解,标识该属性在序列化和反序列化时的JSON的 `key` .
+通过分别标注在 `Getter/Setter`  方法上,指定不同方法序列化/反序列化时的 `key`
 
 ```java
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -1650,7 +1650,7 @@ public class JsonFormatTest {
 #### `@JsonUnwrapped`
 属性注解,改类型如果是对象,则该对象的属性序列或者反序列时不作为JSON的嵌套
 
-`@JsonUnwrapped`注解标注的对象属性,在序列化时,不会被作为嵌套解析,而是与当前对象属性同级进行序列化输出
+`@JsonUnwrapped` 注解标注的对象属性,在序列化时,不会被作为嵌套解析,而是与当前对象属性同级进行序列化输出
 ```java
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -1759,8 +1759,8 @@ public class JsonUnwrappedTest {
 #### `@JsonView`
 属性注解,仅将注解中类的指定类型进行序列化.
 
-类`Views`含有内部类`show`和`hide`.在Java的Bean中,通过注解`@JsonView()`规定属性的归属管理类,指向内部类.
-在序列化时,通过`writerWithView()`方法,指向规定显示的类,则拥有该类`@JsonView`注解的属性将会被序列化.
+类 `Views` 含有内部类 `show` 和 `hide` .在Java的Bean中,通过注解 `@JsonView()` 规定属性的归属管理类,指向内部类.
+在序列化时,通过 `writerWithView()` 方法,指向规定显示的类,则拥有该类 `@JsonView` 注解的属性将会被序列化.
 ```java
 import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -1838,8 +1838,8 @@ class Views{
 `@JsonBackReference` 属性注解,标注双向关联的一对多的关系中,多的一方.
 
 在Java中,如果出现对象之间相互依赖,在序列化时会出现循环指向,最终导致堆栈溢出.
-因此,可以使用`@JsonManagedReference` 注解标注在一的一方的属性中,如类中的`Student`属性
-而`@JsonBackReference` 注解标注在多的一方的属性中,如类中的`List<Score>`属性.
+因此,可以使用 `@JsonManagedReference`  注解标注在一的一方的属性中,如类中的 `Student` 属性
+而 `@JsonBackReference`  注解标注在多的一方的属性中,如类中的 `List<Score>` 属性.
 ```java
 import com.fasterxml.jackson.annotation.JsonBackReference;
         import com.fasterxml.jackson.annotation.JsonManagedReference;
@@ -1966,7 +1966,7 @@ class Score {
 #### `@JsonFilter`
 类注解,指明序列化时,需要的过滤器.
 
-通过`@JsonFilter("jsonFilter")`指定过滤器`jsonFilter`,在序列化时,创建过滤器类.并指定可以序列化的属性,完成序列化.
+通过 `@JsonFilter("jsonFilter")` 指定过滤器 `jsonFilter` ,在序列化时,创建过滤器类.并指定可以序列化的属性,完成序列化.
 ```java
 import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.annotation.JsonView;
