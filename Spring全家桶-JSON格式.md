@@ -12,8 +12,6 @@ tags: [Java, Spring, JSON]
 
 在Spring中内置了Jackson类库,可以完成Bean到JSON字符串的序列化与反序列化.
 
-
-
 # 语法
 
 ## 常用注解预览

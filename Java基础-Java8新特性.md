@@ -10,19 +10,11 @@ abbrlink: 8bebd4ec
 date: 2020-02-22 20:43:28
 ---
 
-
-
-
-
 # JAVA8
-
-
 
 ## Lambda表达式
 
 `@FunctionalInterface` 对于只有一个声明方法的接口,可以通过该注解标识为函数式接口
-
-
 
 ### 示例代码
 
@@ -31,8 +23,6 @@ date: 2020-02-22 20:43:28
 - [*InterfaceWithParamNoReturn*][3]										 有参数,无返回值的函数式接口
 - [*InterfaceWithParamWithReturn*][4]									  有参数,有返回值的函数式接口
 - [*Lambda*][5]																			 调用示例
-
-
 
 ## 函数式接口
 在 `java.util.function.*` 包下,基础包含四类接口,及其扩展接口
@@ -49,18 +39,12 @@ date: 2020-02-22 20:43:28
 在类型上扩展： 比如接收原子类型参数的，有 `[Int|Double|Long]` ,`[Function|Consumer|Supplier|Predicate]`
 特殊常用的变形： 比如 `BinaryOperator` ， 是同类型的双参数 `BiFunction<T,T,T>` ，二元操作符 ； `UnaryOperator` 是 `Function<T,T>` 一元操作符。
 
-
-
 ### 示例代码
 
 - [*ConsumerTest*][6] 							消费型接口
 - [*FunctionTest*][7]							   函数型接口
 - [*PredicateTest*][8]							  断言型接口
 - [*SupplierTest*][9]							     供给型接口
-
-
-
-
 
 ## 方法引用与构造器引用
 
@@ -70,8 +54,6 @@ date: 2020-02-22 20:43:28
 对象::实例方法名
 类::静态方法名
 类::示例方法名(要求,参数列表中第一个参数是方法调用实例,第二个参数是实例方法参数)
-
-
 
 ### 示例方法
 
@@ -89,8 +71,6 @@ date: 2020-02-22 20:43:28
 
 获得途径
 从集合,数组,自行创建获得流
-
-
 
 ### 常用方法
 
@@ -121,24 +101,16 @@ date: 2020-02-22 20:43:28
 - [*OperateSteamIITest*][14]								  公约,收集等
 
 
-
-
-
-
 ## Fork/Join
 
 串行流与并行流
 Fork/Join:将任务拆解执行后并将结果进行汇总
-
-
 
 ### 测试代码
 
 - [*ForkJoinSum*][16]																	Fork-Join模式计算求和
 
 - [*ForkJoinSumTest*][17]															  测试
-
-
 
 ## Optional类
 
@@ -157,8 +129,6 @@ Fork/Join:将任务拆解执行后并将结果进行汇总
 | `orElseGet(Supplier other)`    | 获得返回值,如果返回值不存在,则返回默认值T                    |
 | `map(Function mapper)`         | 如果有值,则进行函数式计算,并返回其计算结果的`Optional`包装;如果为空,则直接返回空包装 |
 | `flatMap(Function mapper)`     | 同上                                                         |
-
-
 
 ### 示例代码
 

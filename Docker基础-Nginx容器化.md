@@ -24,8 +24,6 @@ tags:
 
 
 
-
-
 ## DockerFile 编写
 
 构建命令, 创建镜像 `jiojion/nginx'

@@ -205,8 +205,6 @@ esac
 注意,`key`对应的值在redis中以数字字符串进行保存!
 注意,值必须为整数,否则报错.
 
-
-
 - `key`对应的值必须为数字
 例如:`incr age` 对`age`对应值进行自增,不存在返回1
 
@@ -509,9 +507,9 @@ esac
 对列表`key`进行修剪,只保留`start`和`stop`的区间内的元素.`start`和`stop`超过列表长度,返回错误.
 
 - 修剪,保留前两个
-例如 'ltrim users 0 1'
+例如 `ltrim users 0 1`
 - 截取,保留后两个
-例如 'ltrim users -2 -1'
+例如 `ltrim users -2 -1`
 
 ### `BLPOP`
 语法 `BLPOP key [key …] timeout`
@@ -1063,16 +1061,16 @@ esac
 ## 模式
 
 ### 安全队列
-参考 http://redisdoc.com/list/rpoplpush.html
+[参考](http://redisdoc.com/list/rpoplpush.html)
 
 ### 循环列表 
-参考 http://redisdoc.com/list/brpoplpush.html
+[参考](http://redisdoc.com/list/brpoplpush.html)
 
 #### 事件提醒
-参考 http://redisdoc.com/list/blpop.html
+[参考](http://redisdoc.com/list/blpop.html)
 
 #### 导航会话
-参考 http://redisdoc.com/expire/expire.html
+[参考](http://redisdoc.com/expire/expire.html)
 
 
 

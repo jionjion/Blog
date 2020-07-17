@@ -34,7 +34,9 @@ spring.jpa.database-platform=org.hibernate.dialect.MySQLDialect
 `JpaRepository<T, ID>`继承自`PagingAndSortingRepository<T, ID>`和`QueryByExampleExecutor<T>`基本满足查询,其独特的`Example`查询可以在不进行方法签名的情况下进行复杂的查询
 `JpaSpecificationExecutor<T>`
 
+类图如下
 
+![JpaRepository类图](./Spring全家桶-Spring-Data-JPA篇/Repository类图.png)
 
 ## 具体子类
 
