@@ -9,8 +9,8 @@ tags: [Java, Spring, JPA]
 ---
 
 # 简介
-Spring-Data提供了数据持久化的一种方式,其中`Spring-Data-Jpa`是实现`JPA`规范的一系列扩展.
-通过继承`Repository`类及其子类,调用其预先定义好的各种实现.
+Spring-Data提供了数据持久化的一种方式,其中 `Spring-Data-Jpa` 是实现 `JPA` 规范的一系列扩展.
+通过继承 `Repository` 类及其子类,调用其预先定义好的各种实现.
 
 ## 数据库连接
 ### 数据库连接属性文件
@@ -1102,5 +1102,26 @@ public class PhysicalNamingStrategyStandardImpl implements PhysicalNamingStrateg
 ```properties
 # 表名统一大写
 spring.jpa.hibernate.naming.physical-strategy=top.jionjion.web.fish.config.UpperTableStrategy
+```
+
+
+
+## 打印SQL日志
+
+在 `application` 中添加配置信息
+
+```properties
+# Hibernate约定
+spring.jpa.database-platform=org.hibernate.dialect.MySQL5Dialect
+#spring.jpa.hibernate.dialect=org.hibernate.dialect.MySQL5Dialect
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+
+# 日志级别
+logging.level.org.hibernate=info
+logging.level.org.hibernate.SQL=debug
+logging.level.org.hibernate.engine.QueryParameters=debug
+logging.level.org.hibernate.engine.query.HQLQueryPlan=debug
+logging.level.org.hibernate.type.descriptor.sql.BasicBinder=trace
 ```
 

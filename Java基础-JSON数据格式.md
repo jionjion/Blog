@@ -9,8 +9,8 @@ tags: [Java, JSON]
 ---
 
 ## 简介
-JSON是一种与开发语言无关的、轻量级的数据格式。全称JavaScript Object Notation
-该练习是对`JSON`和`GSON`两种数据格式的创建和解析.
+`JSON` 是一种与开发语言无关的、轻量级的数据格式。全称JavaScript Object Notation
+该练习是对 `JSON` 和 `GSON` 两种数据格式的创建和解析.
 
 
 
@@ -18,12 +18,12 @@ JSON是一种与开发语言无关的、轻量级的数据格式。全称JavaScr
 
 ### 基本类型
 
-| 类型    | 名称                        |
-| ------- | --------------------------- |
-| String  | 字符串类型,必须加双引号表示 |
-| number  | 数字类型,整型或者浮点型     |
-| boolean | 布尔类型,true/false         |
-| null    | 空值或者空串                |
+| 类型    | 名称                         |
+| ------- | ---------------------------- |
+| String  | 字符串类型, 必须加双引号表示 |
+| number  | 数字类型, 整型或者浮点型     |
+| boolean | 布尔类型,true/false          |
+| null    | 空值或者空串                 |
 
 
 
