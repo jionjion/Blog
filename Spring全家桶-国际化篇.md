@@ -40,7 +40,6 @@ account-card-prompt=Welcome, {0}
 @Configuration
 public class LocaleLanguageConfig {
 
-
     /**
      *  默认解析器 其中locale表示默认语言
      */
@@ -135,8 +134,6 @@ public class MessageUtilsTest{
     }
 }
 ```
-
-
 
 
 
