@@ -133,3 +133,22 @@ public String jsonToMap(@RequestBody Map<String,String> user){
 }
 ```
 
+
+
+### 通过反射获得泛型实例
+
+```java
+private AssertException getInstanceOfGenericWithMessage(String message) {
+    // 泛型中的异常子类
+    Class<T> clazz = (Class<T>)((ParameterizedType)getClass().getGenericSuperclass()).getActualTypeArguments()[0];
+    Object obj = null;
+    try {
+        // lang3 中的有参构造方法
+        obj = ConstructorUtils.invokeConstructor(clazz, message);
+    } catch (NoSuchMethodException | InstantiationException | InvocationTargetException | IllegalAccessException e) {
+        e.printStackTrace();
+    }
+    return obj;
+}
+```
+
