@@ -152,3 +152,10 @@ private AssertException getInstanceOfGenericWithMessage(String message) {
 }
 ```
 
+### 本地语言环境信息
+
+```java
+// 获得本地语言定义
+Locale locale = LocaleContextHolder.getLocale();
+```
+

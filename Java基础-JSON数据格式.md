@@ -9,7 +9,7 @@ tags: [Java, JSON]
 ---
 
 ## 简介
-`JSON` 是一种与开发语言无关的、轻量级的数据格式。全称JavaScript Object Notation
+一种与开发语言无关的、轻量级的数据格式。全称 `JavaScript Object Notation`
 该练习是对 `JSON` 和 `GSON` 两种数据格式的创建和解析.
 
 

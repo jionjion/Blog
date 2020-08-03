@@ -1632,3 +1632,33 @@ public class HashOperationsTest{
 }
 ```
 
+# 相关配置
+
+## 序列化配置
+
+支持序列化汉字, `Key` 多结构
+
+```java
+@Configuration
+public class RedisCacheConfig {
+
+    /**
+     * 配置 RedisTemplate
+     *
+     * @param factory 配置工厂
+     * @return RedisTemplate
+     */
+    @Bean
+    public RedisTemplate redisTemplate(RedisConnectionFactory factory) {
+        RedisTemplate redisTemplate = new RedisTemplate();
+        RedisSerializer stringSerializer = new StringRedisSerializer();
+        redisTemplate.setConnectionFactory(factory);
+        redisTemplate.setKeySerializer(stringSerializer);
+        redisTemplate.setValueSerializer(stringSerializer);
+        redisTemplate.setHashKeySerializer(stringSerializer);
+        redisTemplate.setHashValueSerializer(stringSerializer);
+        return redisTemplate;
+    }
+}
+```
+
