@@ -1404,7 +1404,14 @@ public class JsonIgnoreTest {
 #### `@JsonInclude`
 类注解,标识解析字段的要求,例如排除具有空值,默认值的属性
 
-`JsonInclude.Include.NON_NULL` 当属性为空时,不对改属性进行序列化
+`JsonInclude.Include.ALWAYS` 默认策略, 总数序列化
+`JsonInclude.Include.NON_NULL` 当属性为 `null` 时, 不进行序列化
+`JsonJsonInclude.Include.NON_ABSENT` 当属性为 `null` 或 `Optional.empty` 为空时, 不进行序列化
+`JsonJsonInclude.Include.NON_DEFAULT` 当属性为默认值时, 不进行序列化
+`JsonJsonInclude.Include.NON_EMPTY` 属性为 `null` 或 `Optional.empty` 为空, 集合数组为空, 字符串空, 基本类型默认值时, 不进行序列化
+`JsonJsonInclude.Include.CUSTOM` 使用过滤规则, 进行匹配
+`JsonJsonInclude.Include.USE_DEFAULTS` 使用默认级别进行处理, 根据属性访问权限而定
+
 ```java
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -2046,9 +2053,9 @@ public class JsonFilterTest {
 
 
 
-## 示例
+# 示例
 
-### 自定义序列化与反序列化
+## 自定义序列化与反序列化
 
 属性
 
