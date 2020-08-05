@@ -2090,3 +2090,143 @@ public class DateToLongSerializer extends JsonSerializer<LocalDateTime> {
     }
 }
 ```
+
+## 为值集属性设置
+
+期望的属性,通过查询值集列表, 将 `Y` 翻译为 `是` 并, 动态添加属性 `valueDesc` ,完成
+
+```json
+{"name":"Jion","value":"Y","valueDesc":"是"}
+```
+
+自定义注解
+
+```java
+@Target(ElementType.FIELD)
+@Retention(RetentionPolicy.RUNTIME)
+public @interface Lookup {
+
+    /**
+     * 值集Code
+     *
+     * @return 值集Code
+     */
+    String code() default "";
+}
+```
+
+具体的序列化类
+
+```java
+@Slf4j
+public class LookupCodeJsonSerializer extends StdSerializer<String> implements ContextualSerializer {
+
+    private String code;
+
+    private String fileName;
+
+    private final static String DESC = "Desc";
+
+    /**
+     * 无参构造器,必须存在,仅支持 String 类型的转换
+     */
+    public LookupCodeJsonSerializer() {
+        super(String.class);
+    }
+
+    /**
+     * 构造器, 传入值集 Code 参数
+     *
+     * @param code 值集 Code 代码
+     */
+    private LookupCodeJsonSerializer(String code, String fileName) {
+        super(String.class);
+        this.code = code;
+        this.fileName = fileName;
+    }
+
+    /**
+     * 序列化方法
+     *
+     * @param jsonValue     值
+     * @param jsonGenerator 生成JSON工具类
+     * @param serializers   序列化器
+     * @throws IOException 序列化时异常
+     */
+    @Override
+    public void serialize(String jsonValue, JsonGenerator jsonGenerator, SerializerProvider serializers) throws IOException {
+        LookupCodeOperations lookupCodeOperations = ConsoleBeanUtils.getBean(LookupCodeOperations.class);
+        String codeName = lookupCodeOperations.get(code, jsonValue);
+        if(StringUtils.isBlank(codeName)){
+            log.warn("in redis cache can not found this code: {}, the fileName is {} , and the json value is {}",
+                    this.code, this.fileName, jsonValue);
+        }
+        // 首先写入值
+        jsonGenerator.writeString(jsonValue);
+        // 再织入新的值
+        jsonGenerator.writeStringField((this.fileName + DESC), codeName);
+
+    }
+
+    /**
+     * 选择具体的序列化方法, 优先执行
+     *
+     * @param serializerProvider 可选序列化器
+     * @param beanProperty       Bean配置
+     * @return 自定义序列化类
+     */
+    @Override
+    public JsonSerializer<String> createContextual(SerializerProvider serializerProvider, BeanProperty beanProperty) {
+        if (beanProperty != null) {
+            // Bean 属性, 获得其上注解
+            Lookup annotation = beanProperty.getAnnotation(Lookup.class);
+            if (annotation != null) {
+                // 注解上的value值, 获得值集 Code 信息
+                this.code = annotation.code();
+                // 序列化对象属性名
+                String fileName = beanProperty.getName();
+                // 返回对应的序列化器
+                return new LookupCodeJsonSerializer(code, fileName);
+            }
+        }
+        return null;
+    }
+}
+```
+
+
+
+
+
+测试类
+
+```java
+@Slf4j
+public class LookupCodeJsonSerializerTest extends ConsoleApplicationTest {
+
+    @Test
+    public void test() throws IOException {
+        LookupCodeEntity entity = new LookupCodeEntity();
+        entity.setName("Jion");
+        entity.setValue("Y");
+
+        // 序列化
+        ObjectMapper mapper = new ObjectMapper();
+        String asString = mapper.writeValueAsString(entity);
+        log.info(asString);
+    }
+}
+
+/**
+ *  测试类
+ */
+@Data
+class LookupCodeEntity{
+    private String name;
+    
+    @Lookup(code = "YES_NO")
+    @JsonSerialize(using = LookupCodeJsonSerializer.class)
+    private String value;
+}
+```
+
