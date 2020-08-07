@@ -13,8 +13,6 @@ tags: [Oracle, SQL]
 
 通过 `DBLike` 连接其他数据库,以便进行同步操作.
 
-
-
 ## 语法
 
 查询所有的 `DBLink` 
@@ -24,8 +22,6 @@ create database link 连接名称
   connect to 数据库用户名 identified by "数据库密码" using
   '(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=数据库服务器IP)(PORT=数据库服务器端口))(LOAD_BALANCE=yes)(CONNECT_DATA=(SERVER=DEDICATED)(SERVICE_NAME=数据库服务名)))';
 ```
-
-
 
 ## 示例
 
