@@ -159,3 +159,11 @@ private AssertException getInstanceOfGenericWithMessage(String message) {
 Locale locale = LocaleContextHolder.getLocale();
 ```
 
+
+
+### 字符串模板
+
+```java
+String str = MessageFormat.format( " 我是{0},我来自{1},今年{2}岁" , " 中国人" , "北京" , "22" );
+```
+
