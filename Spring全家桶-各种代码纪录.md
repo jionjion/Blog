@@ -161,9 +161,20 @@ Locale locale = LocaleContextHolder.getLocale();
 
 
 
+# 通用代码记录
+
 ### 字符串模板
 
 ```java
 String str = MessageFormat.format( " 我是{0},我来自{1},今年{2}岁" , " 中国人" , "北京" , "22" );
+```
+
+## 日期转换
+
+```java
+// LocalDateTime 转 Date
+Date date =  Date.from(LocalDateTime.now().atZone( ZoneId.systemDefault()).toInstant());
+// Date 转 LocalDateTime
+LocalDateTime localDateTime = nextTime.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
 ```
 
