@@ -394,10 +394,10 @@ public void setBirthday(Calendar birthday) {
 
 
 
-[1]:https://github.com/jionjion/JAVA_WorkSpace/blob/master/JavaBase/src/jaxb/bean/BookListWrapper
-[2]:https://github.com/jionjion/JAVA_WorkSpace/blob/master/JavaBase/src/jaxb/bean/DateAdapter
+[1]:https://github.com/jionjion/JAVA_WorkSpace/blob/master/JavaBase/src/jaxb/bean/BookListWrapper.java
+[2]:https://github.com/jionjion/JAVA_WorkSpace/blob/master/JavaBase/src/jaxb/bean/DateAdapter.java
 [3]:https://github.com/jionjion/JAVA_WorkSpace/blob/master/JavaBase/src/jaxb/bean/Student
-[4]:https://github.com/jionjion/JAVA_WorkSpace/blob/master/JavaBase/src/jaxb/bean/StudentListWrapper
-[5]:https://github.com/jionjion/JAVA_WorkSpace/blob/master/JavaBase/src/jaxb/test/Marshal
-[6]:https://github.com/jionjion/JAVA_WorkSpace/blob/master/JavaBase/src/jaxb/test/UnMarshal
+[4]:https://github.com/jionjion/JAVA_WorkSpace/blob/master/JavaBase/src/jaxb/bean/StudentListWrapper.java
+[5]:https://github.com/jionjion/JAVA_WorkSpace/blob/master/JavaBase/src/jaxb/test/Marshal.java
+[6]:https://github.com/jionjion/JAVA_WorkSpace/blob/master/JavaBase/src/jaxb/test/UnMarshal.java
 
