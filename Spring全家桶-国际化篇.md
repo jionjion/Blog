@@ -16,7 +16,7 @@ date: 2020-02-23 13:06:49
 ## 属性文件
 
 在 `resourcee/i18n` 目录下创建属性文件 `message.properties` , 作为默认的语言的消息内容.
-同时创建 `message_zh_cn.properties` 和 `message_en_us.properties` 分别表示简体中文和美式英文的消息内容.
+同时创建 `message_zh_CN.properties` 和 `message_en_US.properties` 分别表示简体中文和美式英文的消息内容. 注意,国家大小写.
 
 **示例**
 
@@ -35,6 +35,7 @@ account-card-prompt=Welcome, {0}
 ### 配置默认语言
 
 创建配置类, 并指定默认的语言版本和设置拦截器,为系统配置拦截语言规则
+注意. `Bean` 的名字一定是 `localeResolver`, 以便容器替换.
 
 ```java
 @Configuration
