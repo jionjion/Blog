@@ -1,10 +1,13 @@
 ---
 ctitle: Oracle基础-数据库连接篇
-date: 2020-07-26 18:56:35
 categories:
   - Oracle
   - SQL
-tags: [Oracle, SQL]
+tags:
+  - Oracle
+  - SQL
+abbrlink: '0'
+date: 2020-07-26 18:56:35
 ---
 
 

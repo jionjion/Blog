@@ -1,10 +1,13 @@
 ---
 title: Java基础-设计模式
-date: 2020-08-31 22:09:41
 categories:
   - Java
   - Mode
-tags: [Java, Mode]
+tags:
+  - Java
+  - Mode
+abbrlink: 8e9b8537
+date: 2020-08-31 22:09:41
 ---
 
 # 设计思想
@@ -1126,4 +1129,188 @@ public class HouseDirectorTest {
 `java.lang.Appendable` 抽象建造者
 `java.lang.AbstractStringBuilder` 具体建造者,但不能实例化
 `java.lang.StringBuilder` 指挥者兼具体建造者
+
+
+
+## 桥接模式
+
+将抽象和实现两个维度分别独立实现,从而替代多层继承实现.
+基于类的最小设计原则,通过封装/继承/组合等行为,将不同的类承担不同的责任.
+
+**角色:**
+抽象层: 分类依据,一方接口一方抽象类,并在抽象类中组合接口.
+实现层: 具体实现.常用构造器组合接口实现.
+
+### 适用于
+1. 解决多层次继承导致类的数量急剧增加,桥接模式较为适合
+2. 应用场景: JDBC.
+
+### 业务场景
+手机分类.首先是品牌分类,然后是样式分类.(两个维度)
+`Brand`品牌类接口,约定不同的手机品牌.
+分别具有不同的品牌实现,如`XiaoMi`和`Vivo`
+`Phone`手机样式抽象类,约定不同的手机样式.同时,将`Brand`接口通过构造器注入.
+子类为不同样式的手机,如`FoldedPhone`和`TouchPhone`.
+其中,子类通过构造器,中传入的品牌实现,去调用不同的品牌方法.`Phone` 抽象类充当桥梁,连接子类样式与具体的品牌实现
+
+### 示例: 桥接模式
+
+模拟手机业务,不同的手机有不同的品牌,不同的品牌有不同的样式,尝试解决类多层继承导致类爆炸问题.
+
+品牌类,定义品牌及手机基础功能
+
+```java
+/**
+ * 品牌类,定义手机品牌
+ *
+ * @author Jion
+ */
+public interface Brand {
+
+    void open();
+
+    void close();
+
+    void call();
+}
+```
+
+具体的品牌实现,通过实现接口完成
+
+```java
+/** Vivo品牌手机 */
+public class Vivo implements Brand {
+    public void open() {
+        System.out.println("Vivo手机开机...");
+    }
+
+    public void close() {
+        System.out.println("Vivo手机关机...");
+    }
+
+    public void call() {
+        System.out.println("Vivo手机打电话...");
+    }
+}
+
+/** XiaoMi品牌手机 */
+public class XiaoMi implements Brand {
+    public void open() {
+        System.out.println("小米手机开机...");
+    }
+
+    public void close() {
+        System.out.println("小米手机关机...");
+    }
+
+    public void call() {
+        System.out.println("小米手机打电话...");
+    }
+}
+```
+
+定义手机类,抽象类. 将品牌类通过构造器进行组合
+
+```java
+/**
+ * 手机,抽象类,组合品牌类型.
+ * 起到桥接的作用.
+ *
+ * @author Jion
+ */
+public abstract class Phone {
+
+    /** 桥,一方组合品牌 */
+    private Brand brand;
+
+    /** 构造器传入,组合 */
+    public Phone(Brand brand){
+        super();
+        this.brand = brand;
+    }
+
+    /** 桥,让另一方被继承子类调用组合方法 */
+    protected void open(){
+        this.brand.open();
+    }
+
+    /** 调用组合方法 */
+    protected void close(){
+        this.brand.close();
+    }
+
+    /** 调用组合方法 */
+    protected void call(){
+        this.brand.call();
+    }
+}
+```
+
+具体的手机子类,通过继承父类,并构造器传入接口类.实现从抽象类实现方调用接口实现类方的过程.其过程类似过桥...
+新增手机类型,只需要新增抽象实现类即可,无需多层继承.
+
+```java
+/**
+ * 组合, 触摸屏手机
+ * 在调用时,传入不同的品牌,完成桥接组合
+ */
+public class TouchPhone extends Phone {
+
+    /**
+     * 继承自父类,父类无隐式父类构造器,必须显示调用父类有构造器.传入对象
+     */
+    public TouchPhone(Brand brand) {
+        super(brand);
+    }
+
+    /**
+     * 重写抽象父类方法
+     */
+    @Override
+    protected void open() {
+        super.open();
+        System.out.println("触摸屏样式手机打开");
+    }
+
+    @Override
+    protected void close() {
+        super.close();
+        System.out.println("触摸屏样式手机关闭");
+    }
+
+    @Override
+    protected void call() {
+        super.call();
+        System.out.println("触摸屏样式手机打电话");
+    }
+}
+
+/** 组合, 折叠手机 */
+public class FoldedPhone extends Phone {
+
+    /** 继承自父类,父类无隐式父类构造器,必须显示调用父类有构造器.传入对象 */
+    public FoldedPhone(Brand brand) {
+        super(brand);
+    }
+
+    /** 重写抽象父类方法 */
+    @Override
+    protected void open() {
+        super.open();
+        System.out.println("折叠样式手机打开");
+    }
+
+    @Override
+    protected void close() {
+        super.close();
+        System.out.println("折叠样式手机关闭");
+    }
+
+    @Override
+    protected void call() {
+        super.call();
+        System.out.println("折叠样式手机打电话");
+    }
+}
+```
 
