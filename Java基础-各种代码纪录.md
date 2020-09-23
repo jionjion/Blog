@@ -16,3 +16,12 @@ import com.google.common.collect.ImmutableSet;
 private static final Set<String> REQUEST_URIS = ImmutableSet.of("/", "/login");
 ```
 
+
+
+## 环境信息
+
+```java
+// 判断当前系统中是否含有这个环境变量
+Boolean.getBoolean("user.name")
+```
+
