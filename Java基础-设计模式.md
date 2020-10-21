@@ -1314,3 +1314,1294 @@ public class FoldedPhone extends Phone {
 }
 ```
 
+
+
+## 装饰者模式
+
+动态地将一组相似新功能的对象附加到装饰类上, 避免重复创建相似对象,频繁修改装饰类
+
+被装饰者: 具体一组子类,实现在抽象类/接口中约定公共属性/方法.
+装饰者: 连接被装饰者与饰品
+装饰品: 装饰者的子类,并修改被装饰者属性.
+
+### 业务场景
+
+咖啡厅提供很多单体咖啡和调料,为了将其便于调制咖啡,计算价格,因此使用装饰者模式
+调料(装饰者),包装了单体咖啡(被装饰者),完成组合的构建(构造器注入)
+
+饮料类,抽象约定一组相似方法.如单体价格和计算总价
+
+```java
+public abstract class Drink {
+    /** 描述 */
+    private String description;
+
+    /** 价格 */
+    private Double price;
+
+    /** 计算价格方法 */
+    protected abstract Double cose();
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public Double getPrice() {
+        return price;
+    }
+
+    public void setPrice(Double price) {
+        this.price = price;
+    }
+}
+```
+
+单体咖啡类,继承自抽象类,并实现其约定方法与规定属性
+
+```java
+/** 开发类中间类. */
+public class Coffee extends Drink{
+    /** 计算价格方法 */
+    @Override
+    public Double cose() {
+        return super.getPrice();
+    }
+}
+
+/** 美式咖啡 */
+public class LongBlackCoffee extends Coffee {
+
+    /** 构造器 */
+    public LongBlackCoffee() {
+        // 为其指定属性
+        setDescription("美式咖啡");
+        setPrice(5D);
+    }
+}
+
+/** 黑咖啡 */
+public class ShortBlackCoffee extends Coffee {
+    public ShortBlackCoffee() {
+        setDescription("黑咖啡");
+        setPrice(4D);
+    }
+}
+```
+
+装饰者, 作为装饰品的父类,连接被装饰对象与装饰品. 实现父类约定的方法与属性
+
+```java
+/** 装饰者.连接单体咖啡与其调料 */
+public class Decorator extends Drink {
+    /** 引入单体咖啡 */
+    private Drink obj;
+
+    public Decorator(Drink obj){
+        this.obj = obj;
+    }
+
+    /** 计算价格,装饰者 */
+    @Override
+    public Double cose() {
+        // 自己的价格 + 引入单体咖啡的价格
+        return super.getPrice() + obj.cose();
+    }
+
+    /** 描述: 调料 + 价格 + 单体咖啡  */
+    @Override
+    public String getDescription() {
+        return super.getDescription() + ":" + super.getPrice() + " && " + obj.getDescription();
+    }
+}
+```
+
+装饰品,继承自装饰者类,完善具体装饰品信息
+
+```java
+/** 具体的调味品,牛奶 */
+public class Milk extends Decorator{
+    /** 调味品,种类与价格 */
+    public Milk(Drink obj) {
+        super(obj);
+        setDescription("牛奶调味品..");
+        setPrice(2.2D);
+    }
+}
+
+/** 具体的调味品,巧克力 */
+public class Chocolate extends Decorator{
+    /** 调味品,种类与价格 */
+    public Chocolate(Drink obj) {
+        super(obj);
+        setDescription("巧克力调味品..");
+        setPrice(3.3D);
+    }
+}
+```
+
+测试,使用装饰者模式计算价格
+
+```java
+public class DecoratorTest {
+
+    @Test
+    public void test(){
+        // 1.确定单体咖啡
+        Drink coffee = new LongBlackCoffee();
+        // 尝试..计算价格..=> 5
+        System.out.println(coffee.getDescription());
+        System.out.println(coffee.cose());
+
+        // 2.加入调料,新的饮料,构造器注入之前的实例
+        Milk coffeeMilk = new Milk(coffee);
+        // 尝试..计算价格..=> 5 + 2.2 = 7.7
+        System.out.println(coffeeMilk.getDescription());
+        System.out.println(coffeeMilk.cose());
+
+        // 3.加入调料,新的饮料,构造器注入之前的实例
+        Chocolate coffeeMilkChocolate = new Chocolate(coffeeMilk);
+        // 尝试..计算价格..=> 5 + 2.2 + 3.3 = 10.5
+        System.out.println(coffeeMilkChocolate.getDescription());
+        System.out.println(coffeeMilkChocolate.cose());
+    }
+}
+```
+
+### 示例: JDK中使用
+
+`IO` 流的使用
+`InputSteam` :抽象类
+`FileInputStream` : 子类,装饰者
+`SocketInputStream` : 子子类,被装饰者
+
+## 组合模式
+
+创建了对象的树形结构,将对象组合.无需考虑具体节点层级与操作
+
+
+
+### 业务场景
+构成一个学校的 校/院/系, 且具有相同的操作习惯
+
+组织类,抽象类,约定共有方法,操作树节点
+
+```java
+/** 定义节点方法 */
+public abstract class Organization {
+
+    /** 名字 */
+    private String name;
+
+    /** 说明 */
+    private String description;
+
+    public Organization(String name, String description){
+        super();
+        this.name = name;
+        this.description = description;
+    }
+
+    /** 添加 */
+    protected void add(Organization organization){
+
+    }
+
+    /** 删除 */
+    protected void remove(Organization organization){
+
+    }
+
+    /** 子类必须实现, 抽象方法 */
+    protected abstract void print();
+
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+}
+```
+
+第一层,学校节点,持有子节点(用抽象类代替)集合
+
+```java
+/** 大学,管理下属学院 */
+public class University extends Organization {
+
+    /** 包含学院, 用抽象类代替学院实现 */
+    private List<Organization> universityList = new ArrayList<Organization>();
+
+    /** 构造器 */
+    public University(String name, String description) {
+        super(name, description);
+    }
+
+    /** 添加 */
+    @Override
+    protected void add(Organization organization){
+        universityList.add(organization);
+    }
+
+    /** 删除 */
+    @Override
+    protected void remove(Organization organization){
+        universityList.remove(organization);
+    }
+
+    /** 打印 */
+    @Override
+    public void print() {
+        System.out.println("当前学院:" + universityList.toString());
+    }
+}
+```
+
+第二层, 学院节点.
+
+```java
+/** 学院,管理下属院系 */
+public class College extends Organization {
+
+    /** 包含院系, 用抽象类代替院系实现 */
+    private List<Organization> collegeList = new ArrayList<Organization>();
+
+    /** 构造器 */
+    public College(String name, String description) {
+        super(name, description);
+    }
+
+    /** 添加 */
+    @Override
+    protected void add(Organization organization){
+        collegeList.add(organization);
+    }
+
+    /** 删除 */
+    @Override
+    protected void remove(Organization organization){
+        collegeList.remove(organization);
+    }
+
+    /** 打印 */
+    @Override
+    public void print() {
+        System.out.println("当前院系:" + collegeList.toString());
+    }
+}
+
+```
+
+第三层,最小单位,叶子节点,有限度地支持部分方法
+
+```java
+/** 系..最小单位 */
+public class Department extends Organization {
+
+    /** 构造器 */
+    public Department(String name, String description) {
+        super(name, description);
+    }
+
+    /** 打印 */
+    @Override
+    public void print() {
+        System.out.println("当前系:" + super.getName());
+    }
+}
+```
+
+测试类
+
+```java
+public class OrganizationTest {
+    @Test
+    public void test(){
+        // 大学
+        Organization university = new University("河南大学", "河南自己的大学...");
+        // 学院
+        Organization collegeA = new College("计算机学院", "这是计算机学院");
+        Organization collegeB = new College("机械学院", "这是机械学院");
+        // 系
+        Organization DepartmentA1 = new Department("软件工程", "这是软件工程...");
+        Organization DepartmentA2 = new Department("网络工程", "这是网络工程...");
+        Organization DepartmentB1 = new Department("机械制造", "这是机械制造...");
+        Organization DepartmentB2 = new Department("车辆制造", "这是车辆制造...");
+
+        // 动作组合
+        collegeA.add(DepartmentA1);
+        collegeA.add(DepartmentA2);
+        collegeB.add(DepartmentB1);
+        collegeA.add(DepartmentB2);
+        university.add(collegeA);
+        university.add(collegeB);
+
+        // 组合结果, 使用学校级别, 学院级别, 学系级别
+        university.print();
+        collegeA.print();
+        DepartmentA1.print();
+    }
+}
+```
+
+## 外观模式
+为子系统的一组接口提供了一个一致的界面,用以屏蔽子系统细节,使得调用只跟接口发生,无关子系统内部.
+当系统特别复杂时,可以更好的控制访问的层次
+
+### 业务场景
+遥控器控制家庭影院,如DVD, TV...
+
+各种家电类,
+
+```java
+/** DVD 播放器 */
+public class DvdPlayer {
+
+    public void on(){
+        System.out.println("DvD 打开了");
+    }
+
+    public void off(){
+        System.out.println("DvD 关闭了");
+    }
+
+    public void play(){
+        System.out.println("DvD 播放了");
+    }
+}
+
+/** Mp3 播放器 */
+public class Mp3Player {
+
+    public void on(){
+        System.out.println("Mp3 打开了");
+    }
+
+    public void off(){
+        System.out.println("Mp3 关闭了");
+    }
+
+    public void fm(){
+        System.out.println("Mp3 收音了");
+    }
+}
+
+/** TV 电视机 */
+public class TvPlayer {
+
+    public void on(){
+        System.out.println("TV 打开了");
+    }
+
+    public void off(){
+        System.out.println("TV 关闭了");
+    }
+
+    public void change(){
+        System.out.println("TV 换台了");
+    }
+}
+
+```
+
+外观类,组合当前家电
+
+```java
+/** 外观类 */
+public class HomeFacade {
+
+    // 各个子系统对象
+    /** DVD */
+    private final DvdPlayer dvdPlayer;
+
+    /** Mp3 */
+    private final Mp3Player mp3Player;
+
+    /** Tv */
+    private final TvPlayer tvPlayer;
+
+    /** 构造器注入依赖 */
+    public HomeFacade(){
+        dvdPlayer = new DvdPlayer();
+        mp3Player = new Mp3Player();
+        tvPlayer = new TvPlayer();
+    }
+
+    /** 组织各个方法 */
+    public void ready(){
+        dvdPlayer.on();
+        mp3Player.on();
+        tvPlayer.on();
+    }
+
+    /** 组织各个方法 */
+    public void enjoy(){
+        dvdPlayer.play();
+        mp3Player.fm();
+        tvPlayer.change();
+    }
+
+    /** 组织各个方法 */
+    public void end(){
+        dvdPlayer.off();
+        mp3Player.off();
+        tvPlayer.off();
+    }
+}
+```
+
+测试类
+
+```java
+public class HomeFacadeTest {
+
+    @Test
+    public void test(){
+        HomeFacade homeFacade = new HomeFacade();
+        homeFacade.ready();
+        homeFacade.enjoy();
+        homeFacade.end();
+    }
+}
+```
+
+## 享元模式
+
+共享相同的对象,解决代码重复问题.常用作池对象,解决内存重复占用问题.
+
+角色:
+产品抽象角色: 定义外部状态(不同的代码)和内部状态(相同的代码),并声明为对应接口
+具体的产品角色: 实现抽象角色定义的相关方法
+不可共享角色: 不共享的角色,不会出现在享元工厂中
+享元工厂: 构建池容器,集合维护产品对象.
+
+### 业务场景
+网站,根据其分类分为新闻类, 运动类, 并交由不同的用户去订阅使用.根据享元模式,可以将新闻类创建放入池中,交由用户调用.
+
+用户信息
+
+```java
+/** 不同对象间的不同实例 */
+public class User {
+
+    private final String username;
+
+    public User(String username) {
+        this.username = username;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+}
+```
+
+
+
+基础网站, 差异点为不同用户
+
+```java
+/** 抽象类,定义抽象方法 */
+public abstract class Website {
+
+    /** 相似的抽相方法, User为不同点 */
+    protected abstract void use(User user);
+}
+
+```
+
+具体的新闻网站,定义使用方法 `use` .
+
+```java
+/** 具体子类,新闻类型 */
+public class NewWebsite extends Website {
+
+    /** 具体的新闻类别,相似的部分 */
+    private final String type;
+
+
+    public NewWebsite(String type) {
+        this.type = type;
+    }
+
+    @Override
+    protected void use(User user) {
+        System.out.println("当前对象使用者: " + user.getUsername());
+        System.out.println("新闻网站的类型为: " + type + " ,对象哈希为: " + this.hashCode());
+    }
+}
+```
+
+工厂类, 维护池中站点信息
+
+```java
+/** 网站工厂类,根据需求返回池中的对象 */
+public class WebsitePool {
+
+    /** 集合对象 */
+    private final HashMap<String, NewWebsite> pool = new HashMap<String, NewWebsite>(10);
+
+    /** 获得对象,存在拿去,否则创建返回并存放 */
+    public Website getWebsite(String type){
+        // 不存在,放入
+        if(!pool.containsKey(type)){
+            pool.put(type, new NewWebsite(type));
+        }
+        return pool.get(type);
+    }
+}
+```
+
+测试
+
+```java
+public class WebsiteTest {
+
+    @Test
+    public void test(){
+        WebsitePool pool = new WebsitePool();
+
+        // 获得,并存放一个
+        User jion = new User("Jion");
+        Website newWebsite = pool.getWebsite("NEW");
+        newWebsite.use(jion);
+        // 再次获得一个
+        User arise = new User("Arise");
+        Website musicWebsite = pool.getWebsite("Music");
+        musicWebsite.use(arise);
+        // 重试从缓存中,相同对象,不同调用
+        User bom = new User("Bom");
+        Website cacheWebsite = pool.getWebsite("NEW");
+        cacheWebsite.use(bom);
+    }
+}
+```
+
+### 示例: JDK中使用
+
+`java.lang.Integer` 中使用, 正范围[-128,127]内的对象,通过 `valueOf` 方法获得的为缓存数组中的同一个对象.
+
+
+
+## 代理模式
+为对象提供一个代理,通过该代理完成对象的调用,以期增强其特性,而无需修改原有代码
+
+### 静态代理
+定义接口或者父类,代理类与目标类实现相同的父类.通过调用相同的方法,实现对目标类的调用.
+
+优点: 简单,只要实现接口和父类即可
+缺点: 如果接口增加,需要实现相同的方法
+
+#### 示例: 静态代理
+
+接口, 定义方法. 被代理对象与代理类均实现
+
+```java
+/** 代理类与目标类约定方法 */
+public interface Teacher {
+    /** 共有方法 */
+    void tell();
+}
+```
+
+被代理对象, 实现方法
+
+```java
+/** 目标类 */
+public class MathTeacher implements Teacher {
+
+    /** 目标类,方法 */
+    public void tell() {
+        System.out.println("老师正在授课...");
+    }
+}
+```
+
+代理类, 通过实现共同的接口, 并聚合静态代理对象, 扩展方法
+
+```java
+/** 代理类,通过静态代理,扩展方法 */
+public class ProxyTeacher implements Teacher{
+
+    /** 静态代理对象 */
+    private final Teacher teacher = new MathTeacher();
+
+    /** 代理类,方法 */
+    public void tell() {
+        System.out.println("代理类执行...");
+        teacher.tell();
+    }
+}
+```
+
+
+
+### JDK代理
+代理类无需实现接口,但是**被代理对象需要实现接口**.通过jdk中的方法
+
+#### 示例: JDK代理
+
+接口类,定义方法
+
+```java
+/** 目标类约定方法 */
+public interface Teacher {
+    /** 共有方法 */
+    void tell();
+}
+```
+
+被代理类,必须实现接口
+
+```java
+/** 目标类,必须实现接口 */
+public class MathTeacher implements Teacher {
+    /** 目标类,方法 */
+    public void tell() {
+        System.out.println("老师正在授课...");
+    }
+}
+
+```
+
+代理类,通过 `Proxy.newProxyInstance()` 传入类加载器,获得代理对象,并执行 `InvocationHandler` 中扩展方法
+
+```java
+/** 通过JDK动态生成代理对象 */
+public class ProxyTeacherFactory {
+
+    /** 获得代理对象 */
+    public Object getProxyInstance(final Object target) {
+
+        // 类加载器 ; 目标类的所有实现接口 ; 事件处理器
+        return Proxy.newProxyInstance(target.getClass().getClassLoader(),
+                target.getClass().getInterfaces(),
+                new InvocationHandler() {
+                    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+                        System.out.println("代理开始...");
+                        Object result = method.invoke(target, args);
+                        System.out.println("代理结束...");
+                        return result;
+                    }
+                });
+    }
+}
+```
+
+
+
+### CGlib代理
+
+**被代理对象无需实现接口或父类**,即可完成代理(被代理对象不能为final类/static类).
+通过内存中添加代理类的子类,完成对目标类的代理.
+
+
+
+被代理对象, 无需实现接口
+
+```java
+/** 目标类,不必实现接口 */
+public class MathTeacher  {
+    /** 目标类,方法 */
+    public void tell() {
+        System.out.println("老师正在授课...");
+    }
+}
+```
+
+代理类
+
+```java
+/** 创建代理类 */
+public class ProxyTeacherFactory implements MethodInterceptor {
+
+    /** 维护一个目标对象 */
+    private final Object target;
+
+    public ProxyTeacherFactory(Object target){
+        this.target = target;
+    }
+
+    /** 返回代理对象 */
+    public Object getInstance(){
+        // 1. 创建工具类
+        Enhancer enhancer = new Enhancer();
+
+        // 2. 设置父类
+        enhancer.setSuperclass(target.getClass());
+
+        // 3. 设置回调函数
+        enhancer.setCallback(this);
+
+        // 4. 创建子类及代理
+        return enhancer.create();
+    }
+
+    /**
+     *  使用Cglib进行代理, 改方法中调用目标方法
+     * @param obj 被代理对象
+     * @param method 代理方法
+     * @param args  代理方法参数
+     * @param methodProxy 调用方法返回结果
+     * @return 调用方法返回结果
+     * @throws Throwable 各种异常
+     */
+    public Object intercept(Object obj, Method method, Object[] args, MethodProxy methodProxy) throws Throwable {
+        System.out.println("代理开始...");
+        // 代理方法反射调用,传入源目标类及方法参数
+        Object result = method.invoke(target, args);
+        System.out.println("代理结束...");
+        return result;
+    }
+}
+```
+
+## 模板模式
+在抽象类中定义了一组执行方法,子类继承实现具体的方法.
+但是调用仍然以抽象类中的定义顺序执行.
+
+钩子方法:
+父类中定义的方法,默认不作任何事情,子类选择性覆盖.
+
+### 业务场景: 
+制作饮料,口味不同.具有相似的步骤.
+
+抽象类,定义模板方法. 注意方法用 `final` 修饰
+
+```java
+/** 抽象类,定义模板 */
+public abstract class AbstractTea {
+
+    /** 模板方法,不允许修改 */
+    public final void make() {
+        select();
+
+        boil();
+
+        finish();
+
+        // 钩子方法
+        if (isPack()) {
+            pack();
+        }
+    }
+
+    /** 1. 选材,抽象类,子类必须实现 */
+    protected abstract void select();
+
+
+    /** 2. 煮沸,子类选择实现 */
+    protected void boil() {
+        System.out.println("煮沸中...");
+    }
+
+    /** 3. 完成 */
+    public void finish() {
+        System.out.println("制作完成...");
+    }
+
+    /** 4. 钩子方法,是否打包 */
+    public void pack() {
+        System.out.println("打包....");
+    }
+
+    public boolean isPack() {
+        return false;
+    }
+}
+```
+
+红茶制作, 重写模板中 `boil` 某些步骤的方法.
+
+```java
+/** 红茶的制作 */
+public class BlackTea extends AbstractTea {
+
+    @Override
+    protected void select() {
+        System.out.println("选择红茶...");
+    }
+
+    @Override
+    protected void boil() {
+        super.boil();
+        System.out.println("红茶煮沸中...");
+    }
+}
+
+```
+
+绿茶制作, 重写钩子 `isPack` 方法, 动态修改模板方法.
+
+```java
+/** 绿茶的制作 */
+public class GreenTea extends AbstractTea {
+
+    @Override
+    protected void select() {
+        System.out.println("选择绿茶...");
+    }
+
+    @Override
+    public void pack() {
+        super.pack();
+    }
+
+    /** 重写父类方法,钩子方法执行 */
+    @Override
+    public boolean isPack(){
+        return true;
+    }
+}
+```
+
+
+
+## 命令模式
+将请求发送者与接收者相解耦.
+每一个命令作为一个对象,使用不同的参数代表不同的命令,支持命令的撤销
+
+场景: 模拟CMD命令, 订单撤销/恢复, 触发-反馈机制
+
+### 角色
+调用者:   发布命令
+命令:     定义命令(支持撤销)
+具体命令: 具体内容,持有被调用者    
+被调用者: 接受命令,执行具体的请求
+
+### 业务场景
+家电有多个遥控器,需要使用命令模式进行操作
+
+被调用者, 具体的家电及其提供具体的功能.
+
+```java
+/** 电灯遥控器 */
+public class LightReceiver {
+
+    /** 开灯 */
+    public void on() {
+        System.out.println("灯打开....");
+    }
+
+    /** 关灯 */
+    public void off() {
+        System.out.println("灯关闭....");
+    }
+}
+
+/** 电视遥控器 */
+public class TvReceiver {
+
+    /** 开电视 */
+    public void on() {
+        System.out.println("电视打开....");
+    }
+
+    /** 关电视 */
+    public void off() {
+        System.out.println("电视关闭....");
+    }
+}
+
+```
+
+命令,定义接口,且支持撤销
+
+```java
+/** 命令接口 */
+public interface Command {
+
+    /** 执行动作 */
+    public void execute();
+
+    /** 撤销动作 */
+    public void undo();
+}
+```
+
+具体调用命令, 聚合持有具体的接收执行对象. 这里定义空命令,以便在程序初始化中调用.
+
+```java
+/** 空命令,控制性.用于初始化,当调用时,什么也不做 */
+public class NoCommand implements Command {
+    public void execute() { }
+
+    public void undo() { }
+}
+
+/** 灯打开命令,聚合具体的执行者.
+ *  并将命令与执行者相关 */
+public class LightOnCommand implements Command {
+
+    /** 聚合命令具体执行者 */
+    private final LightReceiver lightReceiver;
+
+    public LightOnCommand(LightReceiver lightReceiver) {
+        this.lightReceiver = lightReceiver;
+    }
+
+    public void execute() {
+        lightReceiver.on();
+    }
+
+    public void undo() {
+        lightReceiver.off();
+    }
+}
+/** 关灯命令 */
+public class LightOffCommand implements Command {
+
+    private final LightReceiver lightReceiver;
+
+    public LightOffCommand(LightReceiver lightReceiver) {
+        this.lightReceiver = lightReceiver;
+    }
+    public void execute() {
+        lightReceiver.off();
+    }
+
+    public void undo() {
+        lightReceiver.on();
+    }
+}
+
+/** 电视开机命令 */
+public class TvOnCommand implements Command {
+
+    private final TvReceiver tvReceiver;
+
+    public TvOnCommand(TvReceiver tvReceiver) {
+        this.tvReceiver = tvReceiver;
+    }
+
+    public void execute() {
+        tvReceiver.on();
+    }
+
+    public void undo() {
+        tvReceiver.off();
+    }
+}
+
+/** 电视机关命令 */
+public class TvOffCommand implements Command {
+
+    private final TvReceiver tvReceiver;
+
+    public TvOffCommand(TvReceiver tvReceiver) {
+        this.tvReceiver = tvReceiver;
+    }
+    public void execute() {
+        tvReceiver.off();
+    }
+
+    public void undo() {
+        tvReceiver.on();
+    }
+}
+```
+
+调用者,遥控器类. 将具体命令进行调用分发.
+内部使用数组维护命令组,调用时传入数组索引进行执行; 缓存上一个动作命令,支持撤销
+
+```java
+/** 遥控器,持有多组命令 */
+public class RemoteController {
+	/** 开机命令组 */
+    private final Command[] onCommands;
+	/** 关机命令组 */
+    private final Command[] offCommands;
+
+    /** 撤销的命令 */
+    private Command undoCommand;
+
+    /** 构造器初始化按钮组 */
+    public RemoteController() {
+        onCommands = new Command[5];
+        offCommands = new Command[5];
+
+        // 初始化,为空命令. 这里初始化5组命令
+        for (int i = 0; i < 5; i++) {
+            onCommands[i] = new NoCommand();
+            offCommands[i] = new NoCommand();
+        }
+    }
+
+    /** 为按钮组设置命令 */
+    public void setCommand(int index, Command onCommand, Command offCommand){
+        onCommands[index] = onCommand;
+        offCommands[index] = offCommand;
+    }
+
+    /** 对外提供按钮,启动 */
+    public void onButtonClick(int index){
+        // 找到具体对的家电按钮,并执行
+        onCommands[index].execute();
+        // 记录操作,以备撤销
+        undoCommand = onCommands[index];
+    }
+
+    /** 对外提供按钮,关闭 */
+    public void offButtonClick(int index){
+        // 找到具体对的家电按钮,并执行
+        offCommands[index].execute();
+        // 记录操作,以备撤销
+        undoCommand = offCommands[index];
+    }
+
+    /** 对外提供按钮,撤销 */
+    public void undoButtonClick(){
+        // 执行上次的撤销命令
+        undoCommand.undo();
+    }
+}
+```
+
+测试类
+
+```java
+public class RemoteControllerTest {
+
+    @Test
+    public void test(){
+        // 接收者: 电灯
+        LightReceiver lightReceiver = new LightReceiver();
+
+        // 命令: 开,关
+        LightOnCommand lightOnCommand = new LightOnCommand(lightReceiver);
+        LightOffCommand lightOffCommand = new LightOffCommand(lightReceiver);
+
+        // 调用者: 遥控器
+        RemoteController remoteController = new RemoteController();
+        // 遥控器,命令数组初始化
+        remoteController.setCommand(0, lightOnCommand, lightOffCommand);
+
+        // 具体操作... 开..关..撤销
+        remoteController.onButtonClick(0);
+        remoteController.offButtonClick(0);
+        remoteController.undoButtonClick();
+
+        // 接收者: 电视机
+        TvReceiver tvReceiver = new TvReceiver();
+
+        // 命令: 开,关
+        TvOnCommand tvOnCommand = new TvOnCommand(tvReceiver);
+        TvOffCommand tvOffCommand = new TvOffCommand(tvReceiver);
+
+        // 遥控器,命令数组初始化
+        remoteController.setCommand(1, tvOnCommand, tvOffCommand);
+
+        // 具体操作... 开..关..撤销
+        remoteController.onButtonClick(1);
+        remoteController.offButtonClick(1);
+        remoteController.undoButtonClick();
+    }
+}
+```
+
+
+
+### 示例: JDK中使用
+在 `SpringJDBCTemplate` 中用到, 以便提供统一的一组命令,无需关注具体数据操作类型
+
+
+
+## 访问者模式
+将数据结构与数据操作相分离,在不改变原有数据结构的情况下,定义对这些数据的新操作.
+通过在被访问类中,添加对外提供接待访问的接口
+
+角色:
+访问者: 抽象访问者,为对象声明访问操作
+具体访问: 具体子类,实现访问操作
+数据结构: 枚举访问集合,提供高层次接口,允许访问者进行访问 
+对象:    抽象元素,接受访问者
+具体对象: 具体元素,让访问者操作
+
+场景:
+当系统有一个稳定的数据结构,但有经常变化的功能需求
+需要某个对象结构的对象进行很多不同没有关联的操作,避免因为操作不当污染原有类
+
+### 双分派
+
+首先在客户端程序中,将具体的状态 `Action` 作为参数传入到 `Woman`中(第一次分派,动态分配 `Action` 的具体子类).
+随后在 `Woman` 类中调用参数的具体方法中的 `getWoManResult` , 将自己 `this` 作为参数(第二次分派,动态分配`People` 子类).
+达到解耦的目的
+
+### 业务场景
+
+观众对歌手打分,是否晋升/失败/待定....
+
+访问者, 分为抽象类和具体实现类, 定义并实现访问方法
+
+```java
+/** 访问者, 定义访问接口 */
+public abstract class Action {
+
+    /** 获得一个男歌手的测评 */
+    public abstract void getManResult(Man man);
+
+    /** 获得一个女歌手的测评 */
+    public abstract void getWoManResult(Woman woman);
+
+}
+
+/** 具体访问者 - 打分成功 */
+public class Success extends Action {
+
+    @Override
+    public void getManResult(Man man) {
+        System.out.println("男歌手晋升成功..." + man.name);
+    }
+
+    @Override
+    public void getWoManResult(Woman woman) {
+        System.out.println("女歌手晋升成功..." + woman.name);
+    }
+}
+/** 具体访问者 - 打分失败 */
+public class Fail extends Action {
+
+    @Override
+    public void getManResult(Man man) {
+        System.out.println("男歌手晋升失败..." + man.name);
+    }
+
+    @Override
+    public void getWoManResult(Woman woman) {
+        System.out.println("女歌手晋升失败..." + woman.name);
+    }
+}
+
+/** 具体访问者 - 扩展,打分状态. 等待晋升 */
+public class Wait extends Action {
+
+    @Override
+    public void getManResult(Man man) {
+        System.out.println("男歌手等待晋升..." + man.name);
+    }
+
+    @Override
+    public void getWoManResult(Woman woman) {
+        System.out.println("男歌手等待晋升..." + woman.name);
+    }
+}
+```
+
+定义数据层, 分为抽象类及其具体子类
+
+```java
+/** 数据,抽象层. 传入访问器,子类调用访问器中的访问方法,获得结果 */
+public abstract class People {
+
+    protected String name;
+
+    /** 提供方法,让访问者可以访问 */
+    public abstract void accept(Action action);
+}
+
+/** 数据, 男歌手 */
+public class Man extends People {
+
+    public Man(String name) {
+        super();
+        super.name = name;
+    }
+
+    @Override
+    public void accept(Action action) {
+        action.getManResult(this);
+    }
+}
+
+/** 数据, 女歌手 */
+public class Woman extends People {
+
+    public Woman(String name) {
+        super();
+        super.name = name;
+    }
+
+    @Override
+    public void accept(Action action) {
+        action.getWoManResult(this);
+    }
+}
+
+```
+
+数据结构
+
+```java
+/** 维护成员的数据结构 */
+public class ObjectStructures {
+
+    /** 维护集合 */
+    private final List<People> peoples = new LinkedList<People>();
+
+    /** 增加 */
+    public void attach(People people) {
+        peoples.add(people);
+    }
+
+    /** 移除 */
+    public void detach(People people) {
+        peoples.remove(people);
+    }
+
+    /** 测试 */
+    public void dispaly(Action action) {
+        for (People people : peoples) {
+            people.accept(action);
+        }
+    }
+}
+```
+
+测试
+
+```java
+/** 访问者模式使用 */
+public class ObjectStructuresTest {
+
+    @Test
+    public void test(){
+        // 对象数据结构
+        ObjectStructures context = new ObjectStructures();
+
+        // 添加对象
+        context.attach(new Man("男一号"));
+        context.attach(new Woman("女一号"));
+
+        // 打分,成功
+        Success success = new Success();
+        context.dispaly(success);
+
+        // 打分,失败
+        Fail fail = new Fail();
+        context.dispaly(fail);
+
+        //扩展状态.等待
+        Wait wait = new Wait();
+        context.dispaly(wait);
+    }
+}
+```
+
+
+
+
+## 模式
