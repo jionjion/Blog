@@ -2601,6 +2601,73 @@ public class ObjectStructuresTest {
 }
 ```
 
+## 迭代器模式
+
+提供统一的迭代器完成遍历,而不用暴露内部数据结构
+
+优点: 提供统一的遍历方法,隐藏内部细节
+缺点: 每个集合对象均产生一个迭代器,不好管理.
+
+迭代器接口: 系统提供 `java.util.Iterator`
+具体迭代器: 管理迭代过程,实现 `Iterator` 接口
+聚合接口: 统一的聚合接口,将客户端和具体迭代器解耦
+容器类: 含有具体的容器,持有对象的集合并提供方法返回迭代器
+
+
+
+### `Iterator` 接口
+
+在 `java.util.Iterator<T>` 接口中定义了一系列迭代方法.对外提供迭代方法
+
+- `boolean hasNext()` 是否含有下一个成员
+- `E next()` 获取下一个成员
+- `default void remove()` 迭代时,删除某个元素
+- `default void forEachRemaining(Consumer<? super E> action)` 传入消费者接口函数,遍历循环执行
+
+### 业务场景
+学校,学院,学系的遍历
+
+定义学系类, 作为迭代器遍历的对象. 
+
+```java
+/** 学系,被迭代器遍历的成员 */
+public class Department {
+
+    /** 名字 */
+    private final String name;
+
+    /** 描述 */
+    private final String description;
+
+    public Department(String name, String description) {
+        this.name = name;
+        this.description = description;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+}
+```
+
+
+
+
+
+### JDK中
+ArrayList使用迭代器模式
+具体迭代器: java.util.ArrayList.Itr: 具体迭代器
+聚合接口:   java.util.List: 作为聚合集合,提供 `iterator` 迭代方法
+容器类:    java.util.ArrayList: 容器类,提供具体数组,作为存放容器
+
+
+
+
+
 
 
 
