@@ -2654,19 +2654,577 @@ public class Department {
 }
 ```
 
+学院迭代器具体实现,实现接口 `java.util.Iterator`. 
+
+```java
+/** 学院迭代器, 迭代内部的学系 内部为数组 */
+public class CollegeArrayIterator implements Iterator<Department> {
+
+    /** 迭代的对象 */
+    private final Department[] departments;
+
+    /** 遍历的位置 */
+    private int position = 0;
+
+    public CollegeArrayIterator(Department[] departments){
+        this.departments = departments;
+    }
+
+    /** 数组是否含有下一个 */
+    @Override
+    public boolean hasNext() {
+        return position < departments.length && departments[position] != null;
+    }
+
+    /** 遍历下一个 */
+    @Override
+    public Department next() {
+        Department department = departments[position];
+        position++;
+        return department;
+    }
+
+    /** 删除方法.不作处理 */
+    @Override
+    public void remove() {
+
+    }
+}
+
+```
+
+学院类,  定义对外提供方法, 其中包括 `iterator` 对外提供迭代器
+
+```java
+/** 学院类, */
+public interface College {
+
+    /** 获得学院描述 */
+    String getName();
+
+    /** 增加学系 */
+    void addDepartment(String name, String description);
+
+    /** 返回迭代器,遍历 */
+    Iterator<Department> iterator();
+}
+
+```
+
+学院具体实现, 通过聚合一个数组,将对象存入.并对外提供迭代器进行访问
+
+```java
+/** 计算机学院, 具体的学院. */
+public class ComputerCollege implements College{
+
+    /** 聚合,一个数组. */
+    Department[] departments;
+
+    /** 保存当前数据组,对象个数 */
+    int countOfDepartment = 0;
+
+    public ComputerCollege(){
+        departments = new Department[8];
+    }
+
+    @Override
+    public String getName() {
+
+        return "计算机学院";
+    }
+
+    @Override
+    public void addDepartment(String name, String description) {
+        Department department = new Department(name, description);
+        departments[countOfDepartment] = department;
+        countOfDepartment++;
+    }
+
+    /** 获得迭代器,自定义的迭代器 */
+    @Override
+    public Iterator<Department> iterator() {
+        return new CollegeArrayIterator(departments);
+    }
+}
+
+```
+
+测试用例
+
+```java
+/** 计算机学院, 测试迭代器模式 */
+public class ComputerCollegeTest {
+
+    @Test
+    public void test(){
+        // 学院
+        ComputerCollege college = new ComputerCollege();
+        // 添加学系
+        college.addDepartment("网络工程", "网络工程学系");
+        college.addDepartment("软件工程", "软件工程学系");
+        college.addDepartment("通信工程", "通信工程学系");
+
+        // 迭代遍历
+        Iterator<Department> iterator = college.iterator();
+        while (iterator.hasNext()){
+            Department next = iterator.next();
+            System.out.println(next.getName()  + ": " + next.getDescription());
+        }
+    }
+}
+```
 
 
 
+### 示例: JDK中使用
 
-### JDK中
-ArrayList使用迭代器模式
-具体迭代器: java.util.ArrayList.Itr: 具体迭代器
-聚合接口:   java.util.List: 作为聚合集合,提供 `iterator` 迭代方法
-容器类:    java.util.ArrayList: 容器类,提供具体数组,作为存放容器
-
-
+`ArrayList` 使用迭代器模式
+具体迭代器: `java.util.ArrayList.Itr`: 具体迭代器
+聚合接口:   `java.util.List`: 作为聚合集合,提供 `iterator` 迭代方法
+容器类:    `java.util.ArrayList`: 容器类,提供具体数组,作为存放容器
 
 
+
+## 观察者模式
+对象之间一对多的设计模式,一方是被观察对象,多方是观察者.
+
+被观察对象核心方法: 注册/移除/通知
+观察者核心方法: 更新
+
+### 业务场景
+
+将当前天气信息主题推送到不同的观察者中.
+
+主题接口,并定义核心方法. 注册 / 移除 / 观察 
+
+```java
+/** 主题 */
+public interface Subject {
+
+    /** 注册 */
+    void registerObserver(Observer observer);
+
+    /** 移除 */
+    void removeObserver(Observer observer);
+
+    /** 观察 */
+    void notifyObservers(Float temperature);
+}
+```
+
+观察者接口, 定义更新方法
+
+```java
+/** 观察者 */
+public interface Observer {
+
+    /** 更新方法,传入温度 */
+    void update(Float temperature);
+}
+```
+
+具体的主题对象, 天气信息. 内部维护了所有的观察者对象列表, 并实现 注册 / 移除 / 观察 相关方法
+
+```java
+/** 天气信息,被观察对象 */
+public class WeatherData implements Subject{
+
+    /** 所有观察者 */
+    List<Observer> observer = new ArrayList<>(4);
+
+    @Override
+    public void registerObserver(Observer observer) {
+        this.observer.add(observer);
+    }
+
+    @Override
+    public void removeObserver(Observer observer) {
+        this.observer.remove(observer);
+    }
+
+    @Override
+    public void notifyObservers(Float temperature) {
+        observer.forEach(o -> o.update(temperature));
+    }
+}
+
+```
+
+具体观察者
+
+```java
+/** 观察者, 订阅用户天气. */
+public class WeatherUser implements Observer{
+
+    /** 观察内容: 天气温度 */
+    public void use(Float temperature){
+        System.out.println("用户观察天气: " + temperature);
+    }
+
+    @Override
+    public void update(Float temperature) {
+        // 执行内部方法
+        use(temperature);
+    }
+}
+
+/** 观察者, 订阅用户天气.手机 */
+public class WeatherMobile implements Observer{
+
+    /** 观察内容: 天气温度 */
+    public void use(Float temperature){
+        System.out.println("手机观察天气: " + temperature);
+    }
+
+    @Override
+    public void update(Float temperature) {
+        // 执行内部方法
+        use(temperature);
+    }
+}
+
+```
+
+测试用例
+
+```java
+/** 测试观察者模式 */
+public class ObserverTest {
+
+    @Test
+    public void test(){
+        // 被观察者对象
+        WeatherData weatherData = new WeatherData();
+
+        // 观察者, 用户
+        WeatherUser user = new WeatherUser();
+        // 观察者, 手机
+        WeatherMobile mobile = new WeatherMobile();
+
+        // 注册观察者
+        weatherData.registerObserver(user);
+        weatherData.registerObserver(mobile);
+
+        // 更新事件
+        weatherData.notifyObservers(52F);
+    }
+
+}
+```
+
+
+
+### 示例: JDK使用
+
+`java.util.Observer` 接口,观察者.约定更新方法
+`java.util.Observable` 实现类,被观察对象,提供对观察者的一系列方法.如 添加 / 移除  / 通知
+
+
+
+## 中介者模式
+用一个中介者封装一系列的对象交互,中介者使对象之间无需重复交互引用.
+降低子系统模式之间的耦合
+
+角色:
+中介接口: 接口,约定同事对象到中介类的关系
+具体中介者: 实现接口,并处理同事关系,持有各同事对象
+抽象同事: 一系列对象的共有父类,定义相似方法
+具体同事类: 一系列对象,每个同事类只了解自身方法.
+
+### 业务场景
+
+不同家电之间调用, 通过中介模式实现.
+
+中介接口,  定义注册同事类的方法, 定义协调不同家电类之间调用的方法. 
+
+```java
+/** 中介接口 */
+public interface Mediator {
+
+    /** 注册同事类 */
+    void register(String name, Colleague colleague);
+
+    /** 核心,处理不同家电的发送消息 */
+    void getMessage(int status, String name);
+
+    /** 发送消息 */
+    void sendMessage();
+
+}
+
+```
+
+抽象同事类, 内部维护中介类. 并在构造函数中定义中介类,子类在构造函数中,将其自身注入到中介类中.
+
+```java
+/** 同事类,定义各子家电共有方法,维持中介类 */
+public abstract class Colleague {
+
+    /** 中介类 */
+    private final Mediator mediator;
+
+    /** 家电名 */
+    public String name;
+
+    public Colleague(Mediator mediator, String name){
+        this.mediator = mediator;
+        this.name = name;
+    }
+
+    public Mediator getMediator() {
+        return mediator;
+    }
+
+    /** 发送信号 */
+    public abstract void sendMessage(int status);
+}
+```
+
+具体同事类.  在构造函数中,将其自身注入到中介类中.
+
+```java
+/** 闹钟,具体同事类 */
+public class Alarm extends Colleague {
+
+    public Alarm(Mediator mediator, String name) {
+        super(mediator, name);
+        // 创建具体同事类时,将自己注入到中介类中.
+        mediator.register(name, this);
+    }
+
+    /** 发送消息 */
+    public void sendAlarm(int status){
+        sendMessage(status);
+    }
+
+    @Override
+    public void sendMessage(int status) {
+        // 得到中介,并处理相应消息
+        this.getMediator().getMessage(status, this.name);
+    }
+}
+
+/** 电视,具体同事类 */
+public class Tv extends Colleague {
+
+    public Tv(Mediator mediator, String name) {
+        super(mediator, name);
+        // 创建具体同事类时,将自己注入到中介类中.
+        mediator.register(name, this);
+    }
+
+    /** 发送消息 */
+    public void sendAlarm(int status){
+        sendMessage(status);
+    }
+
+    @Override
+    public void sendMessage(int status) {
+        // 得到中介,并处理相应消息
+        this.getMediator().getMessage(status, this.name);
+    }
+}
+
+/** 点灯,具体同事类 */
+public class Light extends Colleague {
+
+    public Light(Mediator mediator, String name) {
+        super(mediator, name);
+        // 创建具体同事类时,将自己注入到中介类中.
+        mediator.register(name, this);
+    }
+
+    /** 发送消息 */
+    public void sendAlarm(int status){
+        sendMessage(status);
+    }
+
+    @Override
+    public void sendMessage(int status) {
+        // 得到中介,并处理相应消息
+        this.getMediator().getMessage(status, this.name);
+    }
+}
+
+```
+
+具体的中介类. 提供注册方法, 在具体家电类创建时,将其注入到 `HashMap` 中. 并实现 `getMessage` 方法.来处理不同子系统对某个消息状态的具体响应..
+
+```java
+/** 具体的中介者 */
+public class ConcreteMediator implements Mediator {
+
+    private final HashMap<String, Colleague> colleagues = new HashMap<>();
+
+    @Override
+    public void register(String name, Colleague colleague) {
+        colleagues.put(name, colleague);
+    }
+
+
+    /** 核心方法,在该方法中,完成各个子系统间的协调办公 */
+    @Override
+    public void getMessage(int status, String name) {
+        // 根据发出消息的来源不同,处理不同的请求
+        if(colleagues.get(name) instanceof Alarm){
+            System.out.println("闹钟发出的消息..." + status);
+        }else if(colleagues.get(name) instanceof Tv){
+            System.out.println("电视发出的消息..." + status);
+        }else if(colleagues.get(name) instanceof Light){
+            System.out.println("电灯发出的消息..." + status);
+        }else{
+            System.out.println("其他消息...");
+        }
+    }
+
+    @Override
+    public void sendMessage() { }
+}
+
+```
+
+测试
+
+```java
+/** 中介者模式测试 */
+public class ConcreteMediatorTest {
+
+    @Test
+    public void test(){
+        // 创建一个中介者
+        Mediator mediator = new ConcreteMediator();
+        // 创建各个子系统
+        Alarm alarm = new Alarm(mediator, "alarm");
+        Tv tv = new Tv(mediator, "tv");
+        Light light = new Light(mediator, "light");
+        // 发送消息
+        alarm.sendMessage(1);
+        light.sendMessage(2);
+        tv.sendMessage(3);
+    }
+}
+```
+
+
+
+## 备忘录模式
+在不破坏封装的情况下,捕获一个对象的内部状态,并在对象之外保存状态.这样就可以恢复到保存之前的状态
+多与原型模式配合使用,减少内存消耗
+
+角色:
+目标对象: 普通类,额外提供保存和恢复方法
+纪录: 一组存放目标对象属性的类
+备忘录: 持有一组纪录类,提供增删方法
+
+使用场景: 存档; 后退一步; 数据库事务
+
+###业务场景
+
+将一个类的状态属性恢复到之前的状态
+
+被保存的目标对象, 要保存其 `status` 属性. 对外提供保存后生成纪录类 `Memento` 和通过纪录类恢复状态的方法
+
+```java
+/** 要被保存的对象 */
+public class Originator {
+
+    /** 保存内容 */
+    public String status;
+
+    /** 保存,到备忘录中 */
+    public Memento save(){
+        return new Memento(status);
+    }
+
+    /** 通过备忘录中,获得对象的状态,并恢复 */
+    public void recoverStatusFromMemento(Memento memento){
+        this.status = memento.status;
+    }
+}
+
+```
+
+纪录类,保存 `status` 状态信息, 并在构造函数中引入
+
+```java
+/** 状态封装类 */
+public class Memento {
+
+    /** 保存对象的属性 */
+    public String status;
+
+    Memento(String status){
+        this.status = status;
+    }
+}
+
+```
+
+备忘录, 维护一系列保存纪录类信息. 对外提供增添和获得方法
+
+```java
+/** 备忘录集合 */
+public class MementoCollect {
+
+    private final List<Memento> mementos = new ArrayList<>(4);
+
+    /** 添加状态 */
+    public void add(Memento memento){
+        mementos.add(memento);
+    }
+
+    /** 获得状态 */
+    public Memento get(int index){
+        return mementos.get(index);
+    }
+}
+```
+
+测试类. 备忘录模式
+
+```java
+/** 备忘录模式 */
+public class MementoCollectTest {
+
+    @Test
+    public void test(){
+        Originator originator = new Originator();
+
+        // 备忘录集合
+        MementoCollect collect = new MementoCollect();
+
+        // 状态 1
+        originator.status = "状态#1";
+        // 保存状态
+        collect.add(originator.save());
+
+        // 状态 2
+        originator.status = "状态#2";
+        collect.add(originator.save());
+
+        // 状态 3
+        originator.status = "状态#3";
+        collect.add(originator.save());
+
+        // 获得之前状态
+        System.out.println(collect.get(2).status);
+        // 恢复
+        originator.recoverStatusFromMemento(collect.get(2));
+    }
+}
+```
+
+
+
+## 解释器模式
+
+定义一个语言表达式,并对其进行解释执行. 如各种表达式解析器
+
+角色:
+环境角色: 包含上下文信息.
+抽象表达式: 声明抽象解释操作.
+终结符表达式: 完成终结符的解释操作.
+非终结符表达式: 完成非终结符的解释操作.
 
 
 

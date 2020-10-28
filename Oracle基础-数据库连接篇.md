@@ -6,7 +6,6 @@ categories:
 tags:
   - Oracle
   - SQL
-abbrlink: '0'
 date: 2020-07-26 18:56:35
 ---
 
@@ -18,7 +17,7 @@ date: 2020-07-26 18:56:35
 
 ## 语法
 
-查询所有的 `DBLink` 
+创建 `DBLink` 
 
 ```sql
 create database link 连接名称
