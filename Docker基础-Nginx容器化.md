@@ -3,7 +3,9 @@ title: Docker基础-Nginx容器化
 abbrlink: a2c33bc3
 date: 2020-04-07 20:20:42
 categories:
-tags:
+  - 服务器
+  - Docker
+tags: [Linux, Docker, Nginx]
 ---
 
 ## Nginx容器化

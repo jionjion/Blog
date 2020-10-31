@@ -3,7 +3,8 @@ title: MySQL基础-内置函数篇
 abbrlink: 274a540a
 date: 2020-06-14 11:03:26
 categories:
-tags:
+  - MySQL
+tags: [MySQL, SQL]
 ---
 
 ## 简介

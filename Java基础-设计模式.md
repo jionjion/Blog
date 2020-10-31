@@ -1,13 +1,11 @@
 ---
 title: Java基础-设计模式
+abbrlink: 8e9b8537
+date: 2020-08-31 22:09:41
 categories:
   - Java
   - Mode
-tags:
-  - Java
-  - Mode
-abbrlink: 8e9b8537
-date: 2020-08-31 22:09:41
+tags: [Java, Mode]
 ---
 
 # 设计思想
@@ -57,6 +55,36 @@ date: 2020-08-31 22:09:41
 适配器模式 / 桥接模式 / 装饰器模式 / 组合模式 / 外观模式 / 享元模式 / 代理模式
 - 行为型
 模板方法模式 / 命令模式 / 访问者模式 / 迭代器模式 / 观察者模式 / 中介者模式 / 备忘录模式 / 解释器模式 / 状态模式 / 策略模式 / 责任链模式
+
+## 设计模式适用
+
+| 设计模式     | 解决问题                                                     | 场景示例     |
+| ------------ | ------------------------------------------------------------ | ------------ |
+| 单例模式     | 唯一实例创建问题                                             | 工具类       |
+| 工厂模式     | 同一基类,不同实现类的创建问题                                | 工厂类       |
+| 抽象工厂模式 | 相似基类,不同实现类的创建问题                                | 抽象工厂类   |
+| 原型模式     | 对象克隆创建问题                                             |              |
+| 建造者模式   | 将繁琐的对象创建过程拆分                                     |              |
+| 适配器模式   | 不同类和方法间调用问题                                       | 日志适配器类 |
+| 桥接模式     | 类多继承导致类数量爆炸问题                                   |              |
+| 装饰器模式   | 动态地将新功能添加到新对象上,解决多实例间组合问题            | `IO` 流      |
+| 组合模式     | 处理的对象具有树形结构,且叶子与枝杈具有相似的方法属性        |              |
+| 外观模式     | 通过组合以屏蔽子系统细节,使得调用只跟接口发生,无关子系统内部 |              |
+| 享元模式     | 解决重复对象的内存浪费问题,共享相同的对象                    | 连接池类     |
+| 代理模式     | 通过该代理完成对象的调用,以期增强其特性,而无需修改原有代码   | 代理类       |
+| 模板模式     | 为了完成某个过程,需要一系列步骤,但是稍有不同的问题           | 模板类       |
+| 命令模式     | 将请求发送与接收动作相解耦,无需关注相互细节                  |              |
+| 访问者模式   | 在系统中有一个稳定的数据结构,但有经常变化的功能需求          |              |
+| 迭代器模式   | 提供统一的迭代器完成遍历,而不用暴露内部数据结构              | 迭代类       |
+| 观察者模式   | 当一方变化时,通知多方观察者                                  | 天气预报     |
+| 中介者模式   | 用一个中介者封装一系列的对象交互,使对象之间无需重复交互引用  |              |
+| 备忘录模式   | 提供一个可以恢复对象状态的机制                               | 数据状态恢复 |
+| 解释器模式   | 对自定义语言进行解释执行                                     |              |
+| 状态模式     | 对象多种状态间转换时,对外输出不同的执行                      |              |
+| 策略模式     | 通过定义算法族,分别封装,以便相互替换                         |              |
+| 责任链模式   | 为请求创建一个接受请求的链                                   |              |
+
+
 
 # 设计模式
 
@@ -3226,7 +3254,438 @@ public class MementoCollectTest {
 终结符表达式: 完成终结符的解释操作.
 非终结符表达式: 完成非终结符的解释操作.
 
+## 状态模式
+对象多种状态间转换时,对外输出不同的执行.
+将某个状态单独定义类,并对其约定的该状态下方法进行编写.
+相对于`if-else`判断状态,代码简洁.
+
+角色:
+上下文角色: 维护状态信息
+抽象状态角色: 定义角色动作,定义上下文中的操作
+具体状态角色: 每个状态为一个具体子类,并携带有在改状态下可执行上下文的相关动作
 
 
 
-## 模式
+### 业务场景
+
+针对类的初始化 / 工作 / 销毁 状态分别作处理
+
+抽象状态接口, 定义动作方法. 包括 `doInit`, `doWork`, `doDestroy` 分别表示生命周期
+
+```java
+/** 状态接口,定义操作 */
+public interface State {
+
+    /** 新建状态 */
+    default void doInit(){ }
+
+    /** 工作状态 */
+    void doWork();
+
+    /** 销毁状态 */
+    void doDestroy();
+}
+```
+
+具体的状态类. 分别实现对应接口
+
+```java
+/** 初始化状态 */
+public class InitState implements State{
+    @Override
+    public void doInit() {
+        System.out.println("执行初始方法...");
+    }
+
+    @Override
+    public void doWork() {
+        System.out.println("禁止");
+    }
+
+    @Override
+    public void doDestroy() {
+        System.out.println("禁止");
+    }
+}
+
+/** 工作状态 */
+public class WorkState implements State{
+    @Override
+    public void doInit() {
+        System.out.println("禁止");
+    }
+
+    @Override
+    public void doWork() {
+        System.out.println("执行工作方法...");
+    }
+
+    @Override
+    public void doDestroy() {
+        System.out.println("禁止");
+    }
+}
+
+/** 工作状态 */
+public class DestroyState implements State{
+
+    @Override
+    public void doInit() {
+        System.out.println("禁止");
+    }
+
+    @Override
+    public void doWork() {
+        System.out.println("禁止");
+    }
+
+    @Override
+    public void doDestroy() {
+        System.out.println("执行销毁方法...");
+    }
+}
+
+```
+
+上下文类,将状态引入,并在构造器中聚合..
+
+```java
+/** 各种状态. */
+public class Activity {
+
+    /** 状态 */
+    public State state;
+
+    public Activity(State state){
+        this.state = state;
+    }
+}
+```
+
+测试类.状态模式
+
+```java
+/** 状态模式 */
+public class ActivityTest {
+    @Test
+    public void test(){
+        // 活动,设置状态
+        Activity activity = new Activity(new InitState());
+        // 可以调用初始化方法
+        activity.state.doInit();
+        // 修改新状态,并执行
+        activity.state = new WorkState();
+        activity.state.doWork();
+        // 修改新状态,并执行
+        activity.state = new DestroyState();
+        activity.state.doDestroy();
+        // 尝试使用非当前状态的; 不能使用
+        activity.state.doInit();
+    }
+}
+```
+
+## 策略模式
+通过定义算法族,分别封装,以便相互替换.
+使变化的代码从不变中相分离
+
+角色:
+策略接口: 定义策略方法.
+策略实现类: 实现具体的策略方法.
+抽象目标对象:聚合策略接口,并定义同名策略方法
+具体目标对象: 将不同策略方法实现类进行聚合,并调用其策略方法作为抽象类约定的具体实现.
+
+### 业务场景
+鸭子模型. 将鸭子的不同特性作为不同的策略,通过聚合具体的策略接口实现类.扩展鸭子的特性.
+
+定义飞行策略, 及其具体实现类.
+
+```java
+/** 鸭子飞行行为 */
+public interface FlyBehavior {
+    /** 飞行 */
+    void fly();
+}
+
+/** 飞行策略实现, 不会飞 */
+public class NoFlyBehavior implements FlyBehavior {
+    @Override
+    public void fly() {
+        System.out.println("不会飞翔的鸭子...");
+    }
+}
+
+/** 飞行策略实现, 擅长飞翔 */
+public class GoodFlyBehavior implements FlyBehavior {
+    @Override
+    public void fly() {
+        System.out.println("擅长飞翔的鸭子...");
+    }
+}
+```
+
+定义叫声策略, 及其具体实现类
+
+```java
+/** 鸭子叫行为 */
+public interface QuackBehavior {
+    /** 叫 */
+    void quack();
+}
+
+/** 叫声策略实现, 嘎嘎叫 */
+public class GoodQuackBehavior implements QuackBehavior {
+    /** 叫 */
+    @Override
+    public void quack() {
+        System.out.println("鸭子嘎嘎叫...");
+    }
+}
+```
+
+抽象目标类, 聚合策略接口和定义策略同名方法. 期待被子类重写
+
+```java
+/** 抽象,鸭子类. 定义方法,被子类重写 */
+public abstract class Duck {
+
+    /** 飞行策略 */
+    protected FlyBehavior flyBehavior;
+
+    /** 叫策略 */
+    protected QuackBehavior quackBehavior;
+
+    /** 飞行 */
+    protected void fly(){ }
+
+    /** 叫声 */
+    protected void quack(){ }
+}
+```
+
+具体的目标类, 指定具体的策略接口,并调用策略方法
+
+```java
+/** 玩具鸭子 */
+public class ToyDuck extends Duck {
+
+    /** 在构造器中定义具体策略 */
+    public ToyDuck(){
+        // 飞行,叫声 行为
+        super.flyBehavior = new NoFlyBehavior();
+        super.quackBehavior = new GoodQuackBehavior();
+    }
+
+    /** 飞行 */
+    @Override
+    protected void fly() {
+        super.flyBehavior.fly();
+    }
+
+    /** 叫声 */
+    @Override
+    protected void quack() {
+        super.quackBehavior.quack();
+    }
+}
+
+/** 野鸭 */
+public class WildDuck extends Duck {
+
+    /** 在构造器中定义具体策略 */
+    public WildDuck(){
+        // 飞行,叫声 行为
+        super.flyBehavior = new GoodFlyBehavior();
+        super.quackBehavior = new GoodQuackBehavior();
+    }
+
+    /** 飞行 */
+    @Override
+    protected void fly() {
+        super.flyBehavior.fly();
+    }
+
+    /** 叫声 */
+    @Override
+    protected void quack() {
+        super.quackBehavior.quack();
+    }
+}
+```
+
+测试, 策略模式
+
+```java
+/** 测试. 策略模式 */
+public class DuckTest {
+
+    @Test
+    public void test(){
+        WildDuck wildDuck = new WildDuck();
+        wildDuck.fly();
+        wildDuck.quack();
+
+        ToyDuck toyDuck = new ToyDuck();
+        toyDuck.fly();
+        toyDuck.quack();
+        // 动态修改行为
+        toyDuck.flyBehavior=new GoodFlyBehavior();
+        toyDuck.fly();
+    }
+}
+```
+
+### JDK应用
+在 `java.util.Comparator` 接口中实现排序策略方法 `int compare(T o1, T o2)` 
+在 `java.util.Arrays` 中排序方法 `sort(T[], java.util.Comparator<? super T>)` 方法中传入具体策略实现, 完成排序调用.
+
+
+
+
+## 责任链模式
+
+为请求创建一个接受请求的链.
+通常每个接受者都包含对另一个接受者的引用,如果不能处理,则交给下一个接受者处理.
+常用于处理多级请求
+
+角色:
+抽象处理者: 定义处理接口,关联自身.
+具体处理者: 实现处理接口,并关联其他具体处理者.
+请求者: 具体的请求动作
+
+### 业务场景
+采购金额审批.
+金额小于100, 员工审批, 小于10000, 经理审批, 剩余老板审批.
+
+定义处理对象, 商品订单
+
+```java
+/** 商品订单 */
+public class GoodOrder {
+
+    /** 商品 */
+    private final String name;
+
+    /** 价格 */
+    private final Integer price;
+
+    public GoodOrder(String name, Integer price) {
+        this.name = name;
+        this.price = price;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public Integer getPrice() {
+        return price;
+    }
+
+    @Override
+    public String toString() {
+        return "GoodOrder{" +
+                "name='" + name + '\'' +
+                ", price=" + price +
+                '}';
+    }
+}
+```
+
+抽象处理者, 定义抽象处理过程 `process` 进行审批动作. 并维护下一个处理处理者 `other` .
+
+```java
+/** 抽象处理者 */
+public abstract class Approver {
+
+    /** 处理过程 */
+    protected abstract void process(GoodOrder goodOrder);
+
+    /** 关联其他处理者 */
+    private Approver other;
+
+    /** 如果处理不了,交由其他审批人处理.环状结构调用 */
+    public void setOther(Approver approver){
+        this.other = approver;
+    }
+
+    /** 获取其他请求处理人 */
+    public Approver getOther() {
+        return other;
+    }
+}
+```
+
+具体处理者. 在处理过程 `process` 中定义具体的审批过程,如果条件不满足, 交给下一个
+
+```java
+/** 员工处理 */
+public class EmployeeApprover extends Approver {
+
+    /** 处理过程 */
+    @Override
+    protected void process(GoodOrder goodOrder) {
+        if(goodOrder.getPrice() <= 100){
+            System.out.println("金额小于100, 员工审批..." + goodOrder);
+        }else{
+            System.out.println("员工审批不了...");
+            // 否则,交给其他审批人处理
+            super.setOther(new ManagerApprover());
+            super.getOther().process(goodOrder);
+        }
+    }
+}
+
+/** 经理处理 */
+public class ManagerApprover extends Approver {
+
+    /** 处理过程 */
+    @Override
+    protected void process(GoodOrder goodOrder) {
+        if(goodOrder.getPrice() <= 10000){
+            System.out.println("金额小于1万, 经理审批..." + goodOrder);
+        }else{
+            System.out.println("经理审批不了...");
+            // 否则,交给其他审批人处理
+            super.setOther(new BossApprover());
+            super.getOther().process(goodOrder);
+        }
+    }
+}
+/** 老板审批人,最终处理 */
+public class BossApprover extends Approver {
+
+    /** 处理过程 */
+    @Override
+    protected void process(GoodOrder goodOrder) {
+        System.out.println("最终Boss审批..." + goodOrder);
+    }
+}
+
+```
+
+测试类.责任链模式
+
+```java
+/** 责任链模式 */
+public class ApproverTest {
+
+    @Test
+    public void test(){
+        GoodOrder good = new GoodOrder("电脑", 40000);
+        // 处理者, 链模式
+        EmployeeApprover employeeApprover = new EmployeeApprover();
+        // 尝试用员工审批
+        employeeApprover.process(good);
+    }
+}
+```
+
+
+
+
+### 应用
+Spring中的拦截器处理条.
+`org.springframework.web.servlet.HandlerInterceptor` 拦截器,通过实现相关方法,作为具体的处理.
+顺序根据`Order`而定
+`org.springframework.web.servlet.DispatcherServlet#doDispatch`执行具体的请求时,调用相关拦截器

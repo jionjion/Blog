@@ -1,14 +1,11 @@
 ---
 title: Docker基础-Redis容器化
+abbrlink: c1accc53
+date: 2020-02-25 10:36:29
 categories:
   - 服务器
   - Docker
-tags:
-  - Linux
-  - Docker
-  - Redis
-abbrlink: c1accc53
-date: 2020-02-25 10:36:29
+tags: [Linux, Docker, Redis]
 ---
 
 

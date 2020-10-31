@@ -1,12 +1,10 @@
 ---
 title: Python基础-连接MySQL数据库
-categories:
-  - Python
-tags:
-  - Python
-  - MySQL
 abbrlink: c00211ab
 date: 2020-02-26 19:39:40
+categories:
+  - Python
+tags: [Python, MySQL]
 ---
 
 

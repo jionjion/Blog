@@ -1,11 +1,11 @@
 ---
 title: 阿里云-CentOS操作
+abbrlink: 8490a1b3
+date: 2018-06-20 12:32:42
 categories:
   - 服务器
   - CentOS
 tags: CentOS
-abbrlink: 8490a1b3
-date: 2018-06-20 12:32:42
 ---
 
 ## 更换YUM源

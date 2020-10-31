@@ -1,6 +1,6 @@
 ---
 title: Java基础-Commons-Log4j2篇
-abbrlink: '95377e54'
+abbrlink: 95377e54
 date: 2020-01-28 16:55:04
 categories:
   - Java

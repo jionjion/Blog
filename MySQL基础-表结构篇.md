@@ -3,7 +3,8 @@ title: MySQL基础-表结构篇
 abbrlink: d3ab4f85
 date: 2020-06-14 11:06:15
 categories:
-tags:
+  - MySQL
+tags: [MySQL, SQL]
 ---
 
 

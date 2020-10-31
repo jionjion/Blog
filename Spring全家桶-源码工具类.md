@@ -1,8 +1,10 @@
 ---
 title: Spring全家桶-源码工具类
+abbrlink: 62e68549
 date: 2020-09-23 10:21:30
 categories:
-tags:
+  - Java
+tags: [Java]
 ---
 
 

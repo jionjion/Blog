@@ -1,13 +1,11 @@
 ---
 title: Java基础-Java8新特性
+abbrlink: 8bebd4ec
+date: 2020-02-22 20:43:28
 categories:
   - Java
   - JDK
-tags:
-  - Java
-  - JDK8
-abbrlink: 8bebd4ec
-date: 2020-02-22 20:43:28
+tags: [Java, JDK]
 ---
 
 # JAVA8

@@ -1,14 +1,11 @@
 ---
 title: Spring全家桶-国际化篇
+abbrlink: 1a1582e
+date: 2020-02-23 13:06:49
 categories:
   - Java
   - Spring
-tags:
-  - Java
-  - Spring
-  - SpringBoot
-abbrlink: 1a1582e
-date: 2020-02-23 13:06:49
+tags: [Java, Spring, SpringBoot]
 ---
 
 # 简介

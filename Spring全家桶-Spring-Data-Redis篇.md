@@ -1,14 +1,11 @@
 ---
 title: Spring全家桶-Spring-Data-Redis篇
+abbrlink: 2dcb30a0
+date: 2020-06-19 23:20:30
 categories:
   - Java
   - Spring
-tags:
-  - Java
-  - Spring
-  - JPA
-abbrlink: 2dcb30a0
-date: 2020-06-19 23:20:30
+tags: [Java, Spring, JPA]
 ---
 
 # 基础语法

@@ -1,11 +1,10 @@
 ---
 title: Python基础-各种代码纪录
-categories:
-  - Python
-tags:
-  - Python
 abbrlink: 989a9a57
 date: 2020-02-26 21:34:11
+categories:
+  - Python
+tags: [Python]
 ---
 
 ## 魔术方法

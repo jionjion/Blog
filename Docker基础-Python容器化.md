@@ -12,10 +12,6 @@ tags: [Linux, Docker, Python]
 
 参考网站 [DockerHub](https://hub.docker.com/_/python)
 
-
-
-
-
 ## 命令
 
 下载镜像命令

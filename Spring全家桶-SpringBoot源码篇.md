@@ -1,13 +1,11 @@
 ---
 title: Spring全家桶-SpringBoot源码篇
+abbrlink: 339b7cd
+date: 2020-06-23 22:43:34
 categories:
   - Java
   - Spring
-tags:
-  - Java
-  - Spring
-abbrlink: 339b7cd
-date: 2020-06-23 22:43:34
+tags: [Java, Spring]
 ---
 
 # 简介

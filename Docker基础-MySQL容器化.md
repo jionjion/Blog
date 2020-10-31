@@ -3,7 +3,9 @@ title: Docker基础-MySQL容器化
 abbrlink: b4d7f78f
 date: 2020-04-11 16:06:51
 categories:
-tags:
+  - 服务器
+  - Docker
+tags: [Linux, Docker, MySQL]
 ---
 
 ## MySQL容器化
