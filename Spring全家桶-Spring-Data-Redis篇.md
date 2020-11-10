@@ -154,7 +154,6 @@ public class RedisTemplateTest {
         redisTemplate.discard();
     }
 
-
     /** 使用回调进行事物 */
     @Test
     public void testTransactionalWithCallBack() {
