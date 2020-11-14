@@ -1,5 +1,5 @@
 ---
-title: Java基础-注解使用
+title: Java基础-注解篇
 abbrlink: e7572b2
 date: 2020-01-29 11:57:10
 categories:
@@ -18,17 +18,19 @@ java注解的使用和自定义注解进行介绍
 
 注释是标注在类或者方法,属性上的一组说明,通过注解的引用,可以简化各种配置.
 
+所有注解均为 `java.lang.annotation.Annotation` 接口的子类.
 
 
-
-## JDK自带的注解
+## JDK 注解
 在JDK中有很多常见注解,举例:
 
-| 注解              | 解释                 |
-| ----------------- | -------------------- |
-| @Override         | 重写父类的方法       |
-| @Deprecated       | 表示该方法已经过时了 |
-| @Suppvisewarnings | 忽略特定警告         |
+| 注解                   | 类                              | 解释                 |
+| ---------------------- | ------------------------------- | -------------------- |
+| `@Override`            | `java.lang.Override`            | 重写父类或接口的方法 |
+| `@Deprecated`          | `java.lang.Deprecated`          | 标识该方法已经过时了 |
+| `@Suppvisewarnings`    | `java.lang.SuppressWarnings`    | 忽略特定警告         |
+| `@SafeVarargs`         | `java.lang.SafeVarargs`         | 忽略泛型检查         |
+| `@FunctionalInterface` | `java.lang.FunctionalInterface` | 标识为函数式接口     |
 
 
 
@@ -48,35 +50,54 @@ java注解的使用和自定义注解进行介绍
 
 用来注解其他注解的类为**元注解**,通过元注解的标注,可以实现自定义注解.
 ### `@Target` 作用域注解
-标识该注解使用范围,是在类或者方法或者属性上等
+标识该注解使用范围. 使用枚举类 `java.lang.annotation.ElementType`  标识其作用范围
 
-| 元注解            | 解释           |
-| ----------------- | -------------- |
-| `TYPE`            | 类或者接口使用 |
-| `FIELD`           | 字段声明       |
-| `METHOD`          | 方法声明       |
-| `PARAMETER`       | 参数声明       |
-| `CONSTRUCTOR`     | 构造方法声明   |
-| `LOCAL_VARIABLE`  | 局部变量声明   |
-| `ANNOTATION_TYPE` | 注解类         |
-| `PACKAGE`         | 包声明         |
-| `TYPE_PARAMETER`  | 参数类         |
-| `TYPE_USE`        | 自定义使用     |
+| 元注解                        | 解释                     |
+| ----------------------------- | ------------------------ |
+| `ElementType.TYPE`            | 类, 接口, 注解类, 枚举类 |
+| `ElementType.FIELD`           | 字段, 枚举中成员         |
+| `ElementType.METHOD`          | 方法                     |
+| `ElementType.PARAMETER`       | 参数                     |
+| `ElementType.CONSTRUCTOR`     | 构造方法                 |
+| `ElementType.LOCAL_VARIABLE`  | 方法中局部变量           |
+| `ElementType.ANNOTATION_TYPE` | 注解类                   |
+| `ElementType.PACKAGE`         | 包                       |
+| `ElementType.TYPE_PARAMETER`  | 参数类型                 |
+| `ElementType.TYPE_USE`        | 自定义使用               |
 
-### `@Retention` 运行机制注解
-表示注解生效的时期
+### `@Retention` 保留策略注解
+表示注解生效的时期. 使用枚举类 `java.lang.annotation.RetentionPolicy` 表示其保留策略
 
-| 注解    | 说明     |
-| ------- | -------- |
-| SOURCE  | 源码阶段 |
-| CLASS   | 编译阶段 |
-| RUNTIME | 运行阶段 |
+| 注解                      | 说明     | 适用场景               |
+| ------------------------- | -------- | ---------------------- |
+| `RetentionPolicy.SOURCE`  | 源码阶段 | 编码阶段, 开发行为约定 |
+| `RetentionPolicy.CLASS`   | 编译阶段 | 编译规则检查, 代码格式 |
+| `RetentionPolicy.RUNTIME` | 运行阶段 | 自定义注解, 框架扩展   |
+
+注意: 对于运行时注解, 可以通过 `java.lang.reflect.AnnotatedElement` 接口获得对象中的注解信息.
 
 ### `@Inherited` 子类继承注解
+
 表示该类的子类可以复用该类的注解方法
+
+### `@Native` 本地变量注解
+
+表示变量为本地变量, 直接声明在内存中
+
+### `@Repeatable` 可重复注解
+
+表示注解可以被重复标注.
 
 ### `@Documented` doc帮助注解
 生成 `JAVA` 帮助文档时包含信息
+
+## 相关异常
+
+| 异常                                                   | 级别               | 说明                                                 |
+| ------------------------------------------------------ | ------------------ | ---------------------------------------------------- |
+| `java.lang.annotation.AnnotationFormatError`           | `Error`            | 虚拟机在读取一个错误的注解时, 抛出异常               |
+| `java.lang.annotation.AnnotationTypeMismatchException` | `RuntimeException` | 程序在读取编译后或者反序列化后的对象注解时, 抛出异常 |
+| `java.lang.annotation.IncompleteAnnotationException`   | `RuntimeException` | 由于注解的属性信息不完整, 程序读取失败后抛出         |
 
 
 
@@ -114,7 +135,7 @@ public @interface Description {		//使用@interface定义注解
 @Description("这是一个类上的注解")
 public class UseDescription {
 
-	@Description(desc="我是一个描述",author="Jion",age=23, value = "我是方法上的注解")
+	@Description(desc="我是一个描述", author="Jion", age=23, value = "我是方法上的注解")
 	public void model() {
 		System.out.println("使用自定义的注解");
 	}
