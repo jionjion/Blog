@@ -1,9 +1,11 @@
 ---
 title: RabbitMQ基础
-date: 2020-11-07 13:26:44
 categories:
   - RabbitMQ
-tags: [RabbitMQ]
+tags:
+  - RabbitMQ
+abbrlink: 2ef47cbd
+date: 2020-11-07 13:26:44
 ---
 
 # 简介

@@ -1,5 +1,6 @@
 ---
 title: Java基础-Junit5单元测试
+abbrlink: b2fc0f7f
 date: 2020-11-15 15:04:43
 categories:
 tags:

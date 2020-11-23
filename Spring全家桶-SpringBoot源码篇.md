@@ -5561,3 +5561,537 @@ public static void initServletPropertySources(MutablePropertySources sources,
 
 在某个条件下将当前 `Bean` 注入
 
+**常用注解**
+
+- `Conditional` 通用注解, 指定具体实现类依据
+- `ConditionalOnBean`  在某个 `Bean` 存在下生效
+- `ConditionalOnClass` 在某个类存在下生效
+- `ConditionalOnMissingBean` 在某个 `Bean` 存在下不生效
+- `ConditionalOnMissingClass` 在某个类存在下不生效
+- `ConditionalOnProperty` 在某个环境属性下生效
+- `ConditionalOnWebApplication` 在 `Web` 环境下生效
+- `ConditionalOnNotWebApplication` 在 `Web` 环境下不生效
+- `ConditionalOnCloudPlatform`  在 `Cloud` 平台下生效
+- `ConditionalOnExpression` 在某个`SpEL` 表达成立时生效
+- `ConditionalOnJava` 在指定`JDK`版本下生效
+- `ConditionalOnJndi` 在 `JNDI` 环境下生效
+- `ConditionalOnResource` 在类路径下有指定值时生效
+- `ConditionalOnSingleCandidate` 在容器中当前 `Bean` 只有一个时生效
+- `ConditionalOnWarDeployment`在 `War`包部署下生效
+
+### 示例 - 自定义 `ConditionOn` 注解
+
+1. 实现 `org.springframework.context.annotation.Condition` 接口或者其子接口 `org.springframework.context.annotation.ConfigurationCondition` 中的 `matches` 方法.
+2. 自定义注解, 并组合使用 `@Conditional` 注解, 指定具体实现类
+3. 使用.
+
+
+
+自定义 `Condition` 接口方法
+
+```java
+public class OnWebApplicationCondition implements Condition {
+    /**
+     *  自定义匹配规则
+     *
+     * @param context Spring提供的上下文信息, 包含Spring中的核心类及上下文信息
+     * @param metadata Spring提供的注解信息, 包裹注解属性.. 等
+     * @return 是否生效
+     */
+    @Override
+    public boolean matches(ConditionContext context, AnnotatedTypeMetadata metadata) {
+        System.out.println("注解信息" + metadata);
+        System.out.println("上下文信息" + context);
+        return true;
+    }
+}
+
+```
+
+自定义 `@Conditional` 的子注解, 指定自定义的类
+
+```java
+@Target({ ElementType.TYPE, ElementType.METHOD })
+@Retention(RetentionPolicy.RUNTIME)
+@Documented
+@Conditional(OnWebApplicationCondition.class)
+public @interface ConditionalOnWebApplication {
+
+}
+```
+
+### 示例 - 自定义 `starter` 场景启动器
+
+创建一个可以插板的插件
+
+1. 新建 `SpringBoot` 项目
+2. 引入 `spring-boot-autoconfigure` 依赖
+3. 编写属性源与自动配置类, 确定合适的时机引入
+4. 在 `spring.factories` 添加 `org.springframework.boot.autoconfigure.EnableAutoConfiguration` 的具体实现.
+5. `Maven` 打包后, 对外可以使用.
+
+### 加载流程
+
+1. 启动类, 注解  `@SpringBootApplication`  暗含有 `@EnableAutoConfiguration` 注解
+2. 通过 `@import`  方式, 引入 `org.springframework.boot.autoconfigure.AutoConfigurationImportSelector` 类.
+3. 在 `org.springframework.context.annotation.ConfigurationClassParser.DeferredImportSelectorGroupingHandler#processGroupImports` 方法中被处理, 调用 `AutoConfigurationImportSelector` 类方法
+4. 在 `process` 方法中, 通过 `spring.factories` 配置文件, 获得`org.springframework.boot.autoconfigure.EnableAutoConfiguration` 的具体实现.
+5. 过滤. 去重, 注入容器.
+
+
+
+#### 2-11-5-x 入口方法
+
+在重新刷新容器时, 会执行方法. 进入到 `AutoConfigurationImportSelector` 中.
+
+```java
+@Override
+public void process(AnnotationMetadata annotationMetadata, DeferredImportSelector deferredImportSelector) {
+    // 断言. 是否有不期望的类出现
+    Assert.stprocessate(deferredImportSelector instanceof AutoConfigurationImportSelector,
+                 () -> String.format("Only %s implementations are supported, got %s",
+                                     AutoConfigurationImportSelector.class.getSimpleName(),
+                                     deferredImportSelector.getClass().getName()));
+    // 获得 自动配置类.
+    AutoConfigurationEntry autoConfigurationEntry = ((AutoConfigurationImportSelector) deferredImportSelector)
+        .getAutoConfigurationEntry(annotationMetadata);
+    // 添加导入
+    this.autoConfigurationEntries.add(autoConfigurationEntry);
+    for (String importClassName : autoConfigurationEntry.getConfigurations()) {
+        this.entries.putIfAbsent(importClassName, annotationMetadata);
+    }
+}
+```
+
+
+
+#### x-1-0-0 启动方法
+
+```java
+protected AutoConfigurationEntry getAutoConfigurationEntry(AnnotationMetadata annotationMetadata) {
+    if (!isEnabled(annotationMetadata)) {
+        return EMPTY_ENTRY;
+    }
+    // 注解属性
+    AnnotationAttributes attributes = getAttributes(annotationMetadata);
+    // 1. 声明需要自动配置的类
+    List<String> configurations = getCandidateConfigurations(annotationMetadata, attributes);
+    // 2. 去重. 
+    configurations = removeDuplicates(configurations);
+    // 排除某些不期望注入的类
+    Set<String> exclusions = getExclusions(annotationMetadata, attributes);
+    // 3. 获得要排除的具体类
+    checkExcludedClasses(configurations, exclusions);
+    // 执行排除逻辑.
+    configurations.removeAll(exclusions);
+    // 4. 通过条件注入, 过滤不需要的配置类.
+    configurations = getConfigurationClassFilter().filter(configurations);
+    // 5. 发布事件
+    fireAutoConfigurationImportEvents(configurations, exclusions);
+    return new AutoConfigurationEntry(configurations, exclusions);
+}
+```
+
+
+
+#### x-1-1-0 获得声明实现
+
+读取项目依赖下的 `spring.factories` 文件中的依赖自动注入. 其中包括自定义的.
+
+```java
+protected List<String> getCandidateConfigurations(AnnotationMetadata metadata, AnnotationAttributes attributes) {
+    List<String> configurations = SpringFactoriesLoader.loadFactoryNames(getSpringFactoriesLoaderFactoryClass(),
+                                                                         getBeanClassLoader());
+    Assert.notEmpty(configurations, "No auto configuration classes found in META-INF/spring.factories. If you "
+                    + "are using a custom packaging, make sure that file is correct.");
+    return configurations;
+}
+
+```
+
+
+
+#### x-1-2-0 去重
+
+通过新建 `LinkedHashSet` 去去重
+
+```java
+protected final <T> List<T> removeDuplicates(List<T> list) {
+    return new ArrayList<>(new LinkedHashSet<>(list));
+}
+```
+
+
+
+#### x-1-3-0 排除
+
+```java
+private void checkExcludedClasses(List<String> configurations, Set<String> exclusions) {
+    List<String> invalidExcludes = new ArrayList<>(exclusions.size());
+    for (String exclusion : exclusions) {
+        if (ClassUtils.isPresent(exclusion, getClass().getClassLoader()) && !configurations.contains(exclusion)) {
+            invalidExcludes.add(exclusion);
+        }
+    }
+    if (!invalidExcludes.isEmpty()) {
+        handleInvalidExcludes(invalidExcludes);
+    }
+}
+```
+
+#### x-1-4-0 去除不需要的配置类
+
+通过类加载器, 加载 `spring.factories`文件中定义的 `org.springframework.boot.autoconfigure.AutoConfigurationImportFilter` 接口的具体实现, 进行不要的类过滤
+
+```java
+private ConfigurationClassFilter getConfigurationClassFilter() {
+    if (this.configurationClassFilter == null) {
+        // 过滤器.
+        List<AutoConfigurationImportFilter> filters = getAutoConfigurationImportFilters();
+        for (AutoConfigurationImportFilter filter : filters) {
+            invokeAwareMethods(filter);
+        }
+        this.configurationClassFilter = new ConfigurationClassFilter(this.beanClassLoader, filters);
+    }
+    return this.configurationClassFilter;
+}
+```
+
+#### x-1-5-0 发布事件
+
+完成后, 发布 `AutoConfigurationImportEvent` 事件, 通知感兴趣的人..
+
+```java
+private void fireAutoConfigurationImportEvents(List<String> configurations, Set<String> exclusions) {
+    List<AutoConfigurationImportListener> listeners = getAutoConfigurationImportListeners();
+    if (!listeners.isEmpty()) {
+        AutoConfigurationImportEvent event = new AutoConfigurationImportEvent(this, configurations, exclusions);
+        for (AutoConfigurationImportListener listener : listeners) {
+            invokeAwareMethods(listener);
+            listener.onAutoConfigurationImportEvent(event);
+        }
+    }
+}
+```
+
+
+
+## 日志管理
+
+### 日志接口与实现
+
+SpringBoot 推荐使用 `Slf4j` 与`Logback` 组合的方式, 进行日志管理
+
+接口: `org.slf4j.Logger`
+实现: `ch.qos.logback.classic.Logger`
+
+### 日志配置
+
+通过引入 `spring-boot-starter-logging` 启动器配置日志. 自带引入三个依赖
+
+- `logback-classic`   具体日志实现
+- `log4j-to-slf4j`  适配 `log4j`
+- `jul-to-slf4j`  适配 `jul` (java.util.Log)
+
+
+
+配置日志文件.
+
+```xml
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+  logback 配置文件.
+    scan:当设置为true时配置文件若发生改变 将会重新加载;
+    scanPeriod:扫描时间间隔, 若没给出时间单位默认为毫秒;
+    debug:若设置 为true,将打印出logback内部日志信息
+-->
+<configuration scan="true" scanPeriod="60 seconds" debug="false">
+    <!-- 上下文名称, 用来区分不同应用程序的记录默认为 default -->
+    <contextName>Logger Demo</contextName>
+    <!-- 属性配置 -->
+    <property resource="application.properties"/>
+    <!-- name:变量名称; value:变量值. 通过 :- 表示默认值 -->
+    <!-- 文件路径 C:\Users\14345\springboot\application\logs -->
+    <property name="LOG_PATH" value="${logging.path:-${user.home}/springboot/${spring.application.name:-application}/logs}"/>
+    <!-- 文件名  C:\Users\14345\springboot\application\logs\application.log -->
+    <property name="LOG_FILE" value="${logging.file:-${LOG_PATH}/application.log}"/>
+    <!--
+        logger{length}      输出日志的logger名,可有一个整形参数,可能能是缩短logger名
+        contextName|cn      上下文名称
+        date{pattern}       输出日志的打印时间,模式语法与java.text.SimpleDateFormat 兼容
+        p/le/level          日志级别
+        M/method            输出日志的方法名
+        r/relative          从程序启动到创建日志记录的时间
+        m/msg/message       程序提供的信息
+        n                   换行符
+     -->
+    <!-- 格式化日志输出 -->
+    <appender name="APPLICATION" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <!-- 输出文件名 -->
+        <file>${LOG_FILE}</file>
+        <!-- 格式 -->
+        <encoder>
+            <pattern>%date{HH:mm:ss} %contextName [%t] %p %logger{36} - %msg%n</pattern>
+        </encoder>
+        <!-- 文件策略 -->
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <!-- 文件名 -->
+            <fileNamePattern>${LOG_FILE}.%d{yyy-MM-dd}.%i.log</fileNamePattern>
+            <!-- 最大文件保存天数 -->
+            <maxHistory>7</maxHistory>
+            <!-- 单个文件最大大小 -->
+            <maxFileSize>50MB</maxFileSize>
+            <!-- 总使用大小 -->
+            <totalSizeCap>10GB</totalSizeCap>
+        </rollingPolicy>
+    </appender>
+    <!-- 格式化日志输出, 标准输出到控制台 -->
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%date{HH: mm:ss} %contextName [%t] %p %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- root: 全局,日志输出设置 -->
+    <root level="info">
+        <!-- 输出到: 控制台 -->
+        <appender-ref ref="STDOUT"/>
+        <!-- 输出到: 日志文件 -->
+        <appender-ref ref="APPLICATION"/>
+    </root>
+
+    <!-- logger 具体包或子类输出设置 -->
+    <logger name="top.jionjion.logging.service.SomeService" level="error" additivity="true">
+        <appender-ref ref="STDOUT"/>
+    </logger>
+</configuration>
+```
+
+
+
+### 启动日志流程
+
+#### x-1-0-0 入口方法
+
+一般通过 `Logger logger = LoggerFactory.getLogger(getClass());` 获得当前类的日志管理
+
+1. `LoggerFactory.getLogger` 入口
+2. 调用 `findPossibleStaticLoggerBinderPathSet` 方法
+3. 获取 `StaticLoggerBinder` 所在jar包路径
+4. 若存在多个日志实现框架打印提示及选择
+5. 使用 `StaticLoggerBinder` 获得日志工厂, 继而获得日志实现
+         
+
+#### x-1-1-0 获取日志
+
+进行日志的初始化, 并返回日志对象. 
+
+```java
+public static Logger getLogger(Class<?> clazz) {
+    // 进行日志寻址
+    Logger logger = getLogger(clazz.getName());
+    if (DETECT_LOGGER_NAME_MISMATCH) {
+        Class<?> autoComputedCallingClass = Util.getCallingClass();
+        if (autoComputedCallingClass != null && nonMatchingClasses(clazz, autoComputedCallingClass)) {
+            Util.report(String.format("Detected logger name mismatch. Given name: \"%s\"; computed name: \"%s\".", logger.getName(),
+                                      autoComputedCallingClass.getName()));
+            Util.report("See " + LOGGER_NAME_MISMATCH_URL + " for an explanation");
+        }
+    }
+    return logger;
+}
+
+// 进行日志寻址, 返回 ILoggerFactory 接口实现
+public static Logger getLogger(String name) {
+    // 获得日志工厂
+    ILoggerFactory iLoggerFactory = getILoggerFactory();
+    // 2. 获得日志实现类
+    return iLoggerFactory.getLogger(name);
+}
+```
+
+#### x-1-2-0 日志工厂初始化流程
+
+日志工厂初始化流程. 通过状态进行区分, 执行. 
+
+```java
+// 获得日志工厂
+public static ILoggerFactory getILoggerFactory() {
+    // 如果当前状态为未初始化, 执行以下
+    if (INITIALIZATION_STATE == UNINITIALIZED) {
+        synchronized (LoggerFactory.class) {
+            // 再次检查
+            if (INITIALIZATION_STATE == UNINITIALIZED) {
+                INITIALIZATION_STATE = ONGOING_INITIALIZATION;
+                // 3. 准备初始化日志, 并确定具体实现
+                performInitialization();
+            }
+        }
+    }
+    // 判断当前启动状态. 
+    switch (INITIALIZATION_STATE) {
+        // 如果启动成功
+        case SUCCESSFUL_INITIALIZATION:
+            // 获得实现类中的日志工厂单例对象
+            return StaticLoggerBinder.getSingleton().getLoggerFactory();
+        // ...
+        case NOP_FALLBACK_INITIALIZATION:
+            // 返回空对象, 默认空实现所有日志方法
+            return NOP_FALLBACK_FACTORY;
+        // ...
+        case FAILED_INITIALIZATION:
+            throw new IllegalStateException(UNSUCCESSFUL_INIT_MSG);
+		// ...       
+        case ONGOING_INITIALIZATION:
+            return SUBST_FACTORY;
+    }
+    throw new IllegalStateException("Unreachable code");
+}
+```
+
+#### X-1-3-0 日志工厂初始化
+
+```java
+private final static void performInitialization() {
+    // - 日志初始化, 具体日志实现类的选择
+    bind();
+    // - 随后, 日志初始化状态为成功状态.
+    if (INITIALIZATION_STATE == SUCCESSFUL_INITIALIZATION) {
+        // 版本检查. 要求当日志实现版本必须在日志接口约定的版本中
+        versionSanityCheck();
+    }
+}
+```
+
+#### x-1-3-1日志具体实现初始化
+
+日志初始化. 在这里将具体实现类加载到系统... 
+
+如果存在多个日志实现, 则由程序判断后引入并报告...
+
+```java
+private final static void bind() {
+    try {
+        Set<URL> staticLoggerBinderPathSet = null;
+		// 非安卓环境, 执行
+        if (!isAndroid()) {
+            // 2. 加载, 日志的具体实现类, 并返回具体类的地址.
+            staticLoggerBinderPathSet = findPossibleStaticLoggerBinderPathSet();
+            // 3. 是否存在多个日志实现类, 如果存在则控制台打印报错.
+            reportMultipleBindingAmbiguity(staticLoggerBinderPathSet);
+        }
+        // 具体的日志实现类中调用.
+        StaticLoggerBinder.getSingleton();
+        // 当前初始化状态改为成功
+        INITIALIZATION_STATE = SUCCESSFUL_INITIALIZATION;
+        // 4. 报告最终绑定状态. 如果有多个实现, 告知最终选中的日志实现
+        reportActualBinding(staticLoggerBinderPathSet);
+    } catch (NoClassDefFoundError ncde) {
+        // 如果日志加载失败. 打印报错.
+        String msg = ncde.getMessage();
+        if (messageContainsOrgSlf4jImplStaticLoggerBinder(msg)) {
+            INITIALIZATION_STATE = NOP_FALLBACK_INITIALIZATION;
+            Util.report("Failed to load class \"org.slf4j.impl.StaticLoggerBinder\".");
+            Util.report("Defaulting to no-operation (NOP) logger implementation");
+            Util.report("See " + NO_STATICLOGGERBINDER_URL + " for further details.");
+        } else {
+            failedBinding(ncde);
+            throw ncde;
+        }
+    } catch (java.lang.NoSuchMethodError nsme) {
+        String msg = nsme.getMessage();
+        if (msg != null && msg.contains("org.slf4j.impl.StaticLoggerBinder.getSingleton()")) {
+            INITIALIZATION_STATE = FAILED_INITIALIZATION;
+            Util.report("slf4j-api 1.6.x (or later) is incompatible with this binding.");
+            Util.report("Your binding is version 1.5.5 or earlier.");
+            Util.report("Upgrade your binding to version 1.6.x.");
+        }
+        throw nsme;
+    } catch (Exception e) {
+        failedBinding(e);
+        throw new IllegalStateException("Unexpected initialization failure", e);
+    } finally {
+        // 5.清理.
+        postBindCleanUp();
+    }
+}
+```
+
+#### x-1-3-2 日志实现类加载
+
+主要是加载 `org/slf4j/impl/StaticLoggerBinder.class` 类, 约定日志接口的实现类的类名, 尝试加载具体的实现. 这里为 `Slf4j` 日志实现.
+
+```java
+static Set<URL> findPossibleStaticLoggerBinderPathSet() {
+   	// 日志实现类的具体地址
+    Set<URL> staticLoggerBinderPathSet = new LinkedHashSet<URL>();
+    try {
+        // 获得类加载器 ClassLoaders$AppClassLoader
+        ClassLoader loggerFactoryClassLoader = LoggerFactory.class.getClassLoader();
+        Enumeration<URL> paths;        
+        if (loggerFactoryClassLoader == null) {        
+            // 加载 org/slf4j/impl/StaticLoggerBinder.class 类,并使用其类加载器
+            paths = ClassLoader.getSystemResources(STATIC_LOGGER_BINDER_PATH);
+        } else {
+            // 加载 org/slf4j/impl/StaticLoggerBinder.class 类
+            paths = loggerFactoryClassLoader.getResources(STATIC_LOGGER_BINDER_PATH);
+        }
+        // 如果找到具体的日志实现类, 加载到集合中
+        while (paths.hasMoreElements()) {
+            URL path = paths.nextElement();
+            staticLoggerBinderPathSet.add(path);
+        }
+    } catch (IOException ioe) {
+        Util.report("Error getting resources from path", ioe);
+    }
+    // 返回日志的实现类地址结合
+    return staticLoggerBinderPathSet;
+}
+```
+
+#### x-1-3-3 多日志实现判断
+
+```java
+// 判断是否存在多个日志实现
+private static boolean isAmbiguousStaticLoggerBinderPathSet(Set<URL> binderPathSet) {
+    return binderPathSet.size() > 1;
+}
+
+private static void reportMultipleBindingAmbiguity(Set<URL> binderPathSet) {
+    // 存在多个日志实现
+    if (isAmbiguousStaticLoggerBinderPathSet(binderPathSet)) {
+        // Util.report 实际是调用 System.err.println ..打印标准输出
+        Util.report("Class path contains multiple SLF4J bindings.");
+        for (URL path : binderPathSet) {
+            Util.report("Found binding in [" + path + "]");
+        }
+        Util.report("See " + MULTIPLE_BINDINGS_URL + " for an explanation.");
+    }
+}
+```
+
+#### x-1-3-4 报告最终绑定状态
+
+```java
+private static void reportActualBinding(Set<URL> binderPathSet) {
+    // 如果日志的实现不为空, 且存在多个日志框架实现.
+    if (binderPathSet != null && isAmbiguousStaticLoggerBinderPathSet(binderPathSet)) {
+        // 报告最终选择的日志实现.
+        Util.report("Actual binding is of type [" + StaticLoggerBinder.getSingleton().getLoggerFactoryClassStr() + "]");
+    }
+}
+```
+
+#### x-2-1-0 日志对象 Logback
+
+在初始后, 选择具体的日志
+
+```java
+public static Logger getLogger(String name) {
+    // 获得实现类的日志工厂. 
+    ILoggerFactory iLoggerFactory = getILoggerFactory();
+    // 获得日志对象. 为具体子类实现... 如 Logback
+    return iLoggerFactory.getLogger(name);
+}
+```
+
