@@ -48,12 +48,60 @@ tags: [Java, Spring]
 6. `org.springframework.context.annotation.ImportSelector` 接口
 
    动态添加需要导入到容器的类, 包.
+   
+7. `org.springframework.beans.factory.InitializingBean` 接口
+
+   在 `Bean` 初始化后,执行相关实现
+
+8. `org.springframework.beans.factory.DisposableBean` 接口
+
+   在 `Bean` 销毁前, 执行相关实现
 
 
 
-## 容器扩展接口
+## `Aware` 接口
+
+1. `org.springframework.beans.factory.Aware` 
+
+   空接口
+
+2. `org.springframework.context.EnvironmentAware` 
+
+   获取环境信息
+
+3. `org.springframework.context.ApplicationContextAware`
+
+   获取容器对象
+
+1. `org.springframework.context.EmbeddedValueResolverAware` 
+
+   获取变量解析器
+
+2. `org.springframework.context.ResourceLoaderAware`
+
+   获取资源加载器
+
+3. `org.springframework.context.ApplicationEventPublisherAware`
+
+   获取 `Spring` 容器事件发布器
+
+4. `org.springframework.context.MessageSourceAware`
+
+   获取消息管理器
+
+5. 
 
 
+
+## `Web` 容器扩展接口
+
+1. `javax.servlet.ServletContainerInitializer`  接口, `Servlet` 提供
+
+   在容器初始化阶段进行 `Web.xml` 的配置.
+
+2. `org.springframework.boot.web.servlet.ServletContextInitializer` 接口, `Spring` 提供
+
+   在 `WEB` 容器启动时注入什么, 比如 `Servlet`, `Filter`, `Listener` .
 
 
 
@@ -61,24 +109,29 @@ tags: [Java, Spring]
 
 ## 容器定义
 
-| 注解                     | 位置                                      | 说明                                   | 更多                                      |
-| ------------------------ | ----------------------------------------- | -------------------------------------- | ----------------------------------------- |
-| `@SpringBootApplication` | 在主启动类上标注                          | 容器启动入口并向下扫描注入             |                                           |
-| `@Component`             | 类                                        | 将其类托管给容器                       | `@Repository` , `@Service` ,`@Controller` |
-| `@Import`                | 配置类                                    | 将指定类注入容器                       |                                           |
-| `@ImportResource`        | 配置类                                    | `Spring` 配置文件注入                  |                                           |
-| `@PropertySource`        | 配置类                                    | 属性文件注入                           | `@PropertySources`                        |
-| `@Configuration`         | 配置类                                    | 配置类, 其下返回 `Bean` 对象托管给容器 |                                           |
-| `@Bean`                  | 方法, 注解类                              | 方法的返回对象交给容器托管             |                                           |
-| `@Order`                 | 配置类,   `Bean`  方法                    | 自定义排序的优先级                     |                                           |
-| `@ComponentScan`         | 配置类                                    | 自定义包扫描的范围                     | `@ComponentScans`                         |
-| `@Conditional`           | 配置类,  `Bean`  方法                     | 在满足条件下注入                       | `@ConditionalOn**`                        |
-| `@DependsOn`             | 配置类,  `Bean`  方法                     | 当前 `Bean` 的依赖对象                 |                                           |
-| `@Description`           | 配置类,  `Bean`  方法                     | 添加一段对当前 `Bean` 对象的描述       |                                           |
-| `@Lazy`                  | 配置类,  `Bean`  方法, 构造器, 属性, 入参 | 对象被懒实例化                         |                                           |
-| `@Primary`               | 配置类,  `Bean`  方法                     | 多态情况下, 标识为主要的 `Bean`        |                                           |
-| `@Profile`               | 配置类,  `Bean`  方法                     | 多环境下, 当前注入的前置环境.          |                                           |
-| `@Scope`                 | 配置类,  `Bean`  方法                     | 当前 `Bean` 的实例化范围               |                                           |
+| 注解                     | 位置                                            | 说明                                                         | 更多                                      |
+| ------------------------ | ----------------------------------------------- | ------------------------------------------------------------ | ----------------------------------------- |
+| `@SpringBootApplication` | 在主启动类上标注                                | 容器启动入口并向下扫描注入                                   |                                           |
+| `@Component`             | 类                                              | 将其类托管给容器                                             | `@Repository` , `@Service` ,`@Controller` |
+| `@Import`                | 配置类                                          | 将指定类注入容器                                             |                                           |
+| `@ImportResource`        | 配置类                                          | `Spring` 配置文件注入                                        |                                           |
+| `@PropertySource`        | 配置类                                          | 属性文件注入                                                 | `@PropertySources`                        |
+| `@Configuration`         | 配置类                                          | 配置类, 其下返回 `Bean` 对象托管给容器                       |                                           |
+| `@Configurable`          | 类                                              | 当前类中的某些成员需要通过 `@Autowired ` 从容器获得, 但是当前类又想被手工 `new` 出. |                                           |
+| `@Bean`                  | 方法, 注解类                                    | 方法的返回对象交给容器托管                                   |                                           |
+| `@Autowired`             | 配置类,  `Bean`  方法, 构造器, 注解, 属性, 入参 | 将当前依赖的对象注入到 `Bean` 中                             |                                           |
+| `@Order`                 | 配置类,   `Bean`  方法                          | 自定义排序的优先级                                           |                                           |
+| `@ComponentScan`         | 配置类                                          | 自定义包扫描的范围                                           | `@ComponentScans`                         |
+| `@Conditional`           | 配置类,  `Bean`  方法                           | 在满足条件下注入                                             | `@ConditionalOn**`                        |
+| `@DependsOn`             | 配置类,  `Bean`  方法                           | 当前 `Bean` 的依赖对象                                       |                                           |
+| `@Description`           | 配置类,  `Bean`  方法                           | 添加一段对当前 `Bean` 对象的描述                             |                                           |
+| `@Lazy`                  | 配置类,  `Bean`  方法, 构造器, 属性, 入参       | 对象被懒实例化                                               |                                           |
+| `@Primary`               | 配置类,  `Bean`  方法                           | 多态情况下, 标识为主要的 `Bean`                              |                                           |
+| `@Qualifier`             | 配置类,  `Bean`  方法, 属性, 入参               | 多态情况下, 筛选需要的 `Bean`                                |                                           |
+| `@Profile`               | 配置类,  `Bean`  方法                           | 多环境下, 当前注入的前置环境.                                |                                           |
+| `@Scope`                 | 配置类,  `Bean`  方法                           | 当前 `Bean` 的实例化范围                                     |                                           |
+| `@Lookup`                | 方法                                            | 重定义当前类的实例化方法, 返回原型类                         |                                           |
+| `@Value`                 | 方法, 属性, 入参                                | 为当前对象注入环境属性值                                     |                                           |
 
 ## 异步调度
 

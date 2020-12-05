@@ -3944,34 +3944,34 @@ protected void addPropertySources(ConfigurableEnvironment environment, ResourceL
 void load() {
     // defaultProperties
     FilteredPropertySource.apply(this.environment, DEFAULT_PROPERTIES, LOAD_FILTERED_PROPERTY,
-                                 (defaultProperties) -> {
-                                     // 初始化集合
-                                     this.profiles = new LinkedList<>();
-                                     this.processedProfiles = new LinkedList<>();
-                                     this.activatedProfiles = false;
-                                     this.loaded = new LinkedHashMap<>();
-                                     // 初始化默认的 default 集合
-                                     initializeProfiles();
-                                     // 遍历配置集合. 如果不为空, 表示有属性集合, 加载读取其中的配置文件
-                                     while (!this.profiles.isEmpty()) {
-                                         Profile profile = this.profiles.poll();
-                                         if (isDefaultProfile(profile)) {
-                                             // 获得 spring.profiles.active 中指定的前缀, 默认为 default
-                                             addProfileToEnvironment(profile.getName());
-                                         }
-                                         // 2. 加载读取配置文件
-                                         load(profile, this::getPositiveProfileFilter,
-                                              addToLoaded(MutablePropertySources::addLast, false));
-                                         // 已读取集合 
-                                         this.processedProfiles.add(profile);
-                                     }
-                                     // 如果为空, 调用读取
-                                     load(null, this::getNegativeProfileFilter, addToLoaded(MutablePropertySources::addFirst, true));
-                                     // 将读取到的配置文件, 写入到环境中
-                                     addLoadedPropertySources();
-                                     // 为环境设置激活的配置信息
-                                     applyActiveProfiles(defaultProperties);
-                                 });
+    (defaultProperties) -> {
+        // 初始化集合
+        this.profiles = new LinkedList<>();
+        this.processedProfiles = new LinkedList<>();
+        this.activatedProfiles = false;
+        this.loaded = new LinkedHashMap<>();
+        // 初始化默认的 default 集合
+        initializeProfiles();
+        // 遍历配置集合. 如果不为空, 表示有属性集合, 加载读取其中的配置文件
+        while (!this.profiles.isEmpty()) {
+            Profile profile = this.profiles.poll();
+            if (isDefaultProfile(profile)) {
+                // 获得 spring.profiles.active 中指定的前缀, 默认为 default
+                addProfileToEnvironment(profile.getName());
+            }
+            // 2. 加载读取配置文件
+            load(profile, this::getPositiveProfileFilter,
+                    addToLoaded(MutablePropertySources::addLast, false));
+            // 已读取集合 
+            this.processedProfiles.add(profile);
+        }
+        // 如果为空, 调用读取
+        load(null, this::getNegativeProfileFilter, addToLoaded(MutablePropertySources::addFirst, true));
+        // 将读取到的配置文件, 写入到环境中
+        addLoadedPropertySources();
+        // 为环境设置激活的配置信息
+        applyActiveProfiles(defaultProperties);
+    });
 }
 ```
 
@@ -5535,10 +5535,6 @@ public static void initServletPropertySources(MutablePropertySources sources,
 
 - 配置引入
 
-
-
-
-
 ### Tomcat 配置
 
 - 配置 `web` 属性
@@ -5553,7 +5549,316 @@ public static void initServletPropertySources(MutablePropertySources sources,
 - `postProcessBeforeInitialization` 方法调用 `getCustomizers` 方法获得 `WebServerFactoryCustomizer` 实现类
 - 依次调用实现类的 `customize` 方法进行定制处理
 
-## 场景加载器
+### 加载 `Web` 组件
+
+在 `Tomcat` 启动时, 将 `Spring` 扫描的 `Bean` 自动注入到容器中, 为 `Web` 容器加载 `Servlet` , `FIlter` , `Listener` ...
+
+上古版本, 在外置 `tomcat` 启动时, 为 `Web` 容器添加什么....比如过滤器,拦截器什么.
+`servlet3.0` 规范中,约定,在 `META-INF/services` 目录下文件 `javax.servlet.ServletContainerInitializer` 中写入其同名接口具体实现.
+以便在Web容器启动时,通过java配置容器对象,实现注入组件.
+`Spring` 中默认使用 `org.springframework.web.SpringServletContainerInitializer` 类来约定容器启动时的加载动作.
+在实现类中, 具体是通过调用 `WebApplicationInitializer` 接口的具体实现类完成调用.
+
+不过现在都是使用内置 `Tomcat` , 则调用
+`org.springframework.boot.web.embedded.tomcat.TomcatStarter#onStartup` 具体实现.
+从而注入 `ServletContextInitializer` 接口的具体实现类
+
+
+实现 `ServletContextInitializer` 接口, 在容器启动执行相关方法. 常用于注册 `Web` 中的 `servlet`, `filter`, `listener` 等
+
+`Spring` 提供相关子类有
+
+*  `DispatcherServletRegistrationBean` 注册一个新的 `DispatcherServlet` ,处理请求
+*  `ServletRegistrationBean` 注册新的 `Servlet` 请求处理器,对某个请求进行响应.
+*  `FilterRegistrationBean`  注册新的 `Filter` 请求过滤器,对请求进行过滤
+*  `DelegatingFilterProxyRegistrationBean` 注册新的 `Filter` 请求过滤器的代理对象
+*  `ServletListenerRegistrationBean` 注册新的 `Listener` 监听器,对容器进行监听
+
+
+
+#### 自定义 `Web` 组件
+
+通过实现 `org.springframework.boot.web.servlet.ServletContextInitializer` 接口, 在容器启动时配置 `Web` 容器上下文
+
+```java
+@Component
+public class MyServletContextInitializer implements ServletContextInitializer {
+
+    /**
+     * 为 Web容器添加什么..
+     *
+     * @param servletContext Web 容器
+     */
+    @Override
+    public void onStartup(ServletContext servletContext) {
+        System.out.println("Web容器,启动内置Tomcat启动....." + servletContext);
+    }
+}
+```
+
+自定义 `Servlet` 服务
+
+```java
+public class MyHttpServlet extends HttpServlet {
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        System.out.println("Web容器,处理请求...." + request.getRequestURI() + "  " + response.getStatus());
+        response.getWriter().print("hello");
+    }
+}
+
+```
+
+自定义 `Filter` 过滤器
+
+```java
+public class MyHttpFilter extends HttpFilter {
+
+    @Override
+    public void init(FilterConfig filterConfig) {
+        System.out.println("Web容器,自定义过滤器初始化..." + filterConfig);
+    }
+
+    @Override
+    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
+        System.out.println("Web容器,自定义过滤器执行..." + request.getRemoteAddr() + "  " + response.getContentType());
+        super.doFilter(request, response, chain);
+    }
+
+    @Override
+    public void destroy() {
+        System.out.println("Web容器,自定义过滤器销毁...");
+    }
+}
+```
+
+自定义 `Listener` 监听器
+
+```java
+public class MyServletContextListener implements ServletContextListener {
+
+    @Override
+    public void contextInitialized(ServletContextEvent sce) {
+        System.out.println("Web容器,监听到容器初始化事件..." + sce.getServletContext());
+    }
+
+    @Override
+    public void contextDestroyed(ServletContextEvent sce) {
+        System.out.println("Web容器,监听到容器销毁事件..." + sce.getServletContext());
+    }
+}
+```
+
+通过配置向容器中注册...
+
+```java
+/**
+ * 向 Web 容器中添加三大组件..
+ * 自定义请求处理器, 过滤器, 监听器..
+ *
+ * @author Jion
+ */
+@Configuration
+public class WebContextConfig {
+
+    /***
+     *  注册自定义 servlet
+     * @return 自定义 servlet
+     */
+    @Bean
+    public ServletRegistrationBean<? extends Servlet> myHttpServlet() {
+        ServletRegistrationBean<MyHttpServlet> registrationBean = new ServletRegistrationBean<>();
+        MyHttpServlet myHttpServlet = new MyHttpServlet();
+        registrationBean.setServlet(myHttpServlet);
+        registrationBean.setName("myHttpServlet");
+        registrationBean.addUrlMappings("/my-servlet");
+        registrationBean.setLoadOnStartup(100);
+        return registrationBean;
+    }
+
+    /**
+     * 注册自定义 Filter
+     * @return 自定义 Filter
+     */
+    @Bean
+    public FilterRegistrationBean<? extends Filter> myHttpFilter() {
+        FilterRegistrationBean<MyHttpFilter> registrationBean = new FilterRegistrationBean<>();
+        MyHttpFilter myHttpFilter = new MyHttpFilter();
+        registrationBean.setFilter(myHttpFilter);
+        registrationBean.setUrlPatterns(Collections.singleton("/my-servlet"));
+        registrationBean.setOrder(100);
+        return registrationBean;
+    }
+
+    /**
+     * 注册自定义 Listener
+     * @return 自定义 Listener
+     */
+    @Bean
+    public ServletListenerRegistrationBean<? extends EventListener> myHttpListen() {
+        ServletListenerRegistrationBean<MyServletContextListener> registrationBean = new ServletListenerRegistrationBean<>();
+        MyServletContextListener myServletContextListener = new MyServletContextListener();
+        registrationBean.setListener(myServletContextListener);
+        registrationBean.setOrder(100);
+        return registrationBean;
+    }
+}
+```
+
+### 加载 `Web ` 组件流程解
+
+#### x-1-0-0 入口方法
+
+在获得 `TomcatWebServer` 时, 会去执行方法 `initialize`. 其中的 `Tomcat` 会被调用执行.
+
+```java
+public TomcatWebServer(Tomcat tomcat, boolean autoStart, Shutdown shutdown) {
+    Assert.notNull(tomcat, "Tomcat Server must not be null");
+    this.tomcat = tomcat;
+    this.autoStart = autoStart;
+    this.gracefulShutdown = (shutdown == Shutdown.GRACEFUL) ? new GracefulShutdown(tomcat) : null;
+    initialize();
+}
+// org.springframework.boot.web.embedded.tomcat.TomcatWebServer#initialize
+private void initialize() throws WebServerException {
+    logger.info("Tomcat initialized with port(s): " + getPortsDescription(false));
+    synchronized (this.monitor) {
+        try {
+            addInstanceIdToEngineName();
+
+            Context context = findContext();
+            context.addLifecycleListener((event) -> {
+                if (context.equals(event.getSource()) && Lifecycle.START_EVENT.equals(event.getType())) {
+                    // Remove service connectors so that protocol binding doesn't
+                    // happen when the service is started.
+                    removeServiceConnectors();
+                }
+            });
+
+            // Tomcat 执行...
+            this.tomcat.start();
+
+            // We can re-throw failure exception directly in the main thread
+            rethrowDeferredStartupExceptions();
+
+            try {
+                ContextBindings.bindClassLoader(context, context.getNamingToken(), getClass().getClassLoader());
+            }
+            catch (NamingException ex) {
+                // Naming is not enabled. Continue
+            }
+
+            // Unlike Jetty, all Tomcat threads are daemon threads. We create a
+            // blocking non-daemon to stop immediate shutdown
+            startDaemonAwaitThread();
+        }
+        catch (Exception ex) {
+            stopSilently();
+            destroySilently();
+            throw new WebServerException("Unable to start embedded Tomcat", ex);
+        }
+    }
+}
+```
+
+#### x-1-1-0 内置 `Tomcat` 
+
+在内置 `Tomcat` 中, `tomcat-embed-core-9.0.36.jar` 文件, 扩展了 `javax.servlet` 包, 并对其中的 `servlet` 容器规范进行实现. 
+
+该接口会在容器启动时,进行调用. 具体实现类为 `org.springframework.boot.web.embedded.tomcat.TomcatStarter` 
+
+```java
+public interface ServletContainerInitializer {
+    void onStartup(Set<Class<?>> c, ServletContext ctx) throws ServletException;
+}
+```
+
+#### x-1-2-0 启动拦截
+
+在 `Tomcat` 启动时的 `onStartup()` 方法, 会去获得 `org.springframework.boot.web.servlet.ServletContextInitializer` 接口的实现类, 调用其中的 `onStartup` 方法, 并传入 `Servlet` 容器.
+
+```java
+class TomcatStarter implements ServletContainerInitializer {
+
+	private static final Log logger = LogFactory.getLog(TomcatStarter.class);
+
+	private final ServletContextInitializer[] initializers;
+
+	private volatile Exception startUpException;
+
+	TomcatStarter(ServletContextInitializer[] initializers) {
+		this.initializers = initializers;
+	}
+
+	@Override
+	public void onStartup(Set<Class<?>> classes, ServletContext servletContext) throws ServletException {
+		try {
+            // org.springframework.boot.web.servlet.ServletContextInitializer 接口实现类, 调用 onstart方法
+			for (ServletContextInitializer initializer : this.initializers) {
+				initializer.onStartup(servletContext);
+			}
+		}
+		catch (Exception ex) {
+			this.startUpException = ex;
+			// Prevent Tomcat from logging and re-throwing when we know we can
+			// deal with it in the main thread, but log for information here.
+			if (logger.isErrorEnabled()) {
+				logger.error("Error starting Tomcat context. Exception: " + ex.getClass().getName() + ". Message: "
+						+ ex.getMessage());
+			}
+		}
+    }
+}
+```
+
+`Spring` 提工的拦截扩展 `Tomcat` 容器中组件的入口
+
+```java
+package org.springframework.boot.web.servlet;
+
+@FunctionalInterface
+public interface ServletContextInitializer {
+	void onStartup(ServletContext servletContext) throws ServletException;
+
+}
+```
+
+#### x-1-3-0 加载具体
+
+在 `org.springframework.boot.web.servlet.ServletContextInitializer` 接口实现中,其中最多的是 `org.springframework.boot.web.servlet.RegistrationBean` 抽象实现类, 该抽象实现类约定了在容器启动时进行 `Bean` 的注册, 主要是为注册Web三大组件.
+
+```java
+public abstract class RegistrationBean implements ServletContextInitializer, Ordered {
+	// Tomcat 启动时拦截扩展执行.
+	@Override
+	public final void onStartup(ServletContext servletContext) throws ServletException {
+		String description = getDescription();
+		if (!isEnabled()) {
+			logger.info(StringUtils.capitalize(description) + " was not registered (disabled)");
+			return;
+		}
+        // 注册Bean
+		register(description, servletContext);
+	}
+	
+    // 子类实现, 向容器中注册Bean
+	protected abstract void register(String description, ServletContext servletContext);
+}
+```
+
+其中的  `register()` 方法为子类具体实现. 向容器注入..具体子类有
+
+1. `org.springframework.boot.web.servlet.ServletListenerRegistrationBean` 具体实现类注册`Linsener` 监听器
+
+2. `org.springframework.boot.web.servlet.DynamicRegistrationBean` 抽象类, 注册 `Servlet` 和 `Filter`
+
+   1. `org.springframework.boot.web.servlet.ServletRegistrationBean` 实现类, 注册 `servlet`
+
+   2. `org.springframework.boot.web.servlet.FilterRegistrationBean` 实现类, 注册 `filter`
+   3. `org.springframework.boot.web.servlet.DelegatingFilterProxyRegistrationBean` 实现类, 注册 `filter` 的增强代理
+   4. `org.springframework.boot.autoconfigure.web.servlet.DispatcherServletRegistrationBean` 实现类, 注册 `dispathServlet`..自定义请求拦截.
+
+## 场景加载
 
 `SpringBoot` 提供个的各种 `starter-xxx` 
 
