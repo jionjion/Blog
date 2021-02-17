@@ -3,7 +3,9 @@ title: Java基础-Junit5单元测试
 abbrlink: b2fc0f7f
 date: 2020-11-15 15:04:43
 categories:
-tags:
+  - Java
+  - Junit5
+tags: [Java, Junit5]
 ---
 
 # 简介
@@ -38,9 +40,6 @@ tags:
 | `@ExtendWith` | 类 | 扩展测试类的运行环境 |      |
 | `@RegisterExtension` | 类 | 扩展注册信息 |      |
 | `@TempDir` | 形参 | 指定参数文件路径 |      |
-|                      |          |                          |      |
-|                      |          |                          |      |
-|                      |          |                          |      |
 
 
 

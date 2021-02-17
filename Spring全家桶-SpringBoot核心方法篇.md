@@ -116,7 +116,7 @@ tags: [Java, Spring]
 | `@Import`                | 配置类                                          | 将指定类注入容器                                             |                                           |
 | `@ImportResource`        | 配置类                                          | `Spring` 配置文件注入                                        |                                           |
 | `@PropertySource`        | 配置类                                          | 属性文件注入                                                 | `@PropertySources`                        |
-| `@Configuration`         | 配置类                                          | 配置类, 其下返回 `Bean` 对象托管给容器                       |                                           |
+| `@Configuration`         | 配置类,  其他自动配置注解                       | 配置类, 其下返回 `Bean` 对象托管给容器                       |                                           |
 | `@Configurable`          | 类                                              | 当前类中的某些成员需要通过 `@Autowired ` 从容器获得, 但是当前类又想被手工 `new` 出. |                                           |
 | `@Bean`                  | 方法, 注解类                                    | 方法的返回对象交给容器托管                                   |                                           |
 | `@Autowired`             | 配置类,  `Bean`  方法, 构造器, 注解, 属性, 入参 | 将当前依赖的对象注入到 `Bean` 中                             |                                           |
