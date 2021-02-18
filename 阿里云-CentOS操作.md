@@ -85,8 +85,6 @@ error: Failed dependencies:
 
 ``` shell
 wget https://harbottle.gitlab.io/harbottle-main/7/x86_64/00761142-tomcat8/tomcat8-8.5.31-1.el7.harbottle.x86_64.rpm
-
-wget 
 ```
 
 ### 安装
@@ -189,7 +187,7 @@ yum安装实际为通过rpm方式进行的软件,因此,实际以rpm命令查询
 ``` shell
 wget https://www.python.org/ftp/python/3.6.5/Python-3.6.5.tgz
 
-tar -xvf Python-3.6.5.tgz 
+tar -xvf Python-3.6.5.tgz
 ```
 ### 创建安装目录并编译
 因为下载的为源码包,因此需要经过编译才可以安装,在编译之前,需要创建一个文件夹,作为将来编译后的安装目录
