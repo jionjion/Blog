@@ -9,9 +9,9 @@ tags: [Ubuntu]
 ---
 
 # 环境
-系统 `Ubuntu 18.04`
-内存 `8GB`
-处理 `4CPU 2.1GHz`
+系统 `Ubuntu 20.04`
+内存 `16GB`
+处理 `*8CPU 2.4GHz`
 
 # 预装软件
 
@@ -28,7 +28,7 @@ tags: [Ubuntu]
 
 
 
-## 切换apt-get的源
+## 切换 `apt-get` 的源
 备份源信息配置文件
 `cd /etc/apt`
 备份
@@ -37,6 +37,7 @@ tags: [Ubuntu]
 `sudo gedit sources.list`
 添加一下内容
 阿里云的地址
+
 ```
 deb http://mirrors.aliyun.com/ubuntu/ trusty main restricted universe multiverse
 deb http://mirrors.aliyun.com/ubuntu/ trusty-security main restricted universe multiverse
@@ -56,17 +57,14 @@ deb-src http://mirrors.aliyun.com/ubuntu/ trusty-backports main restricted unive
 如果出现部分索引文件下载失败,注释对应的下载地址即可
 
 
-## 共享文件夹
-
-## 创建Root用户
-`sudo passwd root`
-输入当前用户的密码后,指定root用户的密码.
-随后就可以登录root用户了.
 
 ## 安装搜狗输入法
+
 访问搜狗输入法
 [官网!](https://pinyin.sogou.com/linux/)
 安装按照要求下载后，使用默认软件下载打开就好
+
+
 
 
 ## 安装网易云音乐
@@ -85,18 +83,26 @@ deb-src http://mirrors.aliyun.com/ubuntu/ trusty-backports main restricted unive
 
 可参考 [CSDN](https://blog.csdn.net/TJU_Tahara/article/details/83866289)
 
+
+
 ## 安装对比软件
+
 访问网站 [下载网站!](https://www.scootersoftware.com/download.php)
 下载对应版本的rpm安装包,用默认安装软件进行安装就好
 
-## 安装TeamViewer
+## 安装 `TeamViewer`
 访问网站 [下载!](https://www.teamviewer.com/en/download/linux/)
 
 
-## 安装VNC远程连接
+
+## 安装 `VNC` 远程连接
+
 访问网站 [下载!](https://www.realvnc.com/en/connect/download/vnc/linux/)
 
-## 安装JDK8
+
+
+## 安装 `JDK8`
+
 访问网站 [下载!](https://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html)
 到下载目录下,下载文件为`jdk-8u201-linux-x64.tar.gz`
 创建JVM文件目录
@@ -116,7 +122,9 @@ export PATH=${JAVA_HOME}/bin:$PATH
 查看是否安装成功
 `java -version`和`javac -version`查看版本
 
-## 安装Node环境
+
+
+## 安装 `Node` 环境
 访问网站 [官网!](https://nodejs.org/zh-cn/)
 下载文件`node-v10.15.3-linux-x64.tar.xz`
 创建Node软件目录
@@ -148,60 +156,85 @@ $ echo '\n#alias for cnpm\nalias cnpm="npm --registry=https://registry.npm.taoba
   --userconfig=$HOME/.cnpmrc"' >> ~/.zshrc && source ~/.zshrc
 ```
 
-## 安装Pycharm
+## 安装 `Pycharm`
 下载
 解压缩
 在`bin`目录下执行安装命令
 接受协议,下一步下一步.
 
-## 安装idea
+
+
+## 安装 `idea`
+
 下载
 解压缩
 在`bin`目录下执行安装命令
 
-### 推荐软件
 
 
-## 安装Eclipse
+
+## 安装 `Eclipse`
 访问官网[下载](!https://www.eclipse.org/)
 安装
+
+
 
 ## 设置共享
 安装文件
 `sudo apt-get install open-vm-dkms`
-重新安装vmware-tools
+重新安装`vmware-tools`
+
+
 
 ## 下载Git
+
 命令
 `apt-get install git`
 
-## 安装 H.264 视频解码
+
+
+## 安装 `H.264` 视频解码
+
 命令
 `apt install gstreamer1.0-libav`
 
-## 安装WineHQ
+
+
+## 安装 `WineHQ`
+
 访问`https://wiki.winehq.org/Ubuntu_zhcn`
 按照上面安装即可
 
-## 安装aptitude
+
+
+## 安装 `aptitude`
+
 用于解决依赖冲突,替换`apt-get`命令
 
-## 安装gnome-tweak-tool
+
+
+## 安装 `gnome-tweak-tool`
+
 用于更好的优化设置，如屏幕缩放
 
-## 安装maven
+
+
+## 安装 `maven`
+
 访问官网获得下载版本[官网](!http://maven.apache.org/)
 下载解压缩到合适的目录
 如`/usr/local/maven/apache-maven-3.6.0`
 配置环境变量
 修改文件`/etc/profile`，添加
+
 ```shell
 export MAVEN_HOME=/usr/local/maven3
 export PATH=${PATH}:${MAVEN_HOME}/bin
 ```
 运行`source /etc/profile`刷新环境变量
 
-### 更换.m2文件夹下载的仓库地址
+### 更换`.m2`文件夹下载的仓库地址
+
 修改`/conf`目录下的`settings.xml`文件，新增`<localRepository>`节点，节点内指向本地地址
 `<localRepository>本地仓库地址.....</localRepository>`
 
@@ -244,7 +277,9 @@ export PATH=${PATH}:${MAVEN_HOME}/bin
 `mvn org.apache.maven.plugins:maven-dependency-plugin:2.10:copy -DartifactId=device-service -Dversion=0.0.74.5 -Dpackaging=jar -Dfile=C:/Users/Administrator/Desktop/tmp/zaOpenapiSdk-0.0.1.jar -DrepositoryId=central -Durl=http://bb.com/artifactory/libs-release-local`
 
 
-## 安装anaconda
+
+## 安装 `anaconda`
+
 `anaconda`提供对于python类库的支持更新。
 下载地址[官网](!https://www.anaconda.com/)
 选择合适的版本，这里下载的为`Anaconda3-2019.03-Linux-x86_64.sh`
@@ -255,17 +290,72 @@ export PATH=${PATH}:${MAVEN_HOME}/bin
 配置软连接，指向安装目录下的`/bin/conda`,便于命令行运行。软连接存在`/usr/bin/conda`
 `sudo ln /usr/local/anaconda/anaconda3/bin/conda /usr/bin/conda`
 
-
-### 命令
-
 ### 修改源
 参考[清华大学开源镜像](!https://mirrors.tuna.tsinghua.edu.cn/help/anaconda/)
 
 
-## 安装 gparted
+
+## 安装 `gparted`
+
 软件用于磁盘管理
 
-## 安装 shutter
+
+
+## 安装 `shutter`
 用于屏幕截图，及截图完成后编辑
 `sudo apt-get install shutter`
 如无法编辑，参考[博客](!https://www.cnblogs.com/jaxu/archive/2018/08/30/9561992.html)
+
+
+
+#  用户与权限
+
+## 创建 `Root` 用户
+
+`sudo passwd root`
+输入当前用户的密码后,指定root用户的密码.
+随后就可以登录root用户了.
+
+
+
+## 用户管理
+
+查看当前系统有那些用户
+`cat /etc/passwd`
+
+
+
+## 用户组管理
+
+查看当前系统有那些组
+`cat /etc/group`
+
+
+
+示例:
+
+```bash
+root:x:0:
+daemon:x:1:
+bin:x:2:
+sys:x:3:
+```
+
+其格式为
+`group_name:passwd:GID:user_list`
+
+1. 第一字段：用户组名称；
+2. 第二字段：用户组密码；
+3. 第三字段：`GID`
+4. 第四字段：用户列表，每个用户之间用,号分割；本字段可以为空；如果字段为空表示用户组为GID的用户名；
+
+
+
+## 用户同时归属于多个组
+
+1. 查看当前用户登录用户归属哪些组
+   `groups`
+2. 将当前用户 `${USER}` 添加 `-a` 到 `docker` 组
+   `sudo gpasswd -a ${USER} docker`
+3. 刷新 `docker` 组成员
+   `newgrp docker`
