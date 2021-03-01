@@ -10,7 +10,25 @@ tags: Git
 # 介绍
 
 使用Git命令进行各种操作
-当前Git用户非root用户
+当前使用 `git` 账户
+
+<!--more-->
+
+## 账户
+
+### 删除用户密码
+
+删除 `git` 用户的密码,这样就被禁止登录了
+
+`passwd -d git`
+
+
+
+### 禁用账户登录Shell
+
+修改 `/etc/passwd`  文件, 将其中的关于 `git` 用户的命令进行修改
+
+`git:x:1001:1000::/home/git:/usr/bin/git-shell`
 
 
 
@@ -31,6 +49,8 @@ tags: Git
 `git init --bare SpringCloud.git`
 3.克隆已经建好的仓库
 `git clone git@111.11.1.11:/home/git/git/SpringCloud.git/`
+
+
 
 
 

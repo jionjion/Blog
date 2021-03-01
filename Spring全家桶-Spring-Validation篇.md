@@ -1,5 +1,6 @@
 ---
 title: Spring全家桶-Spring-Validation篇
+abbrlink: d70559cf
 date: 2021-02-08 10:29:45
 categories:
 tags:
@@ -9,7 +10,7 @@ tags:
 
 通过 `spring-boot-starter-validation` 引入, 在项目中通过 `@Valid` 注解进行校验.
 
-
+<!--more-->
 
 ## 快速入门
 

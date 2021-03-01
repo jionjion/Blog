@@ -1,11 +1,20 @@
 ---
 title: Spring全家桶-SpringBoot核心方法篇
+abbrlink: 27a11828
 date: 2020-11-29 13:30:04
 categories:
   - Java
   - Spring
-tags: [Java, Spring]
+tags:
+  - Java
+  - Spring
 ---
+
+# 摘要
+
+介绍 `Spring` 常用功能
+
+<!--more-->
 
 # 接口目录
 
@@ -19,7 +28,6 @@ tags: [Java, Spring]
 
     `BeanDefinition` 接口的默认实现, 描述容器中 `Bean` 的基本信息
 
-3. 
 
 
 

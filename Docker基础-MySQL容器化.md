@@ -8,6 +8,12 @@ categories:
 tags: [Linux, Docker, MySQL]
 ---
 
+# 简介
+
+介绍 `MySQL` 的容器化部署
+
+<!--more-->
+
 # `MySQL`容器化
 
 参考 [官网](https://hub.docker.com/_/mysql)
