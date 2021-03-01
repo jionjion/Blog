@@ -632,8 +632,8 @@ public class DelegatingApplicationContextInitializer
 ### 监听器/广播模式 
 
 - 事件
-- 监听器 
--  广播器:
+- 监听器
+-  广播器
 -  触发机制
 
 
