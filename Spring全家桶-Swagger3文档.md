@@ -11,6 +11,10 @@ abbrlink: 6b0021f0
 date: 2020-11-04 09:56:06
 ---
 
+> 项目通过 SpringFox 引入 Swagger3 对进行接口管理
+
+<!--more-->
+
 # SpringFox
 
 通过 `SpringFox` 将 `Swagger` 引入到项目中, 生成API文档. 目前已经支持 `Swagger3` 版本

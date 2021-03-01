@@ -6,11 +6,11 @@ categories:
 tags:
 ---
 
-# 简介
-
-通过 `spring-boot-starter-validation` 引入, 在项目中通过 `@Valid` 注解进行校验.
+> 通过 `spring-boot-starter-validation` 引入, 在项目中通过 `@Valid` 注解进行校验.
 
 <!--more-->
+
+
 
 ## 快速入门
 

@@ -6,8 +6,13 @@ categories:
   - Java
   - Spring
 tags: [Java, Transaction]
-
 ---
+
+> Spring的事物管理过程
+
+<!--more-->
+
+
 
 # 事务
 

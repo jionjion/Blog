@@ -6,6 +6,10 @@ categories: Vue
 tags: [Vue, JsonService]
 ---
 
+> 前端模拟后台数据 , 进行双向开发使用.
+
+<!--more-->
+
 
 
 # Json Service 服务

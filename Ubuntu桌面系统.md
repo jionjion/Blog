@@ -8,7 +8,14 @@ categories:
 tags: [Ubuntu]
 ---
 
+> 在Linux环境下, 使用 Ubuntu 作为生产力工具.
+
+<!--more-->
+
+
+
 # 环境
+
 系统 `Ubuntu 20.04`
 内存 `16GB`
 处理 `*8CPU 2.4GHz`
