@@ -7,9 +7,14 @@ categories:
   - Package
 tags: [Oracle, Package]
 ---
-----
+> Oracle 自定义数据类型的使用
+
+<!--more-->
+
+
 
 ## 内容简介
+
 对oracle数据库中基本数据类型进行扩展，实现自定义数据类型，封装对象多属性。
 
 

@@ -8,6 +8,12 @@ categories:
 tags: [Java, Transaction]
 ---
 
+> Bean 的生命周期管理
+
+<!--more-->
+
+
+
 ## Bean生命周期处理
 
 ### `@Bean` 注解

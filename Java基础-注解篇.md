@@ -8,11 +8,15 @@ categories:
 tags: [Java, Annotation]
 ---
 
+> ava注解的使用和自定义注解进行介绍
+
+> Java注解的使用和自定义注解进行介绍
+
+<!--more-->
+
+
+
 # 简介
-
-java注解的使用和自定义注解进行介绍
-
-
 
 ## 解释
 

@@ -1,14 +1,19 @@
 ---
 title: RabbitMQ基础
-categories:
-  - RabbitMQ
-tags:
-  - RabbitMQ
 abbrlink: 2ef47cbd
 date: 2020-11-07 13:26:44
+categories:
+  - RabbitMQ
+tags: RabbitMQ
 ---
 
-# 简介
+> RabbitMQ 消息队列的使用
+
+<!--more-->
+
+
+
+# RabbitMQ基础
 
 使用 `AMQP` 协议的软件, 支持多种场景, 事务一致性, 持久化消息.
 

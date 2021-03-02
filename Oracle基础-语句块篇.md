@@ -8,7 +8,14 @@ categories:
 tags: [Oracle, Package]
 ---
 
+> Oracle 语句块的使用
+
+<!--more-->
+
+
+
 ## 内容简介
+
 对Oracle数据库中约束PL/SQL语句块的格式，逻辑进行了介绍，以及相关的数据存放方式,进行扩展
 所涉及的表为`scott`用户下的`emp`与`dept`表。注意，需要打开控制台输出`set serveroutput on`
 

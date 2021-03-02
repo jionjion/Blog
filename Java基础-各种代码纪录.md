@@ -7,6 +7,10 @@ categories:
 tags: [Java]
 ---
 
+> Java 的一些常用代码记录
+
+<!--more-->
+
 
 
 ## 集合

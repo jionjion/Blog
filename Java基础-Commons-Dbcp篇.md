@@ -8,12 +8,6 @@ categories:
 tags: [Java, Commons, Commons-Dbcp]
 ---
 
-
-
-
-
-
-
 # 简介
 
 通过使用 `commons-dbcp2` 扩展程序,连接 `MySQL` 数据库

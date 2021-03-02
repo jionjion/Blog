@@ -7,7 +7,14 @@ categories:
   - Package
 tags: [Oracle, Package]
 ---
+> Oracle 存储过程的使用
+
+<!--more-->
+
+
+
 ## 内容简介
+
 对Oracle数据库中的存储过程进行了介绍，所涉及的表为`scott`用户下的`emp`与`dept`表。
 
 ## 基础语法

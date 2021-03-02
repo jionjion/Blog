@@ -1,14 +1,11 @@
 ---
 title: Spring全家桶-Swagger3文档
+abbrlink: 6b0021f0
+date: 2020-11-04 09:56:06
 categories:
   - Java
   - Spring
-tags:
-  - Java
-  - Spring
-  - Swagger
-abbrlink: 6b0021f0
-date: 2020-11-04 09:56:06
+tags: [Java, Spring, Swagger]
 ---
 
 > 项目通过 SpringFox 引入 Swagger3 对进行接口管理

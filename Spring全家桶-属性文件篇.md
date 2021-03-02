@@ -8,7 +8,14 @@ categories:
 tags: [Java, Spring]
 ---
 
+> Spring读取属性文件
+
+<!--more-->
+
+
+
 # 介绍
+
 介绍属性文件的读取
 
 

@@ -8,11 +8,11 @@ categories:
 tags: [Java, Spring, Mybatis]
 ---
 
+> SpringBoot 集成 Mybatis 使用.
 
+<!--more-->
 
 ## SpringBoot集成Mabatis
-
-
 
 ### `Pom` 文件引入
 

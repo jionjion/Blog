@@ -7,6 +7,12 @@ categories:
 tags: [Redis]
 ---
 
+> Redis 操作记录
+
+<!--more-->
+
+
+
 # 安装
 
 官网下载对应的tar包,然后解压,编译,安装

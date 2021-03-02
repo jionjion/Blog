@@ -8,9 +8,14 @@ categories:
 tags: [Oracle, Package]
 ---
 
------
+> Oracle 动态SQL的使用
+
+<!--more-->
+
+
 
 ## 内容简介
+
 介绍了Oracle数据库中，在存储过程或者匿名语句块中动态执行SQL语句。
 
 

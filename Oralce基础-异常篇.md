@@ -8,7 +8,14 @@ categories:
 tags: [Oracle, Package]
 ---
 
+> Oracle 异常的处理
+
+<!--more-->
+
+
+
 ## 内容简介
+
 对Oracle数据库中视图的使用进行了介绍，所涉及的表为`scott`用户下的`emp`与`dept`表。
 
 ### 常见异常

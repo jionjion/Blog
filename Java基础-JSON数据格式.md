@@ -8,7 +8,14 @@ categories:
 tags: [Java, JSON]
 ---
 
+> JSON 的简单使用
+
+<!--more-->
+
+
+
 ## 简介
+
 一种与开发语言无关的、轻量级的数据格式。全称 `JavaScript Object Notation`
 该练习是对 `JSON` 和 `GSON` 两种数据格式的创建和解析.
 

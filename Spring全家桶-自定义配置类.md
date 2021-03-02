@@ -8,8 +8,12 @@ categories:
 tags: [Java, Spring]
 ---
 
+> Spring 中使用配置类
+
+
 
 # 介绍
+
 介绍自定义配置Bean注入
 
 ## 注解描述

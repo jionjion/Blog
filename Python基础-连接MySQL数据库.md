@@ -7,6 +7,10 @@ categories:
 tags: [Python, MySQL]
 ---
 
+> Python 连接 MySQL 数据库
+
+<!--more-->
+
 
 
 ## ~~通过 `MySQLdb` 连接~~

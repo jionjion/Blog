@@ -8,7 +8,11 @@ categories:
 tags: [Oracle, SQL]
 ---
 
-----------
+> Oracle 查询语句
+
+<!--more-->
+
+
 
 ## 内容简介
 

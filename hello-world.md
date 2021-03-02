@@ -3,9 +3,15 @@ title: Hello World
 abbrlink: 4a17b156
 date: 2017-01-01 00:00:00
 categories:
-  - Help
-tags: Help
+  - Hexo
+tags: Hexo
 ---
+
+> 介绍 Hexo 作为博客的部署
+
+<!--more-->
+
+
 
 # Hexo静态博客
 

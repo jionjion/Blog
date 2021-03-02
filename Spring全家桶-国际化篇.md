@@ -8,6 +8,12 @@ categories:
 tags: [Java, Spring, SpringBoot]
 ---
 
+> Spring 国际化的使用
+
+<!--more-->
+
+
+
 # 简介
 
 ## 属性文件

@@ -8,6 +8,12 @@ categories:
 tags: [Java, JDK]
 ---
 
+> 介绍 Java8 的新特性
+
+<!--more-->
+
+
+
 # JAVA8
 
 ## Lambda表达式

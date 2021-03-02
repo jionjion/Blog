@@ -8,7 +8,12 @@ categories:
 tags: [Linux, Docker]
 ---
 
-## 简介
+> 介绍 Dockerfile 的编写和存放一些示例.
+
+
+
+## Dockerfile
+
 Dockerfile是一个包含用于组合映像的命令的文本文档.可以使用在命令行中调用任何命令. Docker通过读取Dockerfile中的指令自动生成映像.
 
 docker build命令用于从Dockerfile构建映像.可以在 `docker build` 命令中使用 `-f` 标志指向文件系统中任何位置的Dockerfile.
@@ -16,7 +21,7 @@ docker build命令用于从Dockerfile构建映像.可以在 `docker build` 命�
 `docker build -f /path/to/a/Dockerfile`
  `#` 为 Dockerfile 中的注释.
 
-### Dockerfile的基本结构
+### 脚本结构
 
 - 基础镜像信息
 - 维护者信息
@@ -24,7 +29,7 @@ docker build命令用于从Dockerfile构建映像.可以在 `docker build` 命�
 - 容器启动时执行指令
 
 
-### Dockerfile中的命令
+### 操作指令
 
 Docker以从上到下的顺序运行Dockerfile的指令.
 为了指定基本映像,第一条指令必须是FROM.
@@ -241,5 +246,6 @@ Dockerfile中只允许有一个ENTRYPOINT命令,多指定时会覆盖前面的�
 　　`ONBUILD RUN /usr/local/bin/python-build --dir /app/src`
 
 
- ## 示例
+
+ ## 示例文件
 

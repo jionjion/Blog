@@ -7,9 +7,13 @@ categories:
 tags: [MySQL, SQL]
 ---
 
-## 简介
+> 介绍了 `MySQL`  相关内置函数. 数据库采用 `8.X` 版本
 
-介绍了 `MySQL`  相关内置函数. 数据库采用 `8.X` 版本
+<!--more-->
+
+
+
+## MySQL 内置函数
 
 
 ## 数值函数

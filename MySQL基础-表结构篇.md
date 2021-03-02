@@ -7,13 +7,13 @@ categories:
 tags: [MySQL, SQL]
 ---
 
+> 介绍 `Mysql` 数据库相关表结构
+
+<!--more-->
 
 
-## 简介
 
-介绍 `Mysql` 数据库相关表结构
-
-
+## MySQL表结构
 
 ## 数据类型
 

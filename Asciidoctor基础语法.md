@@ -8,7 +8,14 @@ categories:
 tags: [Document, Asciidoctor]
 ---
 
+> 介绍标记文档  Asciidoctor 的使用与渲染
+
+<!--more-->
+
+
+
 # 简介
+
 Asciidoctor是一个快速文本处理器和发布工具链，用于将文本内容转为HTML,PDF,PPT或者其他格式
 默认提供了一系列样式,用于表现HTML内容.
 

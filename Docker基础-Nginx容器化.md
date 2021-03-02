@@ -8,11 +8,15 @@ categories:
 tags: [Linux, Docker, Nginx]
 ---
 
+> 介绍 `Nginx` 的容器化部署
+
+<!--more-->
+
+
+
 ## Nginx容器化
 
 参考  [官网](https://hub.docker.com/_/nginx)
-
-
 
 ### 镜像启动
 

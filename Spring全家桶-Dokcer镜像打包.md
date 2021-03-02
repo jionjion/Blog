@@ -8,9 +8,13 @@ categories:
 tags: [Java, Spring, Docker]
 ---
 
+> SpringBoot 打包镜像
+
+<!--more-->
 
 
-##简介
+
+## 简介
 
 介绍SpringBoot与Docker整合.通过maven插件,完成自动打包,生成镜像.
 

@@ -8,6 +8,12 @@ categories:
 tags: [Oracle, SQL]
 ---
 
+> Oracle 使用 DBLink
+
+<!--more-->
+
+
+
 # 简介
 
 通过 `DBLike` 连接其他数据库,以便进行同步操作.

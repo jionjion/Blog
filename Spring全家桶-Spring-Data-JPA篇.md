@@ -8,7 +8,14 @@ categories:
 tags: [Java, Spring, JPA]
 ---
 
+> Spring-Data-JPA 的使用
+
+<!--more-->
+
+
+
 # 简介
+
 Spring-Data提供了数据持久化的一种方式,其中 `Spring-Data-Jpa` 是实现 `JPA` 规范的一系列扩展.
 通过继承 `Repository` 类及其子类,调用其预先定义好的各种实现.
 

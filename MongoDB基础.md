@@ -7,7 +7,14 @@ categories:
 tags: [MongoDB]
 ---
 
+> MongoDB 的使用
+
+<!--more-->
+
+
+
 # 安装
+
 访问网站`https://www.mongodb.com/download-center/community`选择需要的版本
 这里是CentOS7系统,因此选择RedHat版本的,官网可以使用`rpm`安装包进行下载.或者提供的`yum`源
 

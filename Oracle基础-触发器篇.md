@@ -7,8 +7,14 @@ categories:
   - Trigger
 tags: [Oracle, Trigger]
 ---
---------
+> Oracle 触发器的使用
+
+<!--more-->
+
+
+
 ## 内容简介
+
 介绍了Oracle中触发器的简单使用，实际中触发器的引入回导致数据难以控制，所以还是少用为好。
 
 ## 使用

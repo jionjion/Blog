@@ -8,10 +8,11 @@ categories:
 tags: [Java, Lombok]
 ---
 
+> 简要介绍 `Lombok`
+
+<!--more-->
 
 ## 简介
-
-简要介绍 `Lombok`
 
 ## 常用注解
 

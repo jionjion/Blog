@@ -8,6 +8,12 @@ categories:
 tags: [Java, JDBC, MySQL]
 ---
 
+> JDBC连接MySQL数据库
+
+<!--more-->
+
+
+
 ## 简介
 
 使用 `JDBC`(java data base connectivity) 实现连接 `MySQL` 数据库,完成基本的增删改查,事务控制和存储过程的调用.

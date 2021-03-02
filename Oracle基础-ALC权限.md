@@ -8,7 +8,14 @@ categories:
 tags: [Oracle, Package]
 ---
 
+> Oracle 数据库中 ACL 权限控制
+
+<!--more-->
+
+
+
 ## 内容简介
+
 介绍了Oracle数据库中，对于访问控制权限（ACL）的控制。
 
 

@@ -8,6 +8,10 @@ categories:
 tags: [Linux, Docker, Redis]
 ---
 
+> 介绍 `Redis` 的容器化部署
+
+<!--more-->
+
 
 
 # 简介

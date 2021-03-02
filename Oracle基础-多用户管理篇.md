@@ -7,8 +7,14 @@ categories:
   - SQL
 tags: [Oracle, SQL]
 ---
-------
+> Oracle 线程管理
+
+<!--more-->
+
+
+
 ## 内容简介
+
 Oracle数据中用户调用对象时发生死锁时，通过对用户Session的分析，杀死进程释放数据库资源。
 
 ### 程序包调用时发生系统占用

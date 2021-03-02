@@ -7,7 +7,14 @@ categories:
   - Package
 tags: [Oracle, Package]
 ---
+> Oracle 定时器的使用
+
+<!--more-->
+
+
+
 ## 内容简介
+
 介绍了Oracle数据库中定时任务的创建及启动方式。
 
 ## 创建及启动

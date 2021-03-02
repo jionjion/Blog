@@ -8,6 +8,10 @@ categories:
 tags: [Java, Socket]
 ---
 
+> Java 实现网络通信及其示例代码
+
+<!--more-->
+
 
 
 # JAVA中的网络通信

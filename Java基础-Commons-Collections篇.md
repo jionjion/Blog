@@ -8,9 +8,11 @@ categories:
 tags: [Java, Commons, Commons-Collections]
 ---
 
+> 对 Java 集合框架的操作.
 
+<!--more-->
 
-##简介
+## 简介
 
 简化Java中集合框架的操作. 参考[官网](http://commons.apache.org/proper/commons-collections/)
 

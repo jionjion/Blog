@@ -8,6 +8,12 @@ categories:
 tags: [Java, Spring, JPA]
 ---
 
+> SpringBoot 使用 Redis
+
+<!--more-->
+
+
+
 # 基础语法
 
 默认, 在`SpringBoot 2.x` 中, 使用 `lettuce` 进行数据库操作

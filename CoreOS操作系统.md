@@ -8,6 +8,12 @@ categories:
 tags: [Linux, CentOS]
 ---
 
+> 阿里云服务器操作系统, CoreOS的一些操作.
+
+<!--more-->
+
+
+
 # 简介
 
 

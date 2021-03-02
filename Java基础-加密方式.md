@@ -8,13 +8,13 @@ categories:
 tags: [Java, Encode, Decode]
 ---
 
+> 常用加密方式, 及其 Java 实现
+
+<!--more-->
+
 
 
 # 简介
-
-常用加密方式
-
-
 
 ## 相关知识
 **明文:** 等待加密的信息

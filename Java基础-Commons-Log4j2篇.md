@@ -8,8 +8,6 @@ categories:
 tags: [Java, Commons, Commons-Log4j2]
 ---
 
-
-
 # 简介
 参考 [官网](http://www.apache.org/)
 

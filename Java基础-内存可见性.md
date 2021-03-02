@@ -8,6 +8,10 @@ categories:
 tags: [Java, JVM]
 ---
 
+> 介绍 Java 的内存模型及多线程环境下的一些注意要点
+
+<!--more-->
+
 
 
 # 内存可见性介绍

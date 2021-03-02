@@ -8,6 +8,12 @@ categories:
 tags: [Java, Mode]
 ---
 
+> Java 的设计思想与常用的设计模式
+
+<!--more-->
+
+
+
 # 设计思想
 
 ## 核心原则

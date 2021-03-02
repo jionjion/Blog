@@ -8,7 +8,14 @@ categories:
 tags: [Oracle, Package]
 ---
 
+> Oracle 官方数据库程序包的使用
+
+<!--more-->
+
+
+
 # 官方提供
+
 | 包名 | 简介 |
 |----|----|
 | DBMS_ADDM | 数据库诊断相关 |
@@ -207,24 +214,6 @@ tags: [Oracle, Package]
 | DBMS_XSLPROCESSOR | 该DBMS_XSLPROCESSOR包提供了一个界面来管理XML文档的内容和结构。|
 | DBMS_XSTREAM_ADM | 此DBMS_XSTREAM_ADM包提供用于在Oracle数据库和其他系统之间进行流数据库更改的接口。XStream使应用程序能够流出或流式传输数据库更改。|
 | DBMS_XSTREAM_AUTH | 该DBMS_XSTREAM_AUTH程序包提供了用于向XStream管理员授予权限和撤消权限的子程序。|
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

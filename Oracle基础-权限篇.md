@@ -7,9 +7,14 @@ categories:
   - SQL
 tags: [Oracle, SQL]
 ---
-----------
+> Oracle 权限管理
+
+<!--more-->
+
+
 
 ## 内容简介
+
 对Oracle中各种权限进行简介。
 
 ## 概要文件
@@ -151,7 +156,10 @@ to jion;                                                               		-- 授�
 
 - 授权debugger
 ``` sql
-grant  debug connect session to jion;
+-- debug 线程
+grant debug connect session to jion;
+-- debug 程序包
+grant debug any procedure to jion;
 ```
 
 ## 重置密码

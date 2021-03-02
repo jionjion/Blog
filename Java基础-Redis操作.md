@@ -8,10 +8,14 @@ categories:
 tags: [Java, Redis, Jedis]
 ---
 
+> Java代码操作Redis数据库.
+>
+
+<!--more-->
+
+
+
 ## 简介
-Java代码操作Redis数据库.
-
-
 
 ## 相关介绍
 

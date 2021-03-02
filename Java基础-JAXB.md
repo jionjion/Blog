@@ -8,6 +8,10 @@ categories:
 tags: [Java, JAXB]
 ---
 
+> JAXB 的使用, 将对象与XML进行转换
+
+
+
 # 简介
 
 介绍Java8自带工具中,对JAXB的使用
