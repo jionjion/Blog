@@ -7,8 +7,6 @@ categories:
 tags: [Python]
 ---
 
-> Oracle 程序包的使用
-
 > Python 的各种代码记录
 
 <!--more-->
