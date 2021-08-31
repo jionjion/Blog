@@ -74,7 +74,7 @@ tags: [Linux, Docker, Redis]
 
 `docker stop local-redis`
 
-###创建用后即销毁的容器
+### 创建用后即销毁的容器
 
 启动容器, 在交互界面结束后,销毁容器
 
@@ -84,7 +84,7 @@ tags: [Linux, Docker, Redis]
 
 将镜像内 `/data` 文件夹对外挂载
 
-### 生成环境
+### 生产环境
 
 `docker run --name my-redis -d -p6379:6379 redis:latest`
 

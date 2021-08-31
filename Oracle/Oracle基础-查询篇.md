@@ -861,3 +861,21 @@ start with mgr is null
 order siblings by ename;  -- 保持层次后,进行查询
 ```
 
+## 正则查询
+
+### 正则拆分
+
+```sql
+-- 根据,逗号分隔字符, 最多显示999层
+select regexp_substr('1,2,3,4','[^,]+', 1, level) from dual connect by level<=999;
+-- 根据 空格分隔字符, 最多显示1层
+select regexp_substr('2021-05-10 23:59:00','[^ ]+', 1, level) from dual connect by level<=1;
+```
+
+### 正则匹配
+
+```sql
+-- 查找字段中非数字的记录
+select * from emp where not regexp_like(eid, '^[0-9]+[0-9]$');
+```
+

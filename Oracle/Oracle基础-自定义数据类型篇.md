@@ -26,7 +26,6 @@ create type employee_object as object(                                          
 ename varchar2(20),                                                                             -- 自定义的对象的属性
 empno number
 );
-
 ```
 
 ## 记录类型
@@ -53,7 +52,7 @@ declare
   ename varchar2(20) ,                                                                         -- 自定义的记录字段
   empno number(8));  
   
-  type employee_table is table of employee_record indexby BINARY_integer;                      -- 自定义表,表结构与记录一致
+  type employee_table is table of employee_record index by BINARY_integer;                      -- 自定义表,表结构与记录一致
   emp_01 employee_record;                                                                      -- 创建一条记录
   table_01   employee_table;                                                                   -- 创建一个自定义表
 begin
@@ -73,5 +72,4 @@ where id=1100;
      dbms_output.put_line( v_students(1100).ouusrnm); 
 end;
 ```
-
 
