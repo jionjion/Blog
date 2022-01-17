@@ -1,6 +1,7 @@
 ---
 title: RabbitMQ基础
 abbrlink: 2ef47cbd
+typora-root-url: ../../
 date: 2020-11-07 13:26:44
 categories:
   - RabbitMQ
@@ -33,7 +34,7 @@ tags: RabbitMQ
 
 消费者: 从队列接收消息.
 
-![image-20201107170450734](./RabbitMQ基础/AMQP.png)
+![image-20201107170450734](./images/2021-01/AMQP.png)
 
 
 
@@ -42,7 +43,7 @@ tags: RabbitMQ
 [参阅](https://www.rabbitmq.com/getstarted.html)
 
 - 点对点..  生产者直接发送到队列
-- 广播
+- 播
 - 发布-订阅
 - 路由
 - 动态路由
@@ -136,7 +137,7 @@ rabbitmq-plugins set [插件名]
 
 在 `Admin` 选项卡下, 创建虚拟主机. **主机命名以 `/` 开头**
 
-![创建虚拟主机](./RabbitMQ基础/创建虚拟主机.png)
+![创建虚拟主机](./images/2021-01/创建虚拟主机.png)
 
 
 
@@ -144,11 +145,11 @@ rabbitmq-plugins set [插件名]
 
 在 `Admin` 选项卡下, 创建用户. 建议用户名与虚拟主机一致, 同时设置密码和权限
 
-![创建用户](./RabbitMQ基础/创建用户.png)
+![创建用户](./images/2021-01/创建用户.png)
 
 点击创建后的用户名, 进入详细页面.并分配主机
 
-![分配主机](./RabbitMQ基础/分配主机.png)
+![分配主机](./images/2021-01/分配主机.png)
 
 
 

@@ -1,6 +1,7 @@
 ---
 title: Spring全家桶-Spring-Data-JPA篇
 abbrlink: 2cd2a97e
+typora-root-url: ../../
 date: 2019-05-22 18:37:41
 categories:
   - Java
@@ -43,7 +44,7 @@ spring.jpa.database-platform=org.hibernate.dialect.MySQLDialect
 
 类图如下
 
-![JpaRepository类图](./Spring全家桶-Spring-Data-JPA篇/Repository类图.png)
+![JpaRepository类图](./images/2021-01/Repository类图.png)
 
 ## 具体子类
 

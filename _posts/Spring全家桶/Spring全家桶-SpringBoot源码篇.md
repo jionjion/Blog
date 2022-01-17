@@ -1,6 +1,7 @@
 ---
 title: Spring全家桶-SpringBoot源码篇
 abbrlink: 339b7cd
+typora-root-url: ../../
 date: 2020-06-23 22:43:34
 categories:
   - Java
@@ -948,7 +949,7 @@ Spring容器提供的各种事件.
 6.  `ApplicationReadyEvent` 容器准备完成事件
 7.  `ApplicationFailedEvent` 容器失败事件
 
-![系统事件](./Spring全家桶-SpringBoot源码篇/系统事件-1.png)
+![系统事件](./images/2021-02/系统事件-1.png)
 
 
 
@@ -1957,7 +1958,7 @@ public class DuckImportBeanDefinitionRegistrarTest {
 
 其类图如下.
 
-![类图信息](./Spring全家桶-SpringBoot源码篇/BeanDefinition类图-1.png)
+![类图信息](./images/2021-02/BeanDefinition类图-1.png)
 
 
 
@@ -4414,7 +4415,7 @@ public class MyWebApplicationAwareTest{
 
 在 `Environment` 对象中,有多个 `propertySources` , 每个 `propertySources` 封装了来自框架内外的参数信息.从中获得相关的属性.
 
-![Environment类图](./Spring全家桶-SpringBoot源码篇/Environment类图-1.png)
+![Environment类图](./images/2021-02/Environment类图-1.png)
 
 ### 源码步骤
 
@@ -5242,7 +5243,7 @@ public abstract class AbstractFailureAnalyzer<T extends Throwable> implements Fa
 
 其类图如下
 
-![AbstractFailureAnalyzer类图](./Spring全家桶-SpringBoot源码篇/AbstractFailureAnalyzer类图-1.png)
+![AbstractFailureAnalyzer类图](./images/2021-02/AbstractFailureAnalyzer类图-1.png)
 
 #### 2-9-2-0 异常分析器
 
@@ -5705,7 +5706,7 @@ public static void invokeBeanFactoryPostProcessors(
 
 其类图如下
 
-![ConfigurationClassPostProcessor类图](./Spring全家桶-SpringBoot源码篇/ConfigurationClassPostProcessor类图-1.png)
+![ConfigurationClassPostProcessor类图](./images/2021-02/ConfigurationClassPostProcessor类图-1.png)
 
 #### X-1-0-0 实现类入口
 

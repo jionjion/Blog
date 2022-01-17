@@ -1,5 +1,6 @@
 ---
 title: Redis基础
+typora-root-url: ../../
 abbrlink: fe29e710
 date: 2019-01-22 21:09:38
 categories:

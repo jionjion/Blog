@@ -81,10 +81,10 @@ error: Failed dependencies:
 `http://www.oracle.com/technetwork/java/javase/archive-139210.htm`
 
 
-## 上传到服务器
+### 上传到服务器
 将下载后的rpm包上传
 
-## 安装
+### 安装
 `rpm -ivh jdk-8u144-linux-x64.rpm`
 
 
@@ -327,9 +327,11 @@ alias cnpm="npm --registry=https://registry.npm.taobao.org \
 
 
 
+# 用户管理
+
 ## 用户管理
 
-### 新用户
+### 新建用户
 
 创建新用户,并分配密码
 
@@ -343,11 +345,13 @@ useradd docker -g docker
 # 修改 docker 用户密码
 passwd docker
 
-# 允许管理员命名 sudo
-
+# 创建不能登录的用户 git
+useradd git -s /sbin/nologin
 ```
 
 
+
+## 权限管理
 
 ### 允许使用 `sudo`
 
@@ -360,6 +364,14 @@ docker  ALL=(ALL)       ALL
 ```
 
 
+
+### 限制用户不允许登录
+
+使用 `chsh` 命令进行管理, 如果没有该命令, 通过 `yum -y install util-linux-user` 进行安装.
+
+```bash
+chsh -s /sbin/nologin git
+```
 
 
 
@@ -404,3 +416,4 @@ PubkeyAuthentication yes
 ### Windows秘钥权限设置
 
 参考 [博客](https://blog.csdn.net/joshua2011/article/details/90208741)
+
