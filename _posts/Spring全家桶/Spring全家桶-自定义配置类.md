@@ -1,5 +1,6 @@
 ---
 title: Spring全家桶-自定义配置类
+typora-root-url: ../../
 abbrlink: 51eca88c
 date: 2019-05-29 14:46:09
 categories:
@@ -25,4 +26,24 @@ tags: [Java, Spring]
 
 `@EnableCaching`
 对于一些配置文件,数据库连接等对象,通过`@EnableCaching`注解将其缓存中.
+
+
+
+## 依赖管理
+
+对于非直接继承自 `spring-boot-starter-parent` 的项目, 通过 `<dependencyManagement>`  标签配置依赖关系.
+
+```xml
+<dependencyManagement>
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-dependencies</artifactId>
+            <version>2.6.3</version>
+            <type>pom</type>
+            <scope>import</scope>
+        </dependency>
+    </dependencies>
+</dependencyManagement>
+```
 
