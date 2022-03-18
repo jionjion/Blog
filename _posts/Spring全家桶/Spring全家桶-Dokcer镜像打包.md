@@ -144,3 +144,39 @@ docker run -it --name 容器的名字 --rm -p 虚拟机端口:本地端口 镜�
 | -XX:+UseConcMarkSweepGC   | 指定使用的垃圾收集器，这里使用CMS收集器 |
 | -XX:+PrintGCDetails       | 打印详细的GC日志                        |
 
+
+
+
+
+# Maven 配置
+
+配置多文件夹打包
+
+```xml
+<build>
+        <plugins>
+            <!-- 指定多个源代码目录、多个资源文件目录 -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>1.8</version>
+                <executions>
+                    <execution>
+                        <id>add-source</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>add-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <!-- 多个源文件夹 -->
+                                <source>src/main/java</source>
+                                <source>src/main/module</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+    </build>
+```
+
