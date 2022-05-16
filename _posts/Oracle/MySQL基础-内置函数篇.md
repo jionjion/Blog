@@ -113,7 +113,14 @@ select atan(0.5) from dual;
 
 ## 字符函数
 
+### 判空函数
+
+```mysql
+select coalesce(null, 0) from dual;											-- 为空时, 显示0
+```
+
 ### ASCII转换函数
+
 ``` mysql
 -- 查看字母的ASCII值
 select ascii('A'), ascii(1), ascii('囧') from dual;                        -- 字母和数字智能填一个,多填以第一个为主
@@ -204,7 +211,7 @@ select format(1000.2189,2)               from dual;                        -- 1,
 select convert(10000.2189,decimal(12,2)) from dual;                        -- 10000.22 精度12位,小数位2位
 ```
 
-### 字符串MD5
+### 字符串 `MD5`
 
 ```mysql
 select md5('hello')          from dual;

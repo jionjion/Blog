@@ -21,11 +21,10 @@ tags:
 ## `Bean` 核心类及实现
 
 1. `org.springframework.beans.factory.config.BeanDefinition` 接口
-
- 在 `Spring` 提供的 `Bean` 定义类. 描述容器中 `Bean` 的基本信息
+   在 `Spring` 提供的 `Bean` 定义类. 描述容器中 `Bean` 的基本信息
+   1. `org.springframework.beans.factory.config.BeanDefinitionHolder`类 , `Bean` 信息的包装类, 将 `BeanDefinition` 信息和 `BeanName` 和 `aliase` 别名关联
 
 2. `org.springframework.beans.factory.support.RootBeanDefinition` 类
-
     `BeanDefinition` 接口的默认实现, 描述容器中 `Bean` 的基本信息
 
 
@@ -40,6 +39,8 @@ tags:
 2. `org.springframework.context.annotation.BeanDefinitionRegistryPostProcessor` 接口
 
    提供 `postProcessBeanDefinitionRegistry` 方法, 在 `Bean` 注册到容器,但尚未实例化前, 进行后置处理, 或者添加新的定义.
+
+   1. `org.springframework.context.annotation.ConfigurationClassPostProcessor#postProcessBeanDefinitionRegistry` 配置读取主项目启动类下的类,并注册到容器中.
 
 3. `org.springframework.beans.factory.FactoryBean<T>` 接口
 
@@ -93,11 +94,9 @@ tags:
 
    获取 `Spring` 容器事件发布器
 
-4. `org.springframework.context.MessageSourceAware`
+7. `org.springframework.context.MessageSourceAware`
 
    获取消息管理器
-
-5. 
 
 
 

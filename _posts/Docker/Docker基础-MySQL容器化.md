@@ -73,6 +73,51 @@ docker run --name my-mysql --restart=always -d -p3306:3306 -v /data/mysql/data:/
 
 
 
+## 时区设置
+
+查看 `MySQL` 时区
+
+```mysql
+ show variables like '%time_zone%';
+ +------------------+--------+
+| Variable_name    | Value  |
++------------------+--------+
+| system_time_zone | UTC    |
+| time_zone        | SYSTEM |
++------------------+--------+
+```
+
+修改系统时区
+
+```bash
+# 查看当前时区设置
+root@d6e5f8d1e0ef:/# ls -l /etc/localtime
+lrwxrwxrwx 1 root root 27 May 11  2021 /etc/localtime -> /usr/share/zoneinfo/Etc/UTC
+
+# 修改时区
+root@d6e5f8d1e0ef:/usr/share/zoneinfo#  rm -f /etc/localtime
+root@d6e5f8d1e0ef:/usr/share/zoneinfo#  ln -s /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+# 查看修改后的时区
+root@d6e5f8d1e0ef:/usr/share/zoneinfo# ls -l /etc/localtime
+lrwxrwxrwx 1 root root 33 Apr 10 15:35 /etc/localtime -> /usr/share/zoneinfo/Asia/Shanghai
+```
+
+修改后 `MySQL` 时区
+
+```mysql
+mysql> show variables like '%time_zone%';
++------------------+--------+
+| Variable_name    | Value  |
++------------------+--------+
+| system_time_zone | CST    |
+| time_zone        | SYSTEM |
++------------------+--------+
+```
+
+
+
+
+
 # 其他设置
 
 ## 备份与还原

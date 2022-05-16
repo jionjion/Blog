@@ -209,6 +209,68 @@ public interface TransactionStatus extends SavepointManager {
 | `TransactionDefinition.PROPAGATION_NEVER`              | 不在事务内执行,不存在事务                                    |
 | `TransactionDefinition.PROPAGATION_NESTEDED`           | 嵌套事务,通过 `JDBC` 支持的 `savepoint` 进行存盘点的嵌套事务. |
 
+
+
+### 事务失效
+
+`@Transactional` 注解, 是使用 AOP 实现的, 本质就是在目标方法执行前后进行拦截. 在目标方法执行前加入或创建一个事务,在执行方法执行后根据实际情况选择提交或是回滚事务..
+当 `Spring` 遇到该注解时, 会自动从数据库连接池中获取 `connection`, 并开启事务然后绑定到 `ThreadLocal` 上, 对于 `@Transactional` 注解包裹的整个方法都是使用同一个connection连接.
+
+在以下情况下会失效
+
+- `@Transactional` 同类中调用事务方法
+
+- `@Transactional` 应用在非 `public` 修饰的方法上
+- `@Transactional` 注解属性 `propagation` 设置错误
+- `@Transactional` 注解属性 `rollbackFor` 设置错误
+- 同一个类中方法调用，导致 `@Transactional` 失效
+- 异常被 `catch` 捕获导致 `@Transactional` 失效
+
+
+
+#### 同类中调用事务方法示例
+
+ 注解的声明式事务是通过 `spring aop` 起作用的, 而spring aop需要生成代理对象, 直接在同一个类中方法调用使用的还是原始对象, 事务不生效.
+
+```java
+@Service
+public class OrderService{
+	// 同类中调用, 未走代理, 使事务调用失效
+    public void createOrder(OrderCreateDTO createDTO){
+        query();
+        validate();
+        saveData(createDTO);
+    }
+  
+	// 事务操作, 禁止同类中非事务方法间调用
+    @Transactional(rollbackFor = Throwable.class)
+    public void saveData(OrderCreateDTO createDTO){
+        orderDao.insert(createDTO);
+    }
+}
+```
+
+一般通过拆分到 `service` 层调用; 或者启用 `@EnableAspectJAutoProxy` 代理; 或者在 `createOrder` 类上添加 `@Transactional`
+
+`SpringBootApplication` 类, 启用自动代理, 并对外暴露
+
+```java
+@EnableAspectJAutoProxy(exposeProxy = true)
+@SpringBootApplication
+public class SpringBootApplication {}
+```
+
+`OrderService`  调用代理类
+
+```java
+public void createOrder(OrderCreateDTO createDTO){
+    OrderService orderService = (OrderService)AopContext.currentProxy();
+    orderService.saveData(createDTO);
+}
+```
+
+
+
  ### 示例: `Spring` 事务操作
 
 通过 `@Transactional` 进行事务操作.
@@ -236,6 +298,30 @@ public class CustomerServiceInAnnotation {
 }
 
 ```
+
+通过 `TransactionTemplate` 事务模板调用
+
+```java
+/** 通过代码方式管理事务 */
+@Service
+public class CustomerServiceInTemplate {
+    
+    /** 事务模板 */
+    @Autowired 
+    private TransactionTemplate transactionTemplate; 
+
+    /** 保存 */
+    public void save(Customer customer) { 
+        transactionTemplate.execute(transactionStatus -> {
+            //保存明细表
+            customerRepository.save(customer);
+            return Boolean.TRUE; 
+        });
+    } 
+}
+```
+
+
 
 通过 `PlatformTransactionManager` 平台事务管理器, 进行事务操作
 

@@ -82,7 +82,61 @@ public class WebConfig implements WebMvcConfigurer {
 
 # 参数绑定
 
-## 反序列化
+## InitBinder 反序列化
+
+对于 `URL` 中的请求参数, `Form` 表单中的请求参数. 
+
+- 可以通过 `org.springframework.beans.propertyeditors.*` 自定义实现转换
+- 通过注入 `java.beans.PropertyEditorSupport` 自定义转换实现
+
+```java
+    /**
+     * 约定数据转换格式.有且仅针对与URL传参和Form表单传参形式.
+     * <p>
+     * 对于请求体内参数格式转换, 交给Json序列化与反序列扩展.
+     * 参阅 {@code com.hand.hap.core.json}
+     *
+     * @param binder  注册数据编辑器
+     * @param request 请求
+     */
+    @InitBinder
+    public void initBinder(WebDataBinder binder, WebRequest request) {
+        // 更多自定义编辑器参阅 org.springframework.beans.propertyeditors.*
+        binder.registerCustomEditor(Date.class, new CustomDateEditor(new SimpleDateFormat(PATTERN), true));
+
+        // LocalTime LocalDate, LocalDateTime 类型转换.. 需要重载 registerCustomEditor
+        binder.registerCustomEditor(LocalTime.class, new PropertyEditorSupport() {
+            @Override
+            public void setAsText(String text) {
+                if (!StringUtils.isEmpty(text)) {
+                    setValue(LocalTime.parse(text, DateTimeFormatter.ofPattern("HH:mm:ss")));
+                }
+            }
+        });
+        binder.registerCustomEditor(LocalDate.class, new PropertyEditorSupport() {
+            @Override
+            public void setAsText(String text) {
+                if (!StringUtils.isEmpty(text)) {
+                    setValue(LocalDate.parse(text, DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+                }
+            }
+        });
+        binder.registerCustomEditor(LocalDateTime.class, new PropertyEditorSupport() {
+            @Override
+            public void setAsText(String text) {
+                if (!StringUtils.isEmpty(text)) {
+                    setValue(LocalDateTime.parse(text, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+                }
+            }
+        });
+    }
+```
+
+
+
+
+
+## 注解反序列化
 
 带日期格式的参数转为 `java` 类
 

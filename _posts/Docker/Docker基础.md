@@ -70,8 +70,8 @@ Docker客户端只需向Docker服务器或守护进程发出请求，服务器�
 
 将宿主机的端口与容器的端口相绑定. 一个端口只能绑定一个容器
 
-`docker run -p 80:80 nginx`
-运行`nginx` 并绑定宿主机的 `80` 端口到容器的 `80` 端口
+`docker run -p 80:433 nginx`
+运行`nginx` 并绑定宿主机的 `80` 端口到容器的 `433` 端口
 
 `docker run -P nginx`
 运行`nginx` 并将容器内的端口随机映射到宿主机
