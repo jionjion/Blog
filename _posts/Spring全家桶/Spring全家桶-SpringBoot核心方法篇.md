@@ -179,9 +179,14 @@ tags:
 
 # 方法入口
 
-## 容器生命周期
+## 依赖注入
 
-
+- `org.springframework.context.annotation.ConditionEvaluator#shouldSkip ` 判断配置类 `@Configuration` 中的 `@Conditional` 条件,是否将当前配置类注入到容器中.
+- `org.springframework.context.annotation.ConfigurationClassParser#doProcessConfigurationClass` 循环解析配置信息, 将各种配置的 `Bean` 注入到容器中
+  - 引入 `@Component` 标识的内置类
+- `org.springframework.context.annotation.ConfigurationClassParser.DeferredImportSelectorGroupingHandler#register` 注册 `ImportSelector` 接口
+- `org.springframework.boot.autoconfigure.AutoConfigurationImportSelector#getAutoConfigurationEntry` 自动注册的入口类, 将当前 `jar` 内的自动配置类进行读取
+- `org.springframework.boot.autoconfigure.EnableAutoConfiguration` 自动配置控接口, 在 `org/springframework/boot/spring-boot-autoconfigure/2.4.0/spring-boot-autoconfigure-2.4.0.jar!/META-INF/spring.factories` 中描述自动配置的信息.
 
 
 
