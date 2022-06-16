@@ -10,7 +10,7 @@ tags:
   - Spring
 ---
 
-> 介绍 `Spring` 常用功能
+> 介绍 `Spring` 核心方法及拦截点
 
 <!--more-->
 

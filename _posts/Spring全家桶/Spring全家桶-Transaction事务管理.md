@@ -378,7 +378,7 @@ public class CustomerServiceInCode {
 如果一阶段提交中抛出异常,则二阶段均进行回滚保持事务一致性.(性能瓶颈)
 
 **具体**
-`Spring`事务接口 -> `SpringJTA` -> `JTA`事务管理器 -> 资源管理器 -> 数据库
+`Spring` 事务接口 -> `SpringJTA` -> `JTA`事务管理器 -> 资源管理器 -> 数据库
 
 ### `JTA` 接口
 `javax.transaction.TransactionManager` 接口,定义了全局的事务的方法
