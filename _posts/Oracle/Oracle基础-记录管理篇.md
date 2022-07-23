@@ -22,7 +22,7 @@ tags: [Oracle, SQL]
 ### 创建
 创建一般的数据表
 ``` sql
---创建表
+-- 创建表
 create table emp(            -- 创建的表名
 empno    number(8),          -- 8位的整数
 ename    varchar2(20),       -- 初始长度20位的可变字符串
@@ -148,16 +148,18 @@ values (10000,'Jion','ANALYST','7782',sysdate,1200,100,20);
 insert into emp(empno,ename,job)                                            -- 为插入的部分表示为空
 values (10000,'Jion','ANALYST');
 -- 3)批量插入
-insert into emp(empno,ename,job)                                            --插入查询出来的多条记录
+insert into emp(empno,ename,job)                                            -- 插入查询出来的多条记录
 select empno,ename,job from scott.emp where empno=7839 union
 select empno,ename,job from scott.emp where empno=7844 union
-select empno,ename,job from scott.emp where empno=7902 ;
+select empno,ename,job from scott.emp where empno=7902;
+-- 使用 default 插入默认值
+insert into emp vales(default , default , default , default)				-- 默认值
 ```
 
 ### 更新记录
 
 ``` sql
---修改数据
+-- 修改数据
 update emp set ename='Jion'                                                 -- 修改表中字段对应数据
 where empno=7902;                                                           -- 限制条件,如果不加默认修改该字段的所有记录
 ```
@@ -166,7 +168,7 @@ where empno=7902;                                                           -- �
 ### 删除记录
 
 ``` sql
---删除数据
+-- 删除数据
 delete from emp                                                             -- 删除表中数据
 where empno=7902;                                                           -- 限制条件,如果不加默认删除全部数据
 ```
