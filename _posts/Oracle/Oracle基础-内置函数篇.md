@@ -768,3 +768,35 @@ select deptno , sum(sal),
 from emp
 group by deptno
 ```
+
+
+
+## 随机函数
+
+```sql
+-- 生成一个9 位随机数 , 正负不定
+select dbms_random.random from dual;
+
+-- 生产100以内的随机数
+select abs(mod(dbms_random.random,100)) from dual;
+
+-- 生成一个[0,1)的数字
+select dbms_random.value from dual;
+
+-- 生成[50,100)的数字
+select dbms_random.value(50,100) from dual;
+
+-- 声场20长度文本串
+select dbms_random.string('X',20) from dual;
+A 大小写混合
+U 只有大写
+L 只有小写
+P 字符串任意打印,含有特殊字符
+X 字符串由大写字符和数字构成
+
+-- 某一年某月内的随机日期
+select to_char(to_date('2017-01-01','YYYY-MM-DD'),'J') from dual;
+-- 获得当月内的随机日期
+select to_date(trunc(dbms_random.value(2457755,2457755 + 31)),'J') from dual;
+```
+

@@ -17,12 +17,55 @@ tags: [Oracle, Package]
 
 对Oracle数据库中的存储过程进行了介绍，所涉及的表为`scott`用户下的`emp`与`dept`表。
 
+- `PL/SQL`  过程语言和结构化查询语言的结合
+- `PL/SQL` 引擎   执行过程语句执行,随后交由SQL引擎执行过程
+- 开启服务器输出 `set serverout on;`
+
+
+
+## 数据常量
+- 数字类型
+  - binary_integer 整型
+     - natural
+     - naturaln
+     - positive
+     - positiven
+     - signtype
+  - number  整数,负数,浮点型
+     - decimal
+     - float
+     - integer
+     - real
+  - pls_integer 有符号的整数
+  - simple_interger 有符号整数
+- 字符
+  - char
+  - varchar2
+  - long
+  - raw
+  - long raw
+- 布尔
+   -    true
+    -   false
+     -  null
+   - 日期
+    -   date
+     -  timestamp
+- LOB类型: 大的非结构化文件,使用 DBMS_LOB程序包操纵LOB数据
+- BFILE  大型二进制对象存在操作系统文件
+- BLOB   大型二进制对象存在数据库中
+- CLOB   大型字符数据储存在数据库中
+- NCLOB  大型UNICODE字符数据
+- 属性类型:
+  - %type    某一列的类型
+  - %rowtype 某一行的类型
+
 ## 基础语法
 语法
 
 ``` sql
 create or replace procedure 名称(参数列表)
-is|as PL/SQL子程序题
+is|as PL/SQL子程序体
 
 ```
 
@@ -173,3 +216,111 @@ begin
   commit;    -- 提交自治事务,当然也可以回滚
 end;
 ```
+
+
+
+## 二进制文件操作
+
+数据库目录准备
+
+```sql
+-- 创建目录
+create directory file_dir as 'F:\ORACLE_Workspace\database\file';
+-- 目录赋予权限,读写权限
+grant read , write on directory file_dir to zhangqian;
+-- 查看所有目录
+select * from all_directories;
+-- 删除目录 
+drop directory file_dir;
+```
+
+在创建有数据库目录后, 将文件写入到数据库文件夹中
+
+```sql
+-- 二进制文件操作
+create table image_file(img_id number primary key , img blob);
+
+-- 存储文件
+declare
+  v_img_id         number;                    -- 主键
+  v_img_name       varchar2(200);             -- 文件路径
+  v_img_file       bfile;                     -- 文件对象,指向操作系统下的文件
+  v_img_blob       blob;                      -- 二进制
+  v_length         number;                    -- 长度
+begin
+  -- 插入空对象
+  insert into image_file values(1,empty_blob());
+  
+  -- 获得插入的对象,放入内存中,进行修改
+  select img into v_img_blob from image_file where img_id = 1;
+  
+  v_img_name := 'TIM.jpg';
+  -- 读取文件,读取为二进制文件对象
+  v_img_file := bfilename(directory => 'IMAGE_DIR', filename => v_img_name);  -- 传入数据库目录和改目录下的文件名
+  
+  -- 打开二进制文件对象 
+  dbms_lob.open(v_img_file);
+  
+  -- 获得文件长度[有多个重载方法]
+  v_length := dbms_lob.getlength(v_img_file);
+  
+  -- 装载文件
+  dbms_lob.loadfromfile(dest_lob    => v_img_blob,  -- 目标文件,为加载到内存的表字段
+                        src_lob     => v_img_file,  -- 源文件,为打开的当前文件
+                        amount      => v_length,    -- 文件长度
+                        dest_offset => 1,
+                        src_offset  => 1);
+  -- 关闭文件[有多个重载方法]
+  dbms_lob.close(v_img_file);
+  
+  -- 提交事务
+  commit;
+end ;
+-- 查看效果
+select * from image_file ;
+```
+
+读取数据库目录中的文件
+
+```sql
+-- 读取文件
+declare
+  v_file_path         varchar2(2000);    -- 文件路径
+  v_file_name         varchar2(200);     -- 文件名
+  v_file              utl_file.file_type;-- 文件类型
+  v_str               varchar2(2000);    -- 输出
+begin
+  v_file_path := 'FILE_DIR';
+  v_file_name := 'file1.txt';
+  -- 打开文件,文件路径,文件名,读模式打开,缓存长度
+  v_file := utl_file.fopen(v_file_path , v_file_name ,'r' , 200);
+  -- 循环读取文件
+  loop
+    utl_file.get_line(v_file,v_str);
+    dbms_output.put_line(v_str);
+  end loop;
+  -- 关闭文件
+  utl_file.fclose(v_file);
+exception
+  when no_data_found then            -- 结尾不做处理
+    null;
+  when others then
+    v_str := sqlerrm(sqlcode);       -- 获取错误信息
+    dbms_output.put_line(v_str);
+end ;
+```
+
+
+
+## 过程和函数的区别
+过程
+* 作为PL/SQL语句执行
+* 在规则说明中不包括return子句
+* 不返回任何值
+* 可以包括return语句,但是与函数不同,不能用于返回值
+
+函数
+* 作为表达式的一部分
+* 必须在规则说明中方包含return子句
+* 必须返回单个值
+* 必须包含至少一条return语句

@@ -68,7 +68,17 @@ end;
 ```
 
 ## 逻辑控制
-### if语句
+### if 语句
+
+#### 语法
+
+```sql
+if 条件 then 业务 end if;
+if 条件 then 业务1 else 业务2 end if;
+if 条件1 then 业务1 elsif 条件2 then 业务2 else 业务0 end if;
+```
+
+#### 示例
 
 ``` sql
 --判断用户从键盘中输入的语句
@@ -86,7 +96,42 @@ begin                                                                      -- �
 end;
 ```
 
-### while循环
+### case 语句
+
+#### 语法
+
+```sql
+ case 变量 when 情况1 then 业务1 when 情况2 then 业务2 else 业务0 end;
+```
+
+#### 示例
+
+``` sql
+-- 语句块逻辑判断
+begin
+case 变量
+  when 值1 then  ..... ;
+  when 值2 then  ..... ;
+  else .....;
+end ;
+```
+
+
+
+### while 循环
+
+- `使用 exit when 条件`  退出控制
+- `continue when 条件`   跳过本次
+
+#### 语法
+
+```sql
+while 条件 loop
+  代码块;
+end loop;
+```
+
+#### 示例
 
 ``` sql
 --使while循环打印1-10
@@ -101,7 +146,19 @@ begin
 end;
 ```
 
-### loop循环
+
+
+### loop 循环
+
+#### 语法
+
+```sql
+loop
+ 代码块;
+end loop;
+```
+
+#### 示例
 
 ``` sql
 declare
@@ -115,7 +172,20 @@ begin
 end;
 ```
 
-### for循环
+
+
+### for 循环
+
+#### 语法
+
+```sql
+for 中间变量 in [条件] | 范围开始..范围结束
+loop
+ 代码块;
+end
+```
+
+#### 示例
 
 ``` sql
 declare
@@ -128,18 +198,29 @@ begin
 end;
 ```
 
+### goto 语句
 
-### case语句
+语法
 
-``` sql
--- 语句块逻辑判断
+```sql
+declare 
+  i number;
 begin
-case 变量
-  when 值1 then  ..... ;
-  when 值2 then  ..... ;
-  else .....;
+  i:= 1 ;
+  -- 语句块a
+  <<A>>
+  dbms_output.put_line('>>>' || i);
+  i := i+1;
+  -- 条件,满足跳出
+  if i<= 8 then goto A; else goto B; end if;
+  -- 语句块b
+  <<B>>
+  null;
+  dbms_output.put_line('>>>');
 end ;
 ```
+
+
 
 ### 异常处理
 

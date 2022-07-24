@@ -42,6 +42,15 @@ cursor c_emp is select ename from emp
 `fetch c_emp into pename`取游标中一行的元素到变量中,同时指针下移动
 
 ### 显式游标
+
+#### 语法
+
+```sql
+cursor <cursor_name> (<param_name> <param_type>) is select_sql;
+```
+
+
+
 ####  使用游标循环查询结果集
 
 ``` sql
@@ -99,6 +108,7 @@ end;
 ```
 
 #### 使用游标进行记录操作
+
 ``` sql
 --定义员工涨薪水:boos+3;经理+2;其他+1
 declare
@@ -128,6 +138,8 @@ begin
 end;
 ```
 #### 游标遍历更新
+
+使用游标跟新或者删除,但是声明游标时,必须使用 `selec ... for update`
 
 ``` sql
 -- 游标遍历更新
@@ -177,9 +189,16 @@ begin
   close c_cur;  
 end;
 ```
-#### sys_refcursor游标
-使用 sys_refcursor 代替游标变量的声明
+#### sys_refcursor 游标
+使用 sys_refcursor 代替游标变量的声明, 处理运行时才能确定的动态SQL查询的结果
+
 ``` sql
+-- 定义语法
+type <ref_cursor_name> is ref cursor [return <return_type>];
+-- 打开语法
+open cursor_name for select_statement;
+
+-- 示例
 declare
   c_cur              sys_refcursor;                -- 定义弱类型游标变量
   r_emp              emp%rowtype;
@@ -270,7 +289,28 @@ begin
 end;
 ```
 
+#### 使用游标处理大量数据
+
+```sql
+declare
+  cursor c_emp is select * from emp;   -- 创建一个普通的游标
+  type emp_table_type is table of emp%rowtype; -- 创建自定义类型,这是一种表类型,每个行的数据类型为emp表的行类型
+  t_emp   emp_table_type;      -- 根据自定义类型,创建一个变量,存放批量查询的集合
+begin
+  open c_emp;                  -- 打开游标
+  fetch c_emp bulk collect into t_emp;         -- 批量读取
+  for i in 1..t_emp.count loop  -- count属性为自定义类型中的集合长度
+    dbms_output.put_line(t_emp(i).ename || ' is ' || t_emp(i).sal  ); --使用 自定义类型(索引) 获得具体的行,这里的行为rowtype类型,因此可以继续.点出
+  end loop;
+  close c_emp;
+end;
+```
+
+
+
 ### 隐式游标
+
+隐式游标 执行DML语句时, SQL语句生成的游标,起名字为 `sql`
 
 #### 指定次数循环
 ``` sql
@@ -303,7 +343,14 @@ end;
 
 #### 匿名游标
 
+简化显式游标的处理过程,但是只能进行查询处理,不能更新表
+
 ``` sql
+-- 语法
+for <record_index> in <cursor_name> loop
+  .....
+end loop;
+   
 -- 隐式游标,使用for循环迭代,当记录过多时,会内存溢出
 begin  
  for r_emp in (select ename from emp where rownum < 10)  loop  
@@ -311,5 +358,4 @@ begin
  end loop;  
 end;
 ```
-
 

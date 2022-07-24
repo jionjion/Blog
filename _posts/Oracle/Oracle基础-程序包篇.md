@@ -24,6 +24,14 @@ Oracle数据库中，程序包是一系列相关存储过程和函数的集合�
 
 可以使用`constant 常量名`声明常量
 ``` sql
+-- 语法
+create [or replace] package
+package_name is|as 
+[public_item_declarations]       -- 共有变量
+[subprogram_speclflcation]
+end [package_name];
+
+-- 示例
 create or replace package myPackage as
   type myCursor is ref cursor;                                                                -- 自定义数据类型,类似于游标性质
   procedure queryEmpList(dno in number,empList out myCursor);                                 -- 声明存储过程
@@ -34,6 +42,17 @@ end myPackage
 对包头中声明的每一个方法进行实现。
 
 ``` sql
+-- 语法
+create [or replace] package body
+package_name is|as 
+[private_item_declarations]      -- 私有变量
+[subprogram_bodies]
+begin
+ PL/SQL  
+end
+end [package_name];
+
+-- 示例
 create or replace package body myPackage as                                                   -- 声明包体
   procedure queryEmpList(dno in number,empList out myCursor) as                               -- 声明存储过程的实现
   begin

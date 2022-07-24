@@ -114,3 +114,118 @@ with read only;
 ```sql
 select * from user_views;
 ```
+
+
+
+## 物化视图
+
+  包含一个查询结果的数据库对象,它是远程数据的本地副本,或者用来生成基于数据表求和的汇总表.
+  物化视图储存基于远程表的数据,又称为快照
+  物化视图可以查询表.视图,和其他物化视图
+  物化视图中的数据是真是存在的,但是为只读的
+
+### 技术点
+
+#### 数据复制技术
+物化视图 DG 消息队列
+
+#### 查询重写
+
+`enable query rewrite` / `disable query rewrite`
+当数据库查询时,自动判断是否通过查询物化视图来获得结果
+
+#### 物化视图日志
+
+根据不同物化视图的刷新速度,创建为 `rowid` 或者 `primary key` 类型的
+
+#### 刷新模式
+
+`on demand` / `on commit`
+用户在需要时刷新 和 用户执行DML语句时刷新
+`dbms_mview.refresh` 进行手动刷新
+默认为 `on demand force`
+
+#### 刷新方式
+
+`fast` / `complete` / `force` / `never`
+快速刷新,只刷新修改的
+立即刷新,完全刷新
+强制刷新,自动判断,并执行以上两者之一
+从不刷新
+
+### 物化视图方式
+
+#### 基于主键的物化视图
+
+```sql
+-- 授权
+grant create materialized view to zhangqian;
+grant select on zhangqian.MLOG$_EMP to zhangqian;
+
+-- 0.当远程主表中必须含有主键
+-- 1.远端,创建主表,并创建基于主表的视图日志
+create table emp(empno number(4) primary key, ename varchar2(10), sal number(7,2));  -- 创建主表,带主键
+create materialized view log on emp;     	-- 创建物化视图的日志
+
+-- 查看当前用户表, MLOG$_EMP和RUPD$_EMP分别为物化视图日志表
+select * from user_tables;
+-- 支持可更新的表
+select * from RUPD$_EMP;
+-- 物化视图的真正日志
+select * from MLOG$_EMP;
+
+-- 2.本地,创建一个过程,实现刷新本地物化视图动作;创建一个job,进行调用过程的操作;运行这个job,则本地数据会与远端数据自动同步刷新一次
+create materialized view emp_mtlv        	-- 创建物化视图
+refresh fast                             	-- 刷新方式[可省]
+start with sysdate                       	-- 刷新开始时间[可省]
+next sysdate + 1/1440                    	-- 下次刷新时间,每分钟刷新[可省]
+with primary key                         	-- 物化视图基表含有主键[可省]
+as
+select * from zhangqian.emp           	 	-- 物化视图的基本表
+```
+
+#### 使用定时任务刷新
+
+```sql
+-- 使用定时任务刷新
+create or replace procedure refresh_emp_mtlv is
+begin
+  -- 手动刷新物化视图数据
+  dbms_mview.refresh('EMP_MTLV'); 
+end ; 
+
+-- 定时任务调用
+declare job_id number;
+begin
+  -- 提交定时任务,  返回jobId,定时执行的过程,执行开始时间,执行结束时间
+  dbms_job.submit(job_id, 'refresh_emp_mtlv', sysdate , sysdate+1/1440);
+  -- 定时任务执行
+  dbms_job.run(job_id);
+end ;
+```
+
+#### 基于rowid的物化视图
+
+```sql
+-- 0.远端主表没有主键
+-- 1.远端,创建表,无需创建表日志
+create table emp(empno number(4), ename varchar2(10), sal number(7,2));  -- 创建主表,带主键
+
+-- 2.本地,创建一个过程,定时刷新
+create materialized view emp_mtlv        	-- 创建物化视图
+refresh with rowid                       	-- 必填,刷新方式 rowid
+start with sysdate                       	-- 刷新开始时间[可省]
+next sysdate + 1/1440                    	-- 下次刷新时间,每分钟刷新[可省]
+as
+select * from zhangqian.emp
+```
+
+#### 相关查询
+
+```sql
+drop table emp;  								-- 删除表时,自动删除日志表
+drop materialized view emp_mtlv;  				-- 删除物化视图
+
+select * from emp;								-- 查询基表
+select * from emp_mtlv;							-- 查询物化视图
+```

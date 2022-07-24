@@ -127,6 +127,18 @@ SID_LIST_LISTENER =
 
 # 事务管理
 
+## 事务
+
+- 原子性 事务是一个完整状态,不可分割的最小单元
+
+- 一致性 事务完成后,所有的状态保持一致
+- 隔离性 不同事务之间保持隔离,相互独立
+- 永久性 事务完成后,修改保持永久
+
+
+
+Oracle 默认为 一致读 当用户查询数据时,返回结果为当前数据库中的数据信息,如果在随后发生修改,但是当前用户查询到的数据不变.
+
 ## Oracle 数据锁
 
 ### 要求
@@ -196,7 +208,7 @@ select * from dba_objects t where t.OBJECT_ID = 100;
 
 # 体系结构
 
-## 目录
+## 进程结构
 
 ```bash
 Oracle体系结构
@@ -324,3 +336,29 @@ alter system set db_writer_processes=1 scope=spfile
 
 
 
+## 数据库目录
+
+直接将操作系统的文件夹交给数据库托管
+
+```sql
+-- 创建目录结构
+create directory image_dir as 'F:\ORACLE_Workspace\database\image';
+
+-- 目录赋予权限,读写权限
+grant read , write on directory image_dir to zhangqian;
+
+-- 查看所有目录
+select * from all_directories;
+-- 删除目录 
+drop directory image_dir;
+```
+
+
+
+# 数据库查询优化
+1. 调整sga和pga
+2. 调整sql语句,使用绑定变量
+3. 使用物化视图
+4. 系统结构采用读写分类
+    1. 写库挖掘日志,读库重做日志
+    2. 通过队列,同步操作
