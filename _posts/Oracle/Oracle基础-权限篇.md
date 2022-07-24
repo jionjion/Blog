@@ -100,8 +100,8 @@ revoke XXX from zhangqian;
 
 ## 查看各种权限
 - 查看系统权限
-``` sq
-select * from  ROLE_SYS_PRIVS;       
+``` sql
+select * from ROLE_SYS_PRIVS;       
 ```
 
 - 查看对象权限
@@ -119,7 +119,28 @@ select * from system_privilege_map;
 select * from NLS_DATABASE_PARAMETERS;
 ```
 
+- 查看当前用户拥有的角色
+
+```
+select * from user_role_privs;
+```
+
+- dba身份查看所有用户的角色
+
+```sql
+select * from dba_role_privs;
+```
+
+- 查看角色所拥有的权限
+
+```sql
+select * from role_sys_privs;
+```
+
+
+
 ## 角色
+
 具有一组权限的集合可以作为一个角色
 创建角色
 ``` sql
