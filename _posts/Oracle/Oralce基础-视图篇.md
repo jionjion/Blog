@@ -109,10 +109,10 @@ with read only;
 
 ## 其他查询
 
-查看所有视图
+查看所有物化视图
 
 ```sql
-select * from user_views;
+select * from all_mviews;
 ```
 
 
