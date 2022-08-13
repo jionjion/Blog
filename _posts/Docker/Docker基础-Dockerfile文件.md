@@ -10,6 +10,8 @@ tags: [Linux, Docker]
 
 > 介绍 Dockerfile 的编写和存放一些示例.
 
+<!-- more -->
+
 
 
 ## Dockerfile
@@ -41,8 +43,8 @@ Docker以从上到下的顺序运行Dockerfile的指令.
 
 - 格式
 　　`FROM <image>`
-　　`FROM <image>:<tag>`
-　　`FROM <image>@<digest>`
+　　　　`FROM <image>:<tag>`
+　　　　`FROM <image>@<digest>`
 - 示例
 　　`FROM mysql:5.6`
 - 注
@@ -193,11 +195,11 @@ Dockerfile中只允许有一个ENTRYPOINT命令,多指定时会覆盖前面的�
     `VOLUME ["/var/www", "/var/log/apache2", "/etc/apache2"`
 - 注
 　　一个卷可以存在于一个或多个容器的指定目录,该目录可以绕过联合文件系统,并具有以下功能
-1 卷可以容器间共享和重用
-2 容器并不一定要和其它容器共享卷
-3 修改卷后会立即生效
-4 对卷的修改不会对镜像产生影响
-5 卷会一直存在,直到没有任何容器在使用它
+　　1 卷可以容器间共享和重用
+　　2 容器并不一定要和其它容器共享卷
+　　3 修改卷后会立即生效
+　　4 对卷的修改不会对镜像产生影响
+　　5 卷会一直存在,直到没有任何容器在使用它
 
 #### WORKDIR
 工作目录,指定当前操作的位置
@@ -218,11 +220,11 @@ Dockerfile中只允许有一个ENTRYPOINT命令,多指定时会覆盖前面的�
 
 - 格式
 　　`USER user`
-`USER user:group`
-`USER uid`
-`USER uid:gid`
-`USER user:gid`
-`USER uid:group`
+　　`USER user:group`
+　　`USER uid`
+　　`USER uid:gid`
+　　`USER user:gid`
+　　`USER uid:group`
  - 示例
 　　`USER www`
 
@@ -243,7 +245,7 @@ Dockerfile中只允许有一个ENTRYPOINT命令,多指定时会覆盖前面的�
 　　`ONBUILD [INSTRUCTION]`
 - 示例
 　　`ONBUILD ADD . /app/src`
-　　`ONBUILD RUN /usr/local/bin/python-build --dir /app/src`
+　　　　`ONBUILD RUN /usr/local/bin/python-build --dir /app/src`
 
 
 

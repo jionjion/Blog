@@ -1,12 +1,21 @@
 ---
 title: Oracle基础-索引篇
 typora-root-url: ../
-date: 2022-07-24 12:13:06
 categories:
   - Oracle
   - SQL
-tags: [Oracle, SQL]
+tags:
+  - Oracle
+  - SQL
+abbrlink: f9c4089b
+date: 2022-07-24 12:13:06
 ---
+
+> Oracle 索引使用
+
+<!-- more -->
+
+
 
 ## 索引
 

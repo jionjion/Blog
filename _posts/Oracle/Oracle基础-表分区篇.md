@@ -1,12 +1,21 @@
 ---
 title: Oracle基础-表分区篇
 typora-root-url: ../
-date: 2022-07-24 10:41:21
 categories:
   - Oracle
   - SQL
-tags: [Oracle, SQL]
+tags:
+  - Oracle
+  - SQL
+abbrlink: 88771a9d
+date: 2022-07-24 10:41:21
 ---
+
+> Oracle 表分区介绍
+
+<!-- more -->
+
+
 
 # 表分区
 

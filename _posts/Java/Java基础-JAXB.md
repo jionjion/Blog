@@ -10,6 +10,8 @@ tags: [Java, JAXB]
 
 > JAXB 的使用, 将对象与XML进行转换
 
+<!-- more -->
+
 
 
 # 简介

@@ -1,12 +1,21 @@
 ---
 title: Oracle基础-同义词篇
 typora-root-url: ../
-date: 2022-07-24 11:41:18
 categories:
   - Oracle
   - SQL
-tags: [Oracle, SQL]
+tags:
+  - Oracle
+  - SQL
+abbrlink: 46dd9d5e
+date: 2022-07-24 11:41:18
 ---
+
+> Oracle 同义词的使用
+
+<!-- more -->
+
+
 
 ## 同义词
 

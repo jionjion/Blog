@@ -1,16 +1,21 @@
 ---
 title: Spring全家桶-日志篇
 typora-root-url: ../../
-date: 2022-02-15 10:51:31
 categories:
   - Java
   - Spring
-tags: [Java, Spring]
+tags:
+  - Java
+  - Spring
+abbrlink: 698b6ae4
+date: 2022-02-15 10:51:31
 ---
 
 > Spring 日志框架配置...这里使用 `SL4J` 配合 `Logback`  进行日志记录
 
 <!-- more -->
+
+
 
 # 简介
 

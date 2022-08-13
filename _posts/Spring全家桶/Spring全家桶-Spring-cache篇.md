@@ -1,12 +1,21 @@
 ---
 title: Spring全家桶-Spring-cache篇
 typora-root-url: ../../
-date: 2022-07-02 16:39:24
 categories:
   - Java
   - Spring
-tags: [Java, Spring]
+tags:
+  - Java
+  - Spring
+abbrlink: 9b688053
+date: 2022-07-02 16:39:24
 ---
+
+> Spring中使用默认的缓存组件
+
+<!-- more -->
+
+
 
 ## Spring-Cache-Starter  
 

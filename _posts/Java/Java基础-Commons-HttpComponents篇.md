@@ -8,6 +8,12 @@ categories:
 tags: [Java, Commons, Commons-HttpComponents]
 ---
 
+> 使用 httpComponents 类库
+
+<!-- more -->
+
+
+
 # 简介
 
 介绍如何发送Http请求,使用`apache httpComponents`完成.

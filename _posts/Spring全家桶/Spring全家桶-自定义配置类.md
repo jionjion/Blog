@@ -11,6 +11,8 @@ tags: [Java, Spring]
 
 > Spring 中使用配置类
 
+<!-- more -->
+
 
 
 # 介绍

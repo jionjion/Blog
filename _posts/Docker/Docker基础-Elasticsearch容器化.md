@@ -1,15 +1,20 @@
 ---
 title: Docker基础
-date: 2022-06-21 20:21:37
 categories:
   - 服务器
   - Docker
-tags: [Linux, Docker]
+tags:
+  - Linux
+  - Docker
+abbrlink: 1d9fbb6a
+date: 2022-06-21 20:21:37
 ---
 
 > 介绍 `Docker` 容器的基本操作
 
 <!--more-->
+
+
 
 ## 版本
 

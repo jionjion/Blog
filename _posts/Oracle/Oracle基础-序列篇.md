@@ -1,14 +1,24 @@
 ---
 title: Oracle基础-序列篇
 typora-root-url: ../
-date: 2022-07-24 11:43:08
 categories:
   - Oracle
   - SQL
-tags: [Oracle, SQL]
+tags:
+  - Oracle
+  - SQL
+abbrlink: 927abcbe
+date: 2022-07-24 11:43:08
 ---
 
+> Oracle 序列的使用
+
+<!-- more -->
+
+
+
 ## 序列
+
 生成唯一的,连续序号的对象.
 序列可以是升序或者降序的
 

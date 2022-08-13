@@ -14,8 +14,6 @@ tags: [Java, Commons]
 
 
 
-
-
 # Collections
 
 简化Java中集合框架的操作. 参考[官网](http://commons.apache.org/proper/commons-collections/)
