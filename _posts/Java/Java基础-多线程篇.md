@@ -462,3 +462,129 @@ try {
 4. 锁中不要再包含锁
 5. 选择合适的锁类型或者合适的工具类
 
+
+
+# 原子类
+不可分割, 不可中断的最小操作原子
+
+
+
+
+## JDK原子包
+`java.util.concurrent.atomic.*` 原子类.
+保证并发情况的线程安全
+- 原子变量可以把竞争范围缩小到变量级别
+- 比锁性能较高, 除了高度竞争的情况
+
+## 原子类介绍
+
+### `Atomic*` 基本类型原子类
+保证基本数据类型,在多线程操作下的安全性
+`AtomicInteger`
+`AtomicLong`
+`AtomicBoolean`
+
+
+
+### `Atomic*Array`  数组类型原子类
+保证数组内的数据类型, 在多线程操作的情况下的线程安全
+`AtomicIntegerArray`
+`AtomicLongArray`
+`AtomicReferenceArray`
+
+
+
+### `Atomic*Reference` 引用类型原子类
+让一个对象保证操作的原子行...
+`AtomicReference`
+`AtomicStampedReference`
+`AtomicMarkableReference`
+
+
+
+### `Atomic*FieldUpdater` 升级类型原子类
+适用大部分情况作为普通类使用, 只是偶尔原子操作... 
+`AtomicIntegerFieldUpdater`
+`AtomicLongFieldUpdater`
+`AtomicReferenceFieldUpdater`
+
+
+
+### 累加器
+
+#### `Adder` 累加器
+`LongAdder` 
+`DoubleAdder`
+
+
+
+#### `Accumulator` 累加器
+`LongAccumulator`
+`DoubleAccumulator`
+
+
+
+#### 累加器
+
+`LongAdder` 比 `AtomicLong` 效率高, 本质是空间换时间.. 
+原理: 每个线程有自己的计数器, 只在汇总阶段进行, 竞争激烈的时候, `LongAdder` 会把不同线程对应放到不同的 call 上执行修改,降低了 flush 和 refresh 的时间 利用多段锁, 提高了并发性,
+适合场景是统计求和和计数
+
+`Accumulator` 更通用,支持函数表达式 更适合并行计算,多线程计算..
+
+
+
+# CAS 原理
+当且仅当内存值与预期值一致时, 才进行修改, 并返回内存的值..
+
+
+乐观锁原理....
+我认为它应该是A, 如果是的话我就改成B, 
+如果不是A, 那我就不管了.避免多人修改的时候的出错
+
+## 应用场景
+- 乐观锁
+- 数据库版本号
+- 并发容器的自旋
+- 原子类
+
+`AtomicInteger` 原子类原理
+加载 `Unsafe` 工具，首先获得内存地址(Unsafe工具来实现底层操作)
+用 `volatile` 修饰 `value` 字段，保证线程间可见性
+在 `do-while` 循环中, 完成原子性的比较和替换. 调用 `native` 本地方法
+
+
+
+# 不变性
+
+对象创建后, 状态不能被修改
+
+## 使用
+`final` 修饰的基本变量,值不能被改变;
+如果是变量, 那么变量的引用不能变, 但引用的内容融然可以变;
+属性被声明后, 只能被赋值一次
+
+实例属性;
+- 声明时等号右边
+- 构造函数
+- 初始代码块中
+
+类属性:
+- 声明时等号右边
+- 静态代码快中
+
+方法变量:
+- 不规定赋值时机,但是必须在使用前赋值
+
+`final` 修饰方法
+
+- 不能被重写
+- 不能修饰构造方法
+
+`final` 修饰类
+- 不可以被继承
+
+## 线程安全
+栈封闭
+在方法内新建局部变量,每个栈空间不被其他变量访问,因此是线程安全的
+
