@@ -588,3 +588,141 @@ try {
 栈封闭
 在方法内新建局部变量,每个栈空间不被其他变量访问,因此是线程安全的
 
+
+
+# 并发容器
+`ConcurrentHashMap` 线程安全的 `HashMap`
+`CopyOnWriteArrayList` 线程安全的 `List`
+`BlockingQueue` 这是一个接口, 表示阻塞队列, 非常适合用于作为数据共享的通道
+`ConcurrentLinkeQueue` 高效的非阻塞并发队列, 使用链表实现. 可以看做一个线程安全的 `LinkedList`
+`ConcurrentSkipListMap` 是一个 `Map`, 使用跳表的数据结构进行快速查找
+
+
+
+## 分类
+`Concurrent*` 大部分通过 CSA算法(比较并且交换) 实现
+`CopyOnWrite*` 通过复制一份源数据实现
+`Blocking*`  通过 AQS算法(抽象同步队列) 实现
+
+
+
+## 古老的线程安全
+`Vector` 和 `Hashtable`
+古老的线程安全类, 其内部的方法被 `synchronized` 修饰, 以此保证多线程场景下, 只能有一个线程对容器进行修改
+
+```java
+public synchronized boolean add(E e) {
+    modCount++;
+    ensureCapacityHelper(elementCount + 1);
+    elementData[elementCount++] = e;
+    return true;
+}
+```
+
+
+
+### 包装升级
+
+通过 `Collection.synchronizedList` 和 `Collection.synchronizedMap` 进行升级,升级后返回一个新的子类
+子类其内部方法通过 `synchronized(Object)` 使用同步代码块进行包裹, 保证线程安全
+
+```java
+public boolean add(E e) {
+    synchronized (mutex) {return c.add(e);}
+}
+```
+
+
+
+## `HashMap`
+
+可以使用 `Collection.synchronizedMap(new HashMap()` 进行升级
+迭代时不允许修改内容
+读取时,线程安全, 写入时线程不安全
+- 同时 put 碰撞时, 如果计算哈希值相同, 会碰撞丢失
+- 同时 put 扩容时, 内部采用数组方式扩容, 旧的数组内元素会丢失
+- `JDK1.7` 同时多线程扩容时, 会出现循环链表, 导致CPU溢出
+
+
+
+## `ConcurrentHashMap`
+
+线程安全的 `HashMap` 容器.
+只能保证单个操作线程安全..(同时 put 不会数据错误; 但是多个线程间分别读取,计算, 赋值, 不能保证结果的安全)
+
+
+
+### 原理
+在 `HashMap` 中通过链表 + 红黑树, 在同一个 `node` 节点发生冲突次数+8时, 结构从链表转为红黑树..
+可能出现线程安全的地方在有哈希冲突的 node 节点, 因此..对node节点的操作, 采用 CAS 自旋比较替换 或者 synchronized 包裹最小代码单元完成线程间的统一
+
+
+
+## `CopyOnWriteArrayList`
+
+代替 `Vector` 和 `SynchronizedList` ,降低锁的粒度
+类似的还有 `CopyOnWriteArraySet` 代替 `Set`
+
+### 适用场景
+- 读操作要尽可能快, 而写即使慢一点也没有关系
+  - 黑名单, 每日更新, 监听器等.. 
+
+### 读写锁分离
+读写锁升级; 读取的时候不加锁, 只写也不会阻塞读取操作.. 只有在写入之间才会加锁
+
+### 原理
+创建新的副本, 读写分离..
+写的时候, 拷贝一份新的数据, 完成后, 修改原有容器的指向, 即保证了读的时候不变, 又保证了写的时候线程安全..
+迭代器使用的时候,使用的是不可变的旧数组数据...
+
+### 问题
+数据一致性: 只保证最后的数据一致, 不保证数据的实时一致, 因此在读和写的时候是两份数据, 会有出入
+内存占用高: 采用赋值机制, 在进行写操作时, 内存中会有两份数据
+
+
+
+## 并发队列
+
+`Queue`: 保证一组等待被处理的数据
+`BlockingQueue`: 添加了阻塞操作, 在队列为空或者队列满了后, 线程阻塞
+`Deque`: 双端队列
+
+### 阻塞队列
+具有阻塞功能的队列.一端为生产者, 另一端为消费者, 由于队列本身具有线程安全性, 因此无需单独再做另外处理..
+
+是否有界,  分为有界队列和无界队列(最大支持 `Integer.MAX_VALUE`)
+
+队列是线程池的组要组件..
+
+### 常用方法
+
+| 方法                   | 说明                                         |
+| ---------------------- | -------------------------------------------- |
+| `take`                 | 移除头节点,如果为空时,阻塞                   |
+| `put`                  | 添加尾节点,当队列满了,阻塞                   |
+| `add, remove, element` | 添加, 删除, 返回元素,为空返回异常            |
+| `off, poll, peek`      | 添加,取出,拿取(拿去后不删除), 并返回是否成功 |
+
+
+
+### 分类
+
+| 队列                    | 说明                                                         |
+| ----------------------- | ------------------------------------------------------------ |
+| `ArrayBlockingQueue`    | 有界队列, 需要指定容量, 是否公平(如果保证公平, 那么等待最长时间的线程会被优先处理, 不过会带来一些性能损耗) |
+| `LinkBlockingQueue`     | 无界队列                                                     |
+| `PriorityBlockingQueue` | 无界队列<br/>支持优先级排序; <br/>自然排序, 放入的成员必须实现排序接口 |
+| `SynchronousQueue`      | 队列容器是0, 无需等待直接交给消费者处理,直接交换, 效率很高<br/>没有对应的成员操作方法.. |
+| `DelayQueue`            | 无界队列<br/>延迟队列, 根据延迟时间排序<br/>元素需要实现 `Delayed` 接口, 规定排序规则 |
+| `ConcurrentLinkedQueue` | 非阻塞队列, 只有 `ConcurrentLinkedQueue` 一种, 内部使用链表作为数据结构, 使用 CAS(比较并且交换) 非阻塞算法实现线程安全..并发性能较高 |
+
+
+
+
+### 选择顺序
+1. 边界大小, 选择是否有边界
+2. 空间大小, 如果非阻塞, 使用 `ConcurrentLinkedQueue`
+3. 吞吐量 `LinkBlockingQueue` 优于 `ArrayBlockingQueue`
+4. 是否需要交换, 直接交换使用 `SynchronousQueue`
+5. 是否需要重要排序, 使用 `PriorityBlockingQueue`
+6. 是否需要延时, 使用 `DelayQueue`
