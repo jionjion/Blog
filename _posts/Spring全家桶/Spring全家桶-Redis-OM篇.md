@@ -1,10 +1,13 @@
 ---
 title: Spring全家桶-Redis-OM篇
-date: 2022-08-24 14:51:03
 categories:
   - Java
   - Spring
-tags: [Java, Spring]
+tags:
+  - Java
+  - Spring
+abbrlink: 1836f66c
+date: 2022-08-24 14:51:03
 ---
 
 > 介绍在 Spring 中使用 Redis-OM 框架

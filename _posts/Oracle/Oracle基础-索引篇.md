@@ -68,7 +68,9 @@ create index emp_no_idx on emp(eno) reverse;
 alter index emp_no_idx rebuild noreverse;
 ```
 
-### 函数索引,对默写字段经常进行函数过滤,而创建的索引
+### 函数索引
+
+对默写字段经常进行函数过滤,而创建的索引
 
 ```sql
 -- 创建

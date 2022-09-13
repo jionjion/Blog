@@ -1,9 +1,11 @@
 ---
 title: Redis-Stack基础
-date: 2022-08-19 09:05:13
 categories:
   - Redis
-tags: [Redis]
+tags:
+  - Redis
+abbrlink: 6c9fbf13
+date: 2022-08-19 09:05:13
 ---
 
 > Redis-Stack 的技术基础, 提供了对 Redis 的更多操作
