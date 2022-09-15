@@ -19,7 +19,7 @@ tags: CentOS
 ## 更换YUM源
 
 yum的文件以.repo结尾,可以存在多个,便于对未被标准源收录的下载地址进行扩充.
-#### 备份
+### 备份
 
 将 `/etc/yum.repos.d/`文件夹下的CentOS-Base.repo剪贴备份
 ``` shell
@@ -324,6 +324,8 @@ alias cnpm="npm --registry=https://registry.npm.taobao.org \
 `systemctl enable docker`
 停止
 `systemctl stop docker`
+
+
 
 
 

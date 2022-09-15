@@ -1,13 +1,11 @@
 ---
 title: Java基础-多线程篇
+abbrlink: cce7e955
+date: 2022-08-15 05:24:51
 categories:
   - Java
   - Thread
-tags:
-  - Java
-  - Thread
-abbrlink: cce7e955
-date: 2022-08-15 05:24:51
+tags: [Java, Thread]
 ---
 
 > 介绍多线程、锁的使用与案例

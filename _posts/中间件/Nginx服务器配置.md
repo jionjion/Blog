@@ -38,7 +38,7 @@ IO多路复用的实现方式,另有select ,
  减少文件之间的传递方式,不通过用户空间而是将静态资源直接通过内核空间进行拷贝
 
 ## 快速安装
-#### 软件安装
+### 软件安装
 
 编译环境
 ` yum -y install gcc gcc-c autoconf pcre pcre-devel make automake`
@@ -77,7 +77,7 @@ enabled = 1
 安装 `yum install nginx`,完成安装
 使用`nginx -v`查看当前安装版本,`nginx -V`查看当前nginx的安装模块
 
-#### 版本信息
+### 版本信息
 
 `nginx -v` 查看当前版本
 `nginx -V`查看系统参数
@@ -390,19 +390,17 @@ http 2.0 一次连接多路并行请求
 
 扩展:可以使用Nginx结合LADP利用nginx-auth-ldap模块
 
-### Http的请求和连接
+## 更多补充
 
-### 请求限制与连接限制
+- Http的请求和连接
+- 请求限制与连接限制
+-  access模块配置语法
+-  请求限制局限性
+- 基本安全认证
+- auth模块配置语法
+- 安全认证局限性
 
-### access模块配置语法
 
-### 请求限制局限性
-
-### 基本安全认证
-
-### auth模块配置语法
-
-### 安全认证局限性
 
 # 实践
 
@@ -689,6 +687,7 @@ hash关键数值:使用hash去解算自定义的key,相同的key访问同一个�
 限制 `http, server, location`
 
 
+
 # 深度学习
 
 ## 动态分离
@@ -774,6 +773,8 @@ https加密原理
 `ssl_session_timeout 10m;`
 2.设置ssl session缓存
 `ssl_session_cache shared:SSL:10m;`
+
+
 
 # 在线升级
 

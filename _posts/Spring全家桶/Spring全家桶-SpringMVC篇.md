@@ -27,7 +27,7 @@ tags: [Java, Spring, MVC]
 
 # 常见配置
 
-### 允许跨域
+## 允许跨域
 
 重写配置类
 
@@ -53,7 +53,7 @@ public class WebConfig implements WebMvcConfigurer {
 }
 ```
 
-### 外部资源路径
+## 外部资源路径
 
 允许将`URL `中的访问路径映射到文件系统中,扩展访问范围. 
 **注意** 映射磁盘路径以文件夹结尾符结束 `\`

@@ -14,6 +14,8 @@ tags: [Java, Spring]
 
 
 
+# `Spring` 框架
+
 ## 各种代码纪录
 
 ### `AOP`切面示例
@@ -165,7 +167,7 @@ Locale locale = LocaleContextHolder.getLocale();
 
 # 通用代码记录
 
-### 字符串模板
+## 字符串模板
 
 ```java
 String str = MessageFormat.format( " 我是{0},我来自{1},今年{2}岁" , " 中国人" , "北京" , "22" );
