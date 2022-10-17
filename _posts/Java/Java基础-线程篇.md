@@ -504,7 +504,7 @@ public static void main(String[] args) {
 
   可以通过返回副本(深拷贝原对象), 或者工厂模式完成安全发布..
 
-  
+
 
 ### 性能损耗
 
@@ -519,3 +519,311 @@ public static void main(String[] args) {
 #### 内存同步
 
 指令重排序, 自动加锁/释放锁, `volatile` 关键字同步变量
+
+
+
+## 死锁问题
+
+多个线程相同公用同一把锁, 导致相互等待..
+
+### 死锁发生的条件
+
+1. 互斥条件, 一个线程拿到锁之后, 另一个线程就不能获取
+2. 请求与保持条件, 在一个线程请求完成第一把锁后, 持有保留一段时间, 直到释放或者发生死锁
+3. 不剥夺条件, 当发生死锁时, 没有外界干扰, 也不会自动解除死锁.
+4. 循环等待, 发生死锁时, 一直在等待对方释放锁.
+
+
+
+### 定位死锁
+
+#### 通过 PID 查询
+
+查看当前 `PID` , 通过命令 `jps` 获取当前线程的 `PID`
+
+```bash
+PS W:\Java_Basics> jps
+81104 MustDeadLock
+31220 Launcher
+82436 RemoteMavenServer36
+85316 Jps
+35704 
+73336 
+```
+
+使用 `jstack` 查看当前线程执行情况.. `jstack pid`
+
+```bash
+PS W:\Java_Basics> jstack 81104
+2022-09-22 20:38:02
+Full thread dump Java HotSpot(TM) 64-Bit Server VM (25.271-b09 mixed mode):
+
+"DestroyJavaVM" #14 prio=5 os_prio=0 tid=0x0000020a69d8d800 nid=0xed94 waiting on condition [0x0000000000000000]
+   java.lang.Thread.State: RUNNABLE
+
+# 线程1死锁, 程序的调用堆栈
+"Thread-1" #13 prio=5 os_prio=0 tid=0x0000020a7ead2000 nid=0xdfd4 waiting for monitor entry [0x000000af79ffe000]
+   java.lang.Thread.State: BLOCKED (on object monitor)
+        at deadlock.MustDeadLock.run(MustDeadLock.java:53)
+        # 等待 0x000000076b80e728 锁
+        - waiting to lock <0x000000076b80e728> (a java.lang.Object)
+        # 已经获取 0x000000076b80e738 锁
+        - locked <0x000000076b80e738> (a java.lang.Object)
+        at java.lang.Thread.run(Thread.java:748)
+
+# 线程2死锁, 程序的调用堆栈
+"Thread-0" #12 prio=5 os_prio=0 tid=0x0000020a7eacf800 nid=0x6e68 waiting for monitor entry [0x000000af79eff000]
+   java.lang.Thread.State: BLOCKED (on object monitor)
+        at deadlock.MustDeadLock.run(MustDeadLock.java:40)
+        # 等待 0x000000076b80e738 锁
+        - waiting to lock <0x000000076b80e738> (a java.lang.Object)
+        # 已经获取 0x000000076b80e728 锁
+        - locked <0x000000076b80e728> (a java.lang.Object)
+        at java.lang.Thread.run(Thread.java:748)
+
+"Service Thread" #11 daemon prio=9 os_prio=0 tid=0x0000020a7ea52800 nid=0xed50 runnable [0x0000000000000000]
+   java.lang.Thread.State: RUNNABLE
+
+"C1 CompilerThread3" #10 daemon prio=9 os_prio=2 tid=0x0000020a7e9ce800 nid=0x1439c waiting on condition [0x0000000000000000]
+   java.lang.Thread.State: RUNNABLE
+
+"C2 CompilerThread2" #9 daemon prio=9 os_prio=2 tid=0x0000020a7e9b1800 nid=0x18110 waiting on condition [0x0000000000000000]
+   java.lang.Thread.State: RUNNABLE
+
+"C2 CompilerThread1" #8 daemon prio=9 os_prio=2 tid=0x0000020a7e99a000 nid=0xc9e8 waiting on condition [0x0000000000000000]
+   java.lang.Thread.State: RUNNABLE
+
+"C2 CompilerThread0" #7 daemon prio=9 os_prio=2 tid=0x0000020a7e996000 nid=0x1410 waiting on condition [0x0000000000000000]
+   java.lang.Thread.State: RUNNABLE
+
+"Monitor Ctrl-Break" #6 daemon prio=5 os_prio=0 tid=0x0000020a7e994000 nid=0x4ee8 runnable [0x000000af797fe000]
+   java.lang.Thread.State: RUNNABLE
+        at java.net.SocketInputStream.socketRead0(Native Method)
+        at java.net.SocketInputStream.socketRead(SocketInputStream.java:116)
+        at java.net.SocketInputStream.read(SocketInputStream.java:171)
+        at java.net.SocketInputStream.read(SocketInputStream.java:141)
+        at sun.nio.cs.StreamDecoder.readBytes(StreamDecoder.java:284)
+        at sun.nio.cs.StreamDecoder.implRead(StreamDecoder.java:326)
+        at sun.nio.cs.StreamDecoder.read(StreamDecoder.java:178)
+        - locked <0x000000076b70f810> (a java.io.InputStreamReader)
+        at java.io.InputStreamReader.read(InputStreamReader.java:184)
+        at java.io.BufferedReader.fill(BufferedReader.java:161)
+        at java.io.BufferedReader.readLine(BufferedReader.java:324)
+        - locked <0x000000076b70f810> (a java.io.InputStreamReader)
+        at java.io.BufferedReader.readLine(BufferedReader.java:389)
+        at com.intellij.rt.execution.application.AppMainV2$1.run(AppMainV2.java:55)
+
+"Attach Listener" #5 daemon prio=5 os_prio=2 tid=0x0000020a7cbc4800 nid=0xb778 waiting on condition [0x0000000000000000]
+   java.lang.Thread.State: RUNNABLE
+
+"Signal Dispatcher" #4 daemon prio=9 os_prio=2 tid=0x0000020a7cbc3800 nid=0x9090 runnable [0x0000000000000000]
+   java.lang.Thread.State: RUNNABLE
+
+"Finalizer" #3 daemon prio=8 os_prio=1 tid=0x0000020a7cb8a800 nid=0x5c34 in Object.wait() [0x000000af794ff000]
+   java.lang.Thread.State: WAITING (on object monitor)
+        at java.lang.Object.wait(Native Method)
+        - waiting on <0x000000076b588ee0> (a java.lang.ref.ReferenceQueue$Lock)
+        at java.lang.ref.ReferenceQueue.remove(ReferenceQueue.java:144)
+        - locked <0x000000076b588ee0> (a java.lang.ref.ReferenceQueue$Lock)
+        at java.lang.ref.ReferenceQueue.remove(ReferenceQueue.java:165)
+        at java.lang.ref.Finalizer$FinalizerThread.run(Finalizer.java:216)
+
+"Reference Handler" #2 daemon prio=10 os_prio=2 tid=0x0000020a7cb83000 nid=0x10bc8 in Object.wait() [0x000000af793ff000]
+   java.lang.Thread.State: WAITING (on object monitor)
+        at java.lang.Object.wait(Native Method)
+        - waiting on <0x000000076b586c00> (a java.lang.ref.Reference$Lock)
+        at java.lang.Object.wait(Object.java:502)
+        at java.lang.ref.Reference.tryHandlePending(Reference.java:191)
+        - locked <0x000000076b586c00> (a java.lang.ref.Reference$Lock)
+        at java.lang.ref.Reference$ReferenceHandler.run(Reference.java:153)
+
+"VM Thread" os_prio=2 tid=0x0000020a7cb5b000 nid=0x11854 runnable
+
+"GC task thread#0 (ParallelGC)" os_prio=0 tid=0x0000020a69da6800 nid=0x16808 runnable
+
+"GC task thread#1 (ParallelGC)" os_prio=0 tid=0x0000020a69da7800 nid=0x9498 runnable
+
+"GC task thread#2 (ParallelGC)" os_prio=0 tid=0x0000020a69da9000 nid=0x5ab8 runnable
+
+"GC task thread#3 (ParallelGC)" os_prio=0 tid=0x0000020a69daa800 nid=0x1c38 runnable
+
+"GC task thread#4 (ParallelGC)" os_prio=0 tid=0x0000020a69dac800 nid=0x4fb0 runnable
+
+"GC task thread#5 (ParallelGC)" os_prio=0 tid=0x0000020a69dad800 nid=0x17b14 runnable 
+
+"GC task thread#6 (ParallelGC)" os_prio=0 tid=0x0000020a69db0000 nid=0x51d8 runnable
+
+"GC task thread#7 (ParallelGC)" os_prio=0 tid=0x0000020a69db1000 nid=0xd180 runnable
+
+"VM Periodic Task Thread" os_prio=2 tid=0x0000020a7eacd800 nid=0xb644 waiting on condition
+
+JNI global references: 12
+
+        at deadlock.MustDeadLock.run(MustDeadLock.java:53)
+        - waiting to lock <0x000000076b80e728> (a java.lang.Object)
+        - locked <0x000000076b80e738> (a java.lang.Object)
+        at java.lang.Thread.run(Thread.java:748)
+"Thread-0":
+        at deadlock.MustDeadLock.run(MustDeadLock.java:40)
+        - waiting to lock <0x000000076b80e738> (a java.lang.Object)
+        - locked <0x000000076b80e728> (a java.lang.Object)
+        at java.lang.Thread.run(Thread.java:748)
+
+Found 1 deadlock.
+```
+
+
+
+#### 通过 ThreadMXBean 查询
+
+在子线程中, 通过 `ThreadMXBean` 循环查询被锁信息..
+
+```java
+// 获取 ThreadMXBean 对象
+ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
+// 所有线程发生死锁的线程数量
+long[] deadlockedThreads = threadMXBean.findDeadlockedThreads();
+// 循环所有线程
+if(deadlockedThreads != null && deadlockedThreads.length > 0) {
+    for (int i = 0; i < deadlockedThreads.length; i++) {
+        // 获得发生死锁的线程信息
+        ThreadInfo threadInfo = threadMXBean.getThreadInfo(deadlockedThreads[i]);
+        System.out.println("发现死锁" + threadInfo.getThreadName());
+    }
+}
+```
+
+
+
+#### 处理死锁
+
+1. 保存线程快照
+2. 重启服务
+3. 修改代码后再次上线
+
+
+
+#### 修复死锁策略
+
+- 反转获取锁的顺序, 不同线程间获取锁的顺序保持一致... 避免发生相互持有对象所需要的锁的情况.
+
+
+
+#### 哲学家吃饭问题
+
+- 服务员检查(避免策略)
+- 改变一个哲学家拿叉子的顺序(避免策略)
+- 餐票(避免策略)
+- 领导调节(检测与恢复策略)
+- 一段时间内检测是否有死锁, 如果有就剥夺相关资源.
+
+```java
+public class DiningPhilosophers {
+
+
+    public static void main(String[] args) {
+        // 哲学家
+        Philosopher[] philosophers = new Philosopher[5];
+        // 筷子
+        Object[] chopsticks = new Object[5];
+
+        for (int i = 0; i < 5; i++) {
+            chopsticks[i] = new Object();
+        }
+        for (int i = 0; i < 5; i++) {
+            // 初始化左筷子
+            Object leftChopstick = chopsticks[i];
+            // 初始化右筷子, 数组长度+1 后对 5 取余, 这样超出后就会循环.
+            Object rightChopstick = chopsticks[(i + 1) % 5];
+            // 初始化哲学家
+            philosophers[i] = new Philosopher(leftChopstick, rightChopstick);
+
+            // 通过修改最后一位拿餐具的顺序, 解决循环等待问题
+            if(i==4){
+                philosophers[i] = new Philosopher(rightChopstick, leftChopstick);
+            }
+
+            // 初始化线程
+            Thread thread = new Thread(philosophers[i], ("哲学家" + (i + 1)));
+            // 启动程序
+            thread.start();
+        }
+    }
+
+    public static class Philosopher implements Runnable {
+
+        Object leftChopstick;
+        Object rightChopstick;
+
+        public Philosopher(Object leftChopstick, Object rightChopstick) {
+            this.leftChopstick = leftChopstick;
+            this.rightChopstick = rightChopstick;
+        }
+
+        @Override
+        public void run() {
+            while (true) {
+                doAction("正在思考...");
+
+                synchronized (leftChopstick) {
+                    doAction("拿起左边筷子");
+                    synchronized (rightChopstick) {
+                        doAction("拿起右边筷子");
+
+                        doAction("吃饭中...");
+
+                        doAction("放下右边筷子");
+
+                    }
+                    doAction("放下左边筷子");
+                }
+            }
+        }
+
+        /**
+         * 动作
+         */
+        private void doAction(String action) {
+            System.out.println(Thread.currentThread().getName() + " " + action);
+            try {
+                Thread.sleep((long) (Math.random() * 10));
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+}
+```
+
+
+
+#### 避免死锁策略
+
+- `Lock` 类上锁的时候, 通过 `tryLock(Long timeout, TimeUnit unit)` 进行上锁, 设置超时时间
+  - `synchronized` 不能设置超时时间
+  - 锁超时后, 打印日志, 或者发邮件
+- 多使用并发类, 而不是自己设计锁...
+- 尽量降低锁的使用颗粒度, 用不同的锁而不是一个锁..
+- 如果能使用同步代码块, 就不使用同步方法, 自己指定锁对象, 降低颗粒度
+- 给线程起一个有意义的名字, 降低排查难度.
+- 避免锁的嵌套
+- 分配资源前看能不能收回, 如果能够顺利收回, 提供锁
+- 专锁专用, 不同的功能用不同的锁对象.
+
+
+
+## 活锁问题
+
+与死锁类似, 程序不能继续运行, 但是此时线程名没有阻塞, 但是在重复做同样的事...
+
+比如, 消息队列中, 消息处理失败, 就放到队列开头, 但是由于程序问题一直无法处理, 导致任务一直存在运行状态...
+
+
+
+## 饥饿问题
+
+当线程需要某些资源, 如 `CUP` 但是却始终等不到.
+
+- 如线程优先级过低, 导致不能运行
+- 如抢占锁总是获取不到, 处于线程队列尾.
+- 如写入文件, 但是文件被上锁, 始终获取不到.

@@ -269,3 +269,290 @@ public class ParameterController {
 }
 ```
 
+
+
+# 切面增强
+
+## 统一异常处理
+
+可以通过单独定义类配合 `@ControllerAdvice` 注解对其加强.
+
+`@ExceptionHandler(value = Exception.class)` 标识其为一个异常处理类
+
+```java
+/**
+ * @author Jion
+ * 全局异常通知
+ */
+@ControllerAdvice
+public class UserExceptionHandler {
+
+    /**
+     * 处理异常的类,这里将异常统一捕获,完成分类处理
+     */
+    @ResponseBody
+    @ExceptionHandler(value = Exception.class)
+    public ResultMessage<Object> handle(Exception exception) {
+        // 如果属于自定义的异常
+        if (exception instanceof UserException) {
+            // 强制类型转换
+            UserException e = (UserException) exception;
+
+            // 将抛出的异常捕获后包装
+            return new ResultMessage<>(e.getCode(), e.getMessage());
+        }
+
+        //如果不是自动返回系统的异常
+        return new ResultMessage<>(550, exception.getMessage());
+    }
+}
+```
+
+
+
+## `Request` 加强
+
+在所有的请求进入前拦截, 在从 `request` 中反序列化为 `java` 参数前后, 进行增强.
+
+- `@ControllerAdvice` 标识其为控制层增强
+- 继承自 `RequestBodyAdviceAdapter` 类, 从而实现 `RequestBodyAdvice` 接口
+
+```java
+/**
+ * 对请求进行加强,仅有在Post/Put请求中有效
+ * 默认只是对当前同包和子包进行处理
+ *
+ * @author Jion
+ */
+@ControllerAdvice
+public class UserControllerRequestAdvice extends RequestBodyAdviceAdapter {
+
+    final Logger logger = Logger.getLogger(UserControllerRequestAdvice.class.getName());
+
+    /**
+     * 该方法用于判断当前请求, 是否要执行 beforeBodyRead 方法和 afterBodyRead 或 handleEmptyBody , 会在他们两个之前各执行一次
+     *
+     * @param methodParameter 请求调用方法的参数对象
+     * @param targetType      请求调用方法的参数类型
+     * @param converterType   将会使用到的Http消息转换器类类型
+     * @return 返回true 则会执行beforeBodyRead
+     */
+    @Override
+    public boolean supports(@NonNull MethodParameter methodParameter, @NonNull Type targetType, @NonNull Class<? extends HttpMessageConverter<?>> converterType) {
+        logger.info(() -> "被拦截的方法: " + methodParameter.getMethod());
+        logger.info(() -> "输出响应的Java类型为: " + targetType.getTypeName());
+        logger.info(() -> "使用的响应转换器为: " + converterType.getName());
+        return true;
+    }
+
+
+    /**
+     * 在Http消息转换器执转换, 之前执行
+     *
+     * @param inputMessage  客户端的请求数据
+     * @param parameter     请求调用方法的参数对象
+     * @param targetType    请求调用方法的参数类型
+     * @param converterType 将会使用到的Http消息转换器类类型
+     * @return 返回 一个自定义的HttpInputMessage
+     */
+    @Override
+    @NonNull
+    public HttpInputMessage beforeBodyRead(HttpInputMessage inputMessage, @NonNull MethodParameter parameter, @NonNull Type targetType, @NonNull Class<? extends HttpMessageConverter<?>> converterType) throws IOException {
+        try (InputStream inputStream = inputMessage.getBody()) {
+            logger.info(() -> "转化前, 当前输入内容: " + inputStream);
+            logger.info(() -> "转化前, 当前参数类型: " + parameter.getParameterType());
+            logger.info(() -> "转化前, 输出响应的Java类型为: " + targetType.getTypeName());
+            logger.info(() -> "转化前, 使用的响应转换器为: " + converterType.getName());
+
+            // 读取请求体
+            byte[] body = inputMessage.getBody().readAllBytes();
+
+            logger.info(() -> "读取到内容: " + new String(body));
+
+            // 构造新的读取流, 替换原有请求流
+            return new HttpInputMessage() {
+                @Override
+                @NonNull
+                public HttpHeaders getHeaders() {
+                    return inputMessage.getHeaders();
+                }
+
+                @Override
+                @NonNull
+                public InputStream getBody() {
+                    return new ByteArrayInputStream(body);
+                }
+            };
+        }
+    }
+
+    /**
+     * 在Http消息转换器执转换, 之后执行.一般是转换后的Java类, 用来封装参数
+     *
+     * @param body          转换后的对象
+     * @param inputMessage  客户端的请求数据
+     * @param parameter     请求调用方法的参数类型
+     * @param targetType    请求调用方法的参数类型
+     * @param converterType 使用的Http消息转换器类类型
+     * @return 返回一个新的对象
+     */
+    @Override
+    public @NonNull Object afterBodyRead(@NonNull Object body, @NonNull HttpInputMessage inputMessage, @NonNull MethodParameter parameter, @NonNull Type targetType, @NonNull Class<? extends HttpMessageConverter<?>> converterType) {
+
+        logger.info(() -> "转化后, 生成的封装类: " + body.getClass().getName());
+        logger.info(() -> "转化后, 消息HttpInputMessage封装类: " + inputMessage.hashCode());
+        logger.info(() -> "转化后, 当前参数类型: " + parameter.getParameterType());
+        logger.info(() -> "转化后, 输出响应的Java类型为: " + targetType.getTypeName());
+        logger.info(() -> "转化后, 使用的响应转换器为: " + converterType.getName());
+
+        return super.afterBodyRead(body, inputMessage, parameter, targetType, converterType);
+    }
+
+    /**
+     * 在Http消息转换器执转换, 之后执行,
+     * 不过这个方法处理的是, body为空的情况
+     *
+     * @param body          转换后的对象
+     * @param inputMessage  客户端的请求数据
+     * @param parameter     请求调用方法的参数类型
+     * @param targetType    请求调用方法的参数类型
+     * @param converterType 使用的Http消息转换器类类型
+     * @return 返回一个新的对象
+     */
+    @Override
+    @Nullable
+    public Object handleEmptyBody(@Nullable Object body, @NonNull HttpInputMessage inputMessage, @NonNull MethodParameter parameter, @NonNull Type targetType, @NonNull Class<? extends HttpMessageConverter<?>> converterType) {
+        logger.info(() -> "转化后且为空, " + Objects.isNull(body));
+        logger.info(() -> "转化后且为空, 内容" + body);
+        logger.info(() -> "转化后且为空, 消息HttpInputMessage封装类: " + inputMessage.hashCode());
+        logger.info(() -> "转化后且为空, 当前参数类型: " + parameter.getParameterType());
+        logger.info(() -> "转化后且为空, 输出响应的Java类型为: " + targetType.getTypeName());
+        logger.info(() -> "转化后且为空, 使用的响应转换器为: " + converterType.getName());
+
+        logger.info(() -> "handleEmptyBody " + body);
+        return super.handleEmptyBody(body, inputMessage, parameter, targetType, converterType);
+    }
+}
+```
+
+单元测试
+
+```java
+@SpringBootTest
+class UserControllerRequestAdviceTest {
+
+    @Autowired
+    ObjectMapper objectMapper;
+
+    @Autowired
+    UserController userController;
+
+    @Autowired
+    UserExceptionHandler userExceptionHandler;
+
+    @Autowired
+    UserControllerRequestAdvice userControllerRequestAdvice;
+
+    /**
+     * 仅对含有 Request Body 的请求进行拦截
+     *
+     * @throws Exception 抛出异常
+     */
+    @Test
+    void requestHandler() throws Exception {
+        User user = new User();
+        user.setId(1);
+        user.setUsername("username");
+        user.setPassword("password");
+        user.setAddress("ShangHai");
+        user.setBirthday(new Date());
+
+        MockMvc mockMvc = MockMvcBuilders.standaloneSetup(userController).setControllerAdvice(userExceptionHandler).setControllerAdvice(userControllerRequestAdvice).build();
+        // json 请求体
+        mockMvc.perform(MockMvcRequestBuilders.post("/user/user").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(user)).accept(MediaType.APPLICATION_JSON)).andExpect(MockMvcResultMatchers.status().isOk()).andDo(MockMvcResultHandlers.print());
+    }
+}
+```
+
+
+
+## `Response` 加强
+
+通过 `@ControllerAdvice` 配合 `ResponseBodyAdvice` 接口, 对响应内容进行拦截, 其中泛型 `<Object>` 为 `Controller` 中的返回值..
+
+```java
+@ControllerAdvice
+public class UserControllerResponseAdvice implements ResponseBodyAdvice<Object> {
+
+    final Logger logger = Logger.getLogger(UserControllerResponseAdvice.class.getName());
+
+    /**
+     * 是否执行响应拦截
+     *
+     * @param returnType    返回Java类的类型
+     * @param converterType 响应内容Http消息转换器类类型
+     * @return 是否执行拦截
+     */
+    @Override
+    public boolean supports(@NonNull MethodParameter returnType, @NonNull Class<? extends HttpMessageConverter<?>> converterType) {
+        logger.info(() -> "准备判断是否执行响应拦截");
+        logger.info("返回类型 " + returnType.getParameterType());
+
+        return true;
+    }
+
+    /**
+     * @param body                  响应内容, 一般是业务类
+     * @param returnType            Controller 中的方法返回类型
+     * @param selectedContentType   响应 ContentType 类型
+     * @param selectedConverterType 响应内容 Http消息转换器类类型
+     * @param request               当前请求
+     * @param response              当前响应
+     * @return 响应输出对象
+     */
+    @Override
+    public Object beforeBodyWrite(Object body, @NonNull MethodParameter returnType, @NonNull MediaType selectedContentType, @NonNull Class<? extends HttpMessageConverter<?>> selectedConverterType, @NonNull ServerHttpRequest request, @NonNull ServerHttpResponse response) {
+
+        logger.info(() -> "响应转换前, 当前要转换的类" + body.getClass().getName());
+        logger.info(() -> "响应转换前, 方法定义的返回类型" + returnType.getParameterType());
+        logger.info(() -> "响应转换前, 使用的响应转换器为: " + selectedConverterType.getName());
+        logger.info(() -> "响应转换前, 当前请求" + request);
+        logger.info(() -> "响应转换前, 当前响应" + response);
+        return body;
+    }
+}
+```
+
+测试类
+
+```java
+@SpringBootTest
+class UserControllerResponseAdviceTest {
+
+    @Autowired
+    ObjectMapper objectMapper;
+
+    @Autowired
+    UserController userController;
+
+    @Autowired
+    UserExceptionHandler userExceptionHandler;
+
+    @Autowired
+    UserControllerResponseAdvice userControllerResponseAdvice;
+
+
+    /**
+     * 对所有响应拦截
+     *
+     * @throws Exception 抛出异常
+     */
+    @Test
+    void responseHandler() throws Exception {
+        MockMvc mockMvc = MockMvcBuilders.standaloneSetup(userController).setControllerAdvice(userExceptionHandler).setControllerAdvice(userControllerResponseAdvice).build();
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/user/users/1").accept(MediaType.APPLICATION_JSON)).andExpect(MockMvcResultMatchers.status().isOk()).andDo(MockMvcResultHandlers.print());
+    }
+}
+```
+
