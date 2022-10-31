@@ -179,6 +179,7 @@ Oracle 默认为 一致读 当用户查询数据时,返回结果为当前数据�
 `select * .... for update`   			锁定整张表,允许增加,但是不允许修改删除
 
 `select ... for update wait 5` 		查询数据,只能5秒,如果5秒内获得不到锁,则抛出异常
+
 `select ... for update nowait` 		查询数据,如果此刻被其他锁获得,则抛出异常,该资源正忙
 
 
